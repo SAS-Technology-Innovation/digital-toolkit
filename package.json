@@ -1,0 +1,28 @@
+{
+  "name": "digital-toolkit",
+  "version": "1.0.0",
+  "description": "SAS Digital Toolkit Dashboard - A Google Apps Script web application for managing school application data",
+  "main": "index.js",
+  "scripts": {
+    "login": "npx @google/clasp login",
+    "push": "npx @google/clasp push",
+    "deploy": "npx @google/clasp deploy",
+    "open": "npx @google/clasp open",
+    "logs": "npx @google/clasp logs",
+    "pull": "npx @google/clasp pull",
+    "create": "npx @google/clasp create --title 'SAS Digital Toolkit Dashboard' --type standalone",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SAS-Technology-Innovation/digital-toolkit.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SAS-Technology-Innovation/digital-toolkit/issues"
+  },
+  "homepage": "https://github.com/SAS-Technology-Innovation/digital-toolkit#readme"
+}

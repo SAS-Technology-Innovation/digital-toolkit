@@ -1,0 +1,29 @@
+name: Deploy to Google Apps Script
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Write clasp credentials
+      run: |
+        mkdir -p ~/.config/clasp
+        echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.config/clasp/.clasprc.json
+
+    - name: Deploy to Apps Script
+      run: |
+        npx @google/clasp push
+        npx @google/clasp deploy --description "Deployed from GitHub Actions - $(date)"
