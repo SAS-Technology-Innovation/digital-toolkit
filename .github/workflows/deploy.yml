@@ -18,12 +18,24 @@ jobs:
       with:
         node-version: '22'
 
-    - name: Write clasp credentials
+    - name: Setup clasp credentials
       run: |
         mkdir -p ~/.config/clasp
         echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.config/clasp/.clasprc.json
+        chmod 600 ~/.config/clasp/.clasprc.json
+        
+    - name: Verify clasp setup
+      run: |
+        ls -la ~/.config/clasp/
+        echo "Credentials file exists: $(test -f ~/.config/clasp/.clasprc.json && echo 'YES' || echo 'NO')"
+        
+    - name: Install clasp globally
+      run: npm install -g @google/clasp
+
+    - name: Create .clasp.json from secret
+      run: echo '{"scriptId":"${{ secrets.APPS_SCRIPT_ID }}","rootDir":"."}' > .clasp.json
 
     - name: Deploy to Apps Script
       run: |
-        npx @google/clasp push
-        npx @google/clasp deploy --description "Deployed from GitHub Actions - $(date)"
+        clasp push
+        clasp deploy --deploymentId ${{ secrets.APPS_SCRIPT_DEPLOYMENT_ID }} --description "Deployed from GitHub Actions - $(git rev-parse --short HEAD)"

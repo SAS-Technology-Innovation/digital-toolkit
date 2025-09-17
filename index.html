@@ -2,7 +2,7 @@
 <html>
 <head>
   <base target="_top">
-  <title>SAS Digital Toolkit Dashboard</title>
+  <title>SAS Digital Toolkit</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -174,35 +174,6 @@
       display: block;
     }
 
-    /* Division content containers - no additional styling needed */
-
-    .content-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .content-header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .content-subtitle {
-      color: #6c757d;
-      font-size: 14px;
-      margin: 0;
-      font-weight: 400;
-    }
-
-    .header-stats {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -212,72 +183,6 @@
         opacity: 1;
         transform: translateY(0);
       }
-    }
-
-    .section-title {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 1.8rem;
-      font-weight: normal;
-      color: #192f59;
-      margin-bottom: 16px;
-      letter-spacing: 1px;
-    }
-
-    .main-title {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 2.2rem;
-      font-weight: normal;
-      color: #192f59;
-      margin-bottom: 8px;
-      letter-spacing: 1px;
-    }
-
-    .main-subtitle {
-      color: #6c757d;
-      font-size: 14px;
-      margin-bottom: 16px;
-      font-weight: 400;
-    }
-
-    .stats-container {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      margin: 0;
-    }
-
-    .stat-card {
-      background: #f8f9fc;
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
-      padding: 8px 12px;
-      text-align: center;
-      transition: all 0.3s ease;
-      min-width: 60px;
-    }
-
-    .stat-card:hover {
-      border-color: #192f59;
-      background: #e9ecef;
-    }
-
-    .stat-value {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 1.2rem;
-      color: #295c9c;
-      letter-spacing: 1px;
-      margin: 0;
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 10px;
-      color: #6c757d;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 2px 0 0 0;
-      line-height: 1;
     }
 
     /* Main Apps Everyone Can Use Container */
@@ -293,29 +198,25 @@
     .everyone-apps-title {
       font-family: 'Bebas Neue', cursive;
       font-size: 1.8rem;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
       letter-spacing: 1px;
       display: flex;
       align-items: center;
       gap: 10px;
     }
+    
+    .main-subtitle {
+      color: #6c757d;
+      font-size: 14px;
+      margin-bottom: 16px;
+      font-weight: 400;
+    }
 
     /* Division-specific colors for Apps Everyone Can Use */
-    .whole-school-content .everyone-apps-title {
-      color: #6f42c1; /* Purple */
-    }
-
-    .elementary-content .everyone-apps-title {
-      color: #28a745; /* Green */
-    }
-
-    .middleSchool-content .everyone-apps-title {
-      color: #dc3545; /* Red */
-    }
-
-    .highSchool-content .everyone-apps-title {
-      color: #007bff; /* Blue */
-    }
+    .whole-school-content .everyone-apps-title { color: #6f42c1; }
+    .elementary-content .everyone-apps-title { color: #28a745; }
+    .middleSchool-content .everyone-apps-title { color: #dc3545; }
+    .highSchool-content .everyone-apps-title { color: #007bff; }
 
     .everyone-apps-title i {
       width: 24px;
@@ -324,162 +225,78 @@
 
     .everyone-apps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
       gap: 16px;
     }
 
-    /* App Cards - Two sizes: Everyone apps (larger) and Department apps (smaller) */
+    /* App Cards */
     .app-card {
-      background: #f8f9fc;
+      background: #ffffff;
       border: 1px solid #e9ecef;
-      border-radius: 8px;
-      padding: 12px;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .app-card.everyone-app {
+      border-radius: 12px;
       padding: 16px;
-      border-radius: 10px;
-    }
-
-    .app-card.department-app {
-      padding: 10px;
-      border-radius: 6px;
-    }
-
-    .app-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(135deg, #28a745, #20c997);
       transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
     }
-
+    
     .app-card:hover {
       border-color: #192f59;
       box-shadow: 0 4px 12px rgba(25, 47, 89, 0.15);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
     }
-
+    
     .app-name {
-      font-family: 'Bebas Neue', cursive;
-      font-weight: normal;
-      color: #192f59;
-      margin-bottom: 6px;
-      letter-spacing: 1px;
-      line-height: 1.2;
-    }
-
-    .app-card.everyone-app .app-name {
-      font-size: 1.2rem;
-    }
-
-    .app-card.department-app .app-name {
-      font-size: 1rem;
-    }
-
-    .app-category {
-      display: inline-block;
-      padding: 3px 8px;
-      background: linear-gradient(135deg, #295c9c, #192f59);
-      color: white;
-      border-radius: 12px;
+      font-family: 'Poppins', sans-serif;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      color: #192f59;
       margin-bottom: 8px;
+      font-size: 1.1rem;
     }
 
-    .app-card.everyone-app .app-category {
-      font-size: 11px;
-      padding: 4px 10px;
+    .app-name:hover {
+      color: #295c9c;
+      text-decoration: underline;
     }
 
-    .app-card.department-app .app-category {
-      font-size: 9px;
-      padding: 2px 6px;
+    .app-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: auto; /* Pushes tags to the bottom */
+        padding-top: 12px;
     }
 
-    .app-details {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin: 8px 0;
+    .app-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: 500;
+        background-color: #e9ecef;
+        color: #495057;
+    }
+    
+    .app-tag i {
+        width: 12px;
+        height: 12px;
     }
 
-    .app-card.everyone-app .app-details {
-      font-size: 11px;
-    }
+    .tag-category { background-color: #e0e7ff; color: #3730a3; }
+    .tag-subject { background-color: #d1fae5; color: #047857; }
+    .tag-license { background-color: #ffedd5; color: #9a3412; }
+    .tag-department { background-color: #fee2e2; color: #991b1b; }
 
-    .app-card.department-app .app-details {
-      font-size: 10px;
-      gap: 4px;
-    }
-
-    .app-detail {
-      background: #f8f9fc;
-      padding: 2px 6px;
-      border-radius: 4px;
-      color: #495057;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .app-card.department-app .app-detail {
-      padding: 1px 4px;
-      gap: 2px;
-    }
-
-    .app-detail i {
-      width: 10px;
-      height: 10px;
-    }
-
-    .app-card.department-app .app-detail i {
-      width: 8px;
-      height: 8px;
-    }
-
-    .btn-small {
-      padding: 6px 10px;
-      font-size: 11px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .app-card.department-app .btn-small {
-      padding: 4px 8px;
-      font-size: 10px;
-      gap: 3px;
-    }
-
-    .btn-small i {
-      width: 12px;
-      height: 12px;
-    }
-
-    .app-card.department-app .btn-small i {
-      width: 10px;
-      height: 10px;
-    }
-
-    /* Department Containers - 3 across baseline */
+    /* Departments Section */
     .departments-section {
-      margin-top: 24px;
+      margin-top: 48px;
     }
 
     .departments-title {
       font-family: 'Bebas Neue', cursive;
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       margin-bottom: 20px;
       letter-spacing: 1px;
       display: flex;
@@ -488,72 +305,39 @@
     }
 
     .departments-title i {
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
     }
-
-    /* Division-specific colors for Department titles */
-    .whole-school-content .departments-title,
-    .whole-school-content .departments-title i {
-      color: #6f42c1; /* Purple */
-    }
-
-    .elementary-content .departments-title,
-    .elementary-content .departments-title i {
-      color: #28a745; /* Green */
-    }
-
-    .middleSchool-content .departments-title,
-    .middleSchool-content .departments-title i {
-      color: #dc3545; /* Red */
-    }
-
-    .highSchool-content .departments-title,
-    .highSchool-content .departments-title i {
-      color: #007bff; /* Blue */
-    }
+    
+    .whole-school-content .departments-title { color: #6f42c1; }
+    .elementary-content .departments-title { color: #28a745; }
+    .middleSchool-content .departments-title { color: #dc3545; }
+    .highSchool-content .departments-title { color: #007bff; }
 
     .department-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(350px, 100%), 1fr));
       gap: 24px;
     }
 
     .department-card {
       background: white;
       border: 1px solid #e9ecef;
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       transition: all 0.3s ease;
-      min-height: 300px;
     }
-
+    
     .department-card:hover {
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
     }
-
-    /* Division-specific hover colors for Department cards */
-    .whole-school-content .department-card:hover {
-      border-color: #6f42c1; /* Purple */
-      box-shadow: 0 6px 20px rgba(111, 66, 193, 0.15);
-    }
-
-    .elementary-content .department-card:hover {
-      border-color: #28a745; /* Green */
-      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.15);
-    }
-
-    .middleSchool-content .department-card:hover {
-      border-color: #dc3545; /* Red */
-      box-shadow: 0 6px 20px rgba(220, 53, 69, 0.15);
-    }
-
-    .highSchool-content .department-card:hover {
-      border-color: #007bff; /* Blue */
-      box-shadow: 0 6px 20px rgba(0, 123, 255, 0.15);
-    }
+    
+    .whole-school-content .department-card:hover { border-color: #6f42c1; }
+    .elementary-content .department-card:hover { border-color: #28a745; }
+    .middleSchool-content .department-card:hover { border-color: #dc3545; }
+    .highSchool-content .department-card:hover { border-color: #007bff; }
 
     .department-header {
       display: flex;
@@ -561,309 +345,53 @@
       justify-content: space-between;
       margin-bottom: 16px;
       padding-bottom: 12px;
-      border-bottom: 2px solid #f8f9fc;
+      border-bottom: 1px solid #f1f3f5;
     }
 
     .department-title {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 1.3rem;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 1.2rem;
       margin: 0;
-      letter-spacing: 1px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
+    
+    .whole-school-content .department-title { color: #6f42c1; }
+    .elementary-content .department-title { color: #28a745; }
+    .middleSchool-content .department-title { color: #dc3545; }
+    .highSchool-content .department-title { color: #007bff; }
 
     .department-title i {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
     }
 
     .department-count {
       color: white;
-      padding: 3px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
     }
 
-    /* Division-specific colors for Department cards */
-    .whole-school-content .department-title,
-    .whole-school-content .department-title i {
-      color: #6f42c1; /* Purple */
-    }
-
-    .whole-school-content .department-count {
-      background: #6f42c1; /* Purple */
-    }
-
-    .elementary-content .department-title,
-    .elementary-content .department-title i {
-      color: #28a745; /* Green */
-    }
-
-    .elementary-content .department-count {
-      background: #28a745; /* Green */
-    }
-
-    .middleSchool-content .department-title,
-    .middleSchool-content .department-title i {
-      color: #dc3545; /* Red */
-    }
-
-    .middleSchool-content .department-count {
-      background: #dc3545; /* Red */
-    }
-
-    .highSchool-content .department-title,
-    .highSchool-content .department-title i {
-      color: #007bff; /* Blue */
-    }
-
-    .highSchool-content .department-count {
-      background: #007bff; /* Blue */
-    }
+    .whole-school-content .department-count { background: #6f42c1; }
+    .elementary-content .department-count { background: #28a745; }
+    .middleSchool-content .department-count { background: #dc3545; }
+    .highSchool-content .department-count { background: #007bff; }
 
     .department-apps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+      grid-template-columns: 1fr;
       gap: 12px;
     }
 
-    .app-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .btn {
-      padding: 8px 12px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 12px;
-      transition: all 0.3s ease;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-family: 'Poppins', sans-serif;
-      margin-top: 10px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #192f59, #295c9c);
-      color: white;
-      box-shadow: 0 2px 8px rgba(25, 47, 89, 0.3);
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #0f1f3d, #1e4578);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(25, 47, 89, 0.4);
-    }
-
-    .btn i {
-      width: 12px;
-      height: 12px;
-    }
-
-    .license-list {
-      background: #f8f9fc;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
-    .license-list h3 {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 1.5rem;
-      color: #192f59;
-      margin-bottom: 16px;
-      letter-spacing: 1px;
-    }
-
-    .license-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #e9ecef;
-    }
-
-    .license-item:last-child {
-      border-bottom: none;
-    }
-
-    .license-name {
-      font-weight: 500;
-      color: #333;
-    }
-
-    .license-count {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 1.2rem;
-      color: #295c9c;
-      letter-spacing: 1px;
-    }
-
-    .section-subtitle {
-      color: #6c757d;
-      font-size: 1rem;
-      margin-bottom: 24px;
-      text-align: center;
-      font-weight: 400;
-    }
-
-    .license-type {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .license-type.site {
-      background: linear-gradient(135deg, #28a745, #20c997);
-      color: white;
-    }
-
-    .license-type.department {
-      background: linear-gradient(135deg, #fd7e14, #ffc107);
-      color: white;
-    }
-
-    .license-type.limited {
-      background: linear-gradient(135deg, #6f42c1, #e83e8c);
-      color: white;
-    }
-
-    .app-details {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 12px 0;
-      font-size: 14px;
-    }
-
-    .app-detail {
-      background: #f8f9fc;
-      padding: 4px 8px;
-      border-radius: 6px;
-      color: #495057;
-      font-weight: 500;
-    }
-
-    .breakdown-container {
-      display: grid;
-      gap: 24px;
-    }
-
-    .breakdown-section {
-      background: #f8f9fc;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid #e9ecef;
-    }
-
-    .breakdown-title {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 1.3rem;
-      color: #192f59;
-      margin-bottom: 16px;
-      letter-spacing: 1px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .breakdown-count {
-      background: #295c9c;
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .breakdown-apps {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
-    }
-
-    .breakdown-app {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      border: 1px solid #e9ecef;
-      transition: all 0.3s ease;
-    }
-
-    .breakdown-app:hover {
-      border-color: #192f59;
-      box-shadow: 0 4px 12px rgba(25, 47, 89, 0.1);
-      transform: translateY(-1px);
-    }
-
-    .breakdown-app-name {
-      font-weight: 600;
-      color: #192f59;
-      margin-bottom: 4px;
-    }
-
-    .breakdown-app-info {
-      font-size: 12px;
-      color: #6c757d;
-      margin-bottom: 8px;
-    }
-
-    .filter-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      padding: 0;
-    }
-
-    .filter-button {
-      padding: 4px 10px;
-      background: white;
-      border: 1px solid #e9ecef;
-      color: #6c757d;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 500;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border-radius: 16px;
-    }
-
-    .filter-button:hover {
-      color: #192f59;
-      border-color: #192f59;
-    }
-
-    .filter-button.active {
+    .footer {
       background: #192f59;
       color: white;
-      border-color: #192f59;
-    }
-
-    .footer {
-      background: linear-gradient(135deg, #192f59, #295c9c);
-      color: white;
-      padding: 32px 0;
+      padding: 32px 24px;
       margin-top: 60px;
-    }
-
-    .footer-content {
-      width: 100%;
-      padding: 0 24px;
       text-align: center;
     }
 
@@ -877,50 +405,33 @@
     .footer-text {
       font-size: 14px;
       opacity: 0.9;
-      font-weight: 400;
-      margin-bottom: 8px;
     }
 
     .footer-link {
-      color: #20c997;
+      color: #63e6be;
       text-decoration: none;
       font-weight: 500;
-      transition: color 0.3s ease;
     }
 
     .footer-link:hover {
-      color: #28a745;
       text-decoration: underline;
     }
 
-    .loading {
+    .loading, .error-state {
       text-align: center;
       padding: 60px 20px;
-      color: #6c757d;
     }
 
-    .loading h3 {
+    .loading h3, .error-state h3 {
       font-family: 'Bebas Neue', cursive;
       font-size: 1.8rem;
-      color: #192f59;
-      margin-bottom: 8px;
       letter-spacing: 1px;
     }
-
-    .error-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #dc3545;
-    }
-
-    .error-state h3 {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 1.8rem;
-      margin-bottom: 12px;
-      letter-spacing: 1px;
-    }
-
-    /* Fluid responsive design - no fixed breakpoints */
+    
+    .loading h3 { color: #192f59; }
+    .loading p { color: #6c757d; }
+    .error-state h3 { color: #dc3545; }
+    .error-state p { color: #dc3545; }
 
     @media (max-width: 768px) {
       .header-content {
@@ -929,115 +440,11 @@
         gap: 16px;
         text-align: center;
       }
-
-      .header-brand {
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .header-text {
+      .header-brand, .header-text {
         align-items: center;
       }
-
-      .header-meta {
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .tabs {
-        flex-direction: column;
-      }
-
-      .tab-button {
-        min-width: auto;
-        padding: 15px 20px;
-      }
-
-      .main-content {
-        padding: 16px;
-      }
-
-      .content-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-
-      .everyone-apps-container {
-        padding: 16px;
-        margin-bottom: 24px;
-      }
-
-      .everyone-apps-title {
-        font-size: 1.5rem;
-      }
-
-      .everyone-apps-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .departments-title {
-        font-size: 1.4rem;
-      }
-
-      .department-container {
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
-
-      .department-apps {
-        grid-template-columns: 1fr;
-      }
-
-      .department-card {
-        padding: 16px;
-        min-height: auto;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .everyone-apps-container {
-        padding: 12px;
-      }
-
-      .everyone-apps-title {
-        font-size: 1.3rem;
-      }
-
-      .departments-title {
-        font-size: 1.2rem;
-      }
-
-      .department-card {
-        padding: 12px;
-      }
-
-      .department-title {
-        font-size: 1.1rem;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .header h1 {
-        font-size: 2rem;
-      }
-
-      .main-content {
-        padding: 16px;
-      }
-
-      .app-list-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-
-      .app-list-actions {
-        width: 100%;
-        justify-content: flex-start;
-      }
-
-      .app-grid {
+      .main-content { padding: 16px; }
+      .everyone-apps-grid, .department-container {
         grid-template-columns: 1fr;
       }
     }
@@ -1052,14 +459,12 @@
         <div class="header-brand">
           <img src="https://resources.finalsite.net/images/v1736450683/sas/q9u7ppfdasutt8sglmzh/school-logo.svg" alt="Singapore American School" class="header-logo">
           <div class="header-text">
-            <h1>Digital Toolkit Dashboard</h1>
-            <p>Applications and digital resources for SAS community</p>
+            <h1>SAS Digital Toolkit</h1>
+            <p>Applications and digital resources for the SAS community</p>
           </div>
         </div>
         <div class="header-meta">
           <span>Technology & Innovation</span>
-          <span class="separator">|</span>
-          <span>SAS Community Portal</span>
         </div>
       </div>
     </div>
@@ -1077,96 +482,63 @@
     <!-- Loading State -->
     <div id="loading" class="loading">
       <h3>Loading Dashboard</h3>
-      <p>Please wait while we fetch your digital toolkit data...</p>
+      <p>Please wait while we fetch the digital toolkit data...</p>
     </div>
+
+    <!-- Error State Container -->
+    <div id="error" style="display: none;"></div>
 
     <!-- Main Content -->
     <div id="main-content" class="main-content" style="display: none;">
 
       <!-- Whole School Tab Content -->
       <div id="wholeSchool-content" class="tab-content active whole-school-content">
-        <!-- Apps Everyone Can Use Section -->
         <div class="everyone-apps-container">
-          <h2 class="everyone-apps-title">
-            <i data-lucide="globe"></i>
-            Apps Everyone Can Use
-          </h2>
-          <p class="main-subtitle">These applications are available to the entire SAS community with unlimited access</p>
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Apps Everyone Can Use</h2>
+          <p class="main-subtitle">These core applications are available to the entire SAS community.</p>
           <div id="wholeSchool-everyone-apps" class="everyone-apps-grid"></div>
         </div>
-
-        <!-- Departments Section -->
         <div class="departments-section">
-          <h3 class="departments-title">
-            <i data-lucide="building-2"></i>
-            Departments
-          </h3>
+          <h3 class="departments-title"><i data-lucide="building-2"></i> Department-Specific Apps</h3>
           <div id="wholeSchool-departments" class="department-container"></div>
         </div>
       </div>
 
       <!-- Elementary School Tab Content -->
       <div id="elementary-content" class="tab-content elementary-content">
-        <!-- Apps Everyone Can Use Section -->
         <div class="everyone-apps-container">
-          <h2 class="everyone-apps-title">
-            <i data-lucide="baby"></i>
-            Apps Everyone Can Use - Elementary
-          </h2>
-          <p class="main-subtitle">These applications are available to all elementary students and teachers</p>
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for Elementary</h2>
+          <p class="main-subtitle">These applications are available to all elementary students and staff.</p>
           <div id="elementary-everyone-apps" class="everyone-apps-grid"></div>
         </div>
-
-        <!-- Departments Section -->
         <div class="departments-section">
-          <h3 class="departments-title">
-            <i data-lucide="building-2"></i>
-            Elementary Departments
-          </h3>
+          <h3 class="departments-title"><i data-lucide="building-2"></i> Elementary Department Apps</h3>
           <div id="elementary-departments" class="department-container"></div>
         </div>
       </div>
 
       <!-- Middle School Tab Content -->
       <div id="middleSchool-content" class="tab-content middleSchool-content">
-        <!-- Apps Everyone Can Use Section -->
         <div class="everyone-apps-container">
-          <h2 class="everyone-apps-title">
-            <i data-lucide="graduation-cap"></i>
-            Apps Everyone Can Use - Middle School
-          </h2>
-          <p class="main-subtitle">These applications are available to all middle school students and teachers</p>
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for Middle School</h2>
+          <p class="main-subtitle">These applications are available to all middle school students and staff.</p>
           <div id="middleSchool-everyone-apps" class="everyone-apps-grid"></div>
         </div>
-
-        <!-- Departments Section -->
         <div class="departments-section">
-          <h3 class="departments-title">
-            <i data-lucide="building-2"></i>
-            Middle School Departments
-          </h3>
+          <h3 class="departments-title"><i data-lucide="building-2"></i> Middle School Department Apps</h3>
           <div id="middleSchool-departments" class="department-container"></div>
         </div>
       </div>
 
       <!-- High School Tab Content -->
       <div id="highSchool-content" class="tab-content highSchool-content">
-        <!-- Apps Everyone Can Use Section -->
         <div class="everyone-apps-container">
-          <h2 class="everyone-apps-title">
-            <i data-lucide="university"></i>
-            Apps Everyone Can Use - High School
-          </h2>
-          <p class="main-subtitle">These applications are available to all high school students and teachers</p>
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for High School</h2>
+          <p class="main-subtitle">These applications are available to all high school students and staff.</p>
           <div id="highSchool-everyone-apps" class="everyone-apps-grid"></div>
         </div>
-
-        <!-- Departments Section -->
         <div class="departments-section">
-          <h3 class="departments-title">
-            <i data-lucide="building-2"></i>
-            High School Departments
-          </h3>
+          <h3 class="departments-title"><i data-lucide="building-2"></i> High School Department Apps</h3>
           <div id="highSchool-departments" class="department-container"></div>
         </div>
       </div>
@@ -1175,115 +547,21 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <div class="footer-content">
-        <p class="footer-title">Developed by the Technology & Innovation Team</p>
-        <p class="footer-text">
-          For technical support, contact <a href="mailto:edtech@sas.edu.sg" class="footer-link">edtech@sas.edu.sg</a>
-        </p>
-        <p class="footer-text" style="opacity: 0.8; font-size: 12px; margin-top: 12px;">
-          © 2024 Singapore American School. All rights reserved.
-        </p>
-      </div>
+      <p class="footer-title">Developed by the Technology & Innovation Team</p>
+      <p class="footer-text">
+        For support, contact <a href="mailto:edtech@sas.edu.sg" class="footer-link">edtech@sas.edu.sg</a>
+      </p>
     </footer>
 
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Show loading indicator
-      document.getElementById('loading').style.display = 'block';
-      document.getElementById('main-content').style.display = 'none';
-
-      // Check if we're in Google Apps Script environment
-      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
-        google.script.run.withSuccessHandler(renderDashboard).withFailureHandler(showError).getDashboardData();
-      } else {
-        // Mock data for local testing
-        const mockData = {
-          wholeSchool: {
-            apps: [
-              { product: "Google Workspace for Education Plus", category: "Productivity Tools", website: "https://workspace.google.com/", licenseType: "Site License", department: "Technology", division: "Whole School", subject: "General", licenses: 0 },
-              { product: "Zoom", category: "Collaboration", website: "https://zoom.us/", licenseType: "Enterprise", department: "Technology", division: "Whole School", subject: "Communication", licenses: 0 },
-              { product: "Canvas", category: "LMS", website: "https://www.canvaslms.com/", licenseType: "School License", department: "Academic Technology", division: "Whole School", subject: "Learning Management", licenses: 0 },
-              { product: "Microsoft Office 365", category: "Productivity Tools", website: "https://office.com/", licenseType: "Site License", department: "Technology", division: "Whole School", subject: "Office Suite", licenses: 0 },
-              { product: "Turnitin", category: "Assessment", website: "https://turnitin.com/", licenseType: "School License", department: "English Department", division: "Whole School", subject: "Writing Assessment", licenses: 0 }
-            ],
-            byCategory: {
-              "Productivity Tools": [{ product: "Google Workspace", licenseType: "Site License", department: "Technology" }],
-              "Collaboration": [{ product: "Zoom", licenseType: "Enterprise", department: "Technology" }]
-            },
-            byDepartment: {
-              "Technology": [
-                { product: "Google Workspace for Education Plus", category: "Productivity Tools", website: "https://workspace.google.com/", licenseType: "Site License", department: "Technology", division: "Whole School", subject: "General", licenses: 0 },
-                { product: "Zoom", category: "Collaboration", website: "https://zoom.us/", licenseType: "Enterprise", department: "Technology", division: "Whole School", subject: "Communication", licenses: 0 },
-                { product: "Microsoft Office 365", category: "Productivity Tools", website: "https://office.com/", licenseType: "Site License", department: "Technology", division: "Whole School", subject: "Office Suite", licenses: 0 }
-              ],
-              "Academic Technology": [
-                { product: "Canvas", category: "LMS", website: "https://www.canvaslms.com/", licenseType: "School License", department: "Academic Technology", division: "Whole School", subject: "Learning Management", licenses: 0 }
-              ],
-              "English Department": [
-                { product: "Turnitin", category: "Assessment", website: "https://turnitin.com/", licenseType: "School License", department: "English Department", division: "Whole School", subject: "Writing Assessment", licenses: 0 }
-              ]
-            }
-          },
-          elementary: {
-            apps: [
-              { product: "Raz-Kids", category: "Literacy", website: "https://www.raz-kids.com/", licenseType: "Site License", department: "Elementary", division: "Elementary", subject: "Reading", licenses: 500 },
-              { product: "Seesaw", category: "Learning Platform", website: "https://web.seesaw.me/", licenseType: "School License", department: "Elementary", division: "Elementary", subject: "Portfolio", licenses: 0 }
-            ],
-            byCategory: {
-              "Literacy": [{ product: "Raz-Kids", licenseType: "Site License", department: "Elementary" }]
-            },
-            byDepartment: {
-              "Elementary": [{ product: "Raz-Kids", licenseType: "Site License", category: "Literacy" }]
-            }
-          },
-          middleSchool: {
-            apps: [
-              { product: "CommonLit", category: "Literacy", website: "https://www.commonlit.org/", licenseType: "School License", department: "English", division: "Middle School", subject: "Reading", licenses: 0 },
-              { product: "Desmos", category: "Mathematics", website: "https://www.desmos.com/", licenseType: "Site License", department: "Math", division: "Middle School", subject: "Graphing", licenses: 0 }
-            ],
-            byCategory: {
-              "Literacy": [{ product: "CommonLit", licenseType: "School License", department: "English" }],
-              "Mathematics": [{ product: "Desmos", licenseType: "Site License", department: "Math" }]
-            },
-            byDepartment: {
-              "English": [{ product: "CommonLit", licenseType: "School License", category: "Literacy" }],
-              "Math": [{ product: "Desmos", licenseType: "Site License", category: "Mathematics" }]
-            }
-          },
-          highSchool: {
-            apps: [
-              { product: "Adobe Creative Suite", category: "Design", website: "https://adobe.com/", licenseType: "Department License", department: "Arts", division: "High School", subject: "Design", licenses: 50 },
-              { product: "Turnitin", category: "Assessment", website: "https://turnitin.com/", licenseType: "School License", department: "English", division: "High School", subject: "Writing", licenses: 200 }
-            ],
-            byCategory: {
-              "Design": [{ product: "Adobe Creative Suite", licenseType: "Department License", department: "Arts" }],
-              "Assessment": [{ product: "Turnitin", licenseType: "School License", department: "English" }]
-            },
-            byDepartment: {
-              "Arts": [{ product: "Adobe Creative Suite", licenseType: "Department License", category: "Design" }],
-              "English": [{ product: "Turnitin", licenseType: "School License", category: "Assessment" }]
-            }
-          },
-          stats: {
-            totalApps: 7,
-            wholeSchoolCount: 3,
-            elementaryCount: 2,
-            middleSchoolCount: 2,
-            highSchoolCount: 2
-          }
-        };
-        renderDashboard(JSON.stringify(mockData));
-
-        // Handle window resize to update responsive grids
-        window.addEventListener('resize', () => {
-          // Re-initialize any responsive elements if needed
-          if (typeof lucide !== 'undefined') {
-            setTimeout(() => lucide.createIcons(), 100);
-          }
-        });
-      }
+      // Always use google.script.run to get data from the server (Code.gs)
+      google.script.run
+        .withSuccessHandler(renderDashboard)
+        .withFailureHandler(showError)
+        .getDashboardData();
     });
 
     function renderDashboard(dataString) {
@@ -1291,146 +569,37 @@
         const data = JSON.parse(dataString);
 
         if (data.error) {
-          showError(data.error);
+          showError({ message: data.error });
           return;
         }
 
-        // Hide loading and show content
+        // Hide loading and show main content
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('main-content').style.display = 'grid';
+        document.getElementById('main-content').style.display = 'block';
 
-        // Function to create app cards for "Apps Everyone Can Use" (larger cards)
-        function createEveryoneAppCard(app) {
-          const licenseTypeClass = getLicenseTypeClass(app.licenseType);
-          const licenses = app.licenses > 0 ? `${app.licenses.toLocaleString()}` : 'Unlimited';
-
+        // --- RENDER FUNCTIONS ---
+        
+        // Creates a generic app card. Used for both "Everyone" and "Department" sections.
+        function createAppCard(app) {
           return `
-            <div class="app-card everyone-app">
-              <h3 class="app-name">${app.product}</h3>
-              <span class="app-category">${app.category}</span>
-              <div class="license-type ${licenseTypeClass}" style="font-size: 10px; padding: 2px 6px; margin-bottom: 6px;">${app.licenseType}</div>
-              <div class="app-details">
-                <span class="app-detail"><i data-lucide="building"></i> ${app.department}</span>
-                <span class="app-detail"><i data-lucide="tag"></i> ${app.subject}</span>
-                <span class="app-detail"><i data-lucide="users"></i> ${licenses}</span>
-              </div>
-              <a href="${app.website}" target="_blank" class="btn btn-primary btn-small">
-                <i data-lucide="external-link"></i> Visit
+            <div class="app-card">
+              <a href="${app.website}" target="_blank" style="text-decoration: none; color: inherit;">
+                <h4 class="app-name">${app.product}</h4>
               </a>
+              <div class="app-tags">
+                ${app.category ? `<span class="app-tag tag-category">${app.category}</span>` : ''}
+                ${app.subject ? `<span class="app-tag tag-subject">${app.subject}</span>` : ''}
+                ${app.licenseType ? `<span class="app-tag tag-license">${app.licenseType}</span>` : ''}
+              </div>
             </div>
           `;
         }
-
-        // Function to create smaller app cards for department sections
-        function createDepartmentAppCard(app) {
-          const licenseTypeClass = getLicenseTypeClass(app.licenseType);
-          const licenses = app.licenses > 0 ? `${app.licenses.toLocaleString()}` : 'Unlimited';
-
-          return `
-            <div class="app-card department-app">
-              <h3 class="app-name">${app.product}</h3>
-              <span class="app-category">${app.category}</span>
-              <div class="license-type ${licenseTypeClass}" style="font-size: 9px; padding: 1px 4px; margin-bottom: 4px;">${app.licenseType}</div>
-              <div class="app-details">
-                <span class="app-detail"><i data-lucide="tag"></i> ${app.subject}</span>
-                <span class="app-detail"><i data-lucide="users"></i> ${licenses}</span>
-              </div>
-              <a href="${app.website}" target="_blank" class="btn btn-primary btn-small">
-                <i data-lucide="external-link"></i> Visit
-              </a>
-            </div>
-          `;
-        }
-
-
-        // Function to get license type CSS class
-        function getLicenseTypeClass(licenseType) {
-          const type = licenseType.toLowerCase();
-          if (type.includes('site') || type.includes('school') || type.includes('enterprise') || type.includes('unlimited')) {
-            return 'site';
-          } else if (type.includes('department') || type.includes('classroom')) {
-            return 'department';
-          } else {
-            return 'limited';
-          }
-        }
-
-        // Function to create compact inline stats
-        function createInlineStats(apps, sectionName) {
-          const totalApps = apps.length;
-          const siteLicenseApps = apps.filter(app => {
-            const type = app.licenseType.toLowerCase();
-            return type.includes('site') || type.includes('school') || type.includes('enterprise');
-          }).length;
-
-          if (sectionName === 'Whole School') {
-            return `
-              <div class="stat-card">
-                <div class="stat-value">${totalApps}</div>
-                <div class="stat-label">Apps</div>
-              </div>
-            `;
-          } else {
-            return `
-              <div class="stat-card">
-                <div class="stat-value">${totalApps}</div>
-                <div class="stat-label">Total</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value">${siteLicenseApps}</div>
-                <div class="stat-label">Unlimited</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value">${totalApps - siteLicenseApps}</div>
-                <div class="stat-label">Limited</div>
-              </div>
-            `;
-          }
-        }
-
-        // Store all data globally for filtering
-        window.dashboardData = data;
-
-        // Function to filter apps for "Everyone Can Use" section (site/school/enterprise licenses)
-        function getEveryoneApps(apps) {
-          return apps.filter(app => {
-            const type = app.licenseType.toLowerCase();
-            return type.includes('site') || type.includes('school') || type.includes('enterprise') || type.includes('unlimited');
-          });
-        }
-
-        // Function to render division content
-        function renderDivisionContent(divisionData, division) {
-          // Render "Apps Everyone Can Use" section
-          const everyoneApps = getEveryoneApps(divisionData.apps);
-          const everyoneContainer = document.getElementById(`${division}-everyone-apps`);
-          if (everyoneContainer) {
-            everyoneContainer.innerHTML = everyoneApps.map(createEveryoneAppCard).join('');
-          }
-
-          // Render departments section
-          renderDepartments(divisionData, division);
-        }
-
-        // Function to get department icon
-        function getDepartmentIcon(department) {
-          const dept = department.toLowerCase();
-          if (dept.includes('technology') || dept.includes('it')) return 'monitor';
-          if (dept.includes('english') || dept.includes('language')) return 'book-open';
-          if (dept.includes('math') || dept.includes('science')) return 'calculator';
-          if (dept.includes('art') || dept.includes('music')) return 'palette';
-          if (dept.includes('pe') || dept.includes('physical') || dept.includes('sports')) return 'activity';
-          if (dept.includes('library') || dept.includes('media')) return 'library';
-          if (dept.includes('admin') || dept.includes('office')) return 'briefcase';
-          if (dept.includes('elementary')) return 'baby';
-          if (dept.includes('middle')) return 'graduation-cap';
-          if (dept.includes('high')) return 'university';
-          return 'folder';
-        }
-
-        // Function to create department cards with smaller app cards inside
+        
+        // Creates a card for a specific department, containing its apps.
         function createDepartmentCard(department, apps) {
           const icon = getDepartmentIcon(department);
+          const appCardsHTML = apps.map(createAppCard).join('');
+          
           return `
             <div class="department-card">
               <div class="department-header">
@@ -1441,61 +610,68 @@
                 <span class="department-count">${apps.length}</span>
               </div>
               <div class="department-apps">
-                ${apps.map(createDepartmentAppCard).join('')}
+                ${appCardsHTML}
               </div>
             </div>
           `;
         }
+        
+        // Renders all the content for a specific division tab.
+        function renderDivisionContent(divisionData, division) {
+          const everyoneContainer = document.getElementById(`${division}-everyone-apps`);
+          if (everyoneContainer) {
+            const everyoneApps = divisionData.everyoneApps || [];
+            if (everyoneApps.length > 0) {
+              everyoneContainer.innerHTML = everyoneApps.map(createAppCard).join('');
+            } else {
+              everyoneContainer.innerHTML = '<p class="text-gray-500">No core apps found for this division.</p>';
+            }
+          }
 
-        // Function to render departments for a division
-        function renderDepartments(divisionData, division) {
           const departmentContainer = document.getElementById(`${division}-departments`);
-
-          if (divisionData.byDepartment && Object.keys(divisionData.byDepartment).length > 0) {
-            const departmentCards = Object.entries(divisionData.byDepartment)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([department, apps]) => createDepartmentCard(department, apps))
-              .join('');
-
-            departmentContainer.innerHTML = departmentCards;
-          } else {
-            // Fallback: create a single "All Apps" department
-            departmentContainer.innerHTML = createDepartmentCard('All Apps', divisionData.apps);
+          if (departmentContainer) {
+            const departments = divisionData.byDepartment || {};
+            if (Object.keys(departments).length > 0) {
+              const departmentCardsHTML = Object.entries(departments)
+                .sort(([a], [b]) => a.localeCompare(b)) // Sort departments alphabetically
+                .map(([dept, apps]) => createDepartmentCard(dept, apps))
+                .join('');
+              departmentContainer.innerHTML = departmentCardsHTML;
+            } else {
+              departmentContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No department-specific apps found.</p>';
+            }
           }
         }
 
-        // Render all divisions with the new layout structure
+        // --- INITIALIZE DASHBOARD ---
+
         ['wholeSchool', 'elementary', 'middleSchool', 'highSchool'].forEach(division => {
           if (data[division]) {
             renderDivisionContent(data[division], division);
           }
         });
 
-        // Setup tab functionality
         setupTabs();
-
-        // Initialize Lucide icons
+        
+        // Re-initialize Lucide icons after rendering new content
         if (typeof lucide !== 'undefined') {
           lucide.createIcons();
         }
 
       } catch (error) {
-        showError('Error parsing dashboard data: ' + error.message);
+        showError(error);
       }
     }
 
     function setupTabs() {
-      // Main division tabs
       const tabs = document.querySelectorAll('.tab-button');
       const contents = document.querySelectorAll('.tab-content');
 
       tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-          // Remove active class from all tabs and contents
           tabs.forEach(t => t.classList.remove('active'));
           contents.forEach(c => c.classList.remove('active'));
 
-          // Add active class to clicked tab and corresponding content
           tab.classList.add('active');
           const targetContent = document.getElementById(tab.dataset.tab + '-content');
           if (targetContent) {
@@ -1505,12 +681,28 @@
       });
     }
 
+    function getDepartmentIcon(department) {
+      const dept = department.toLowerCase();
+      if (dept.includes('tech') || dept.includes('it')) return 'monitor';
+      if (dept.includes('english') || dept.includes('language')) return 'book-open';
+      if (dept.includes('math')) return 'calculator';
+      if (dept.includes('science')) return 'flask-conical';
+      if (dept.includes('art') || dept.includes('music') || dept.includes('drama')) return 'palette';
+      if (dept.includes('pe') || dept.includes('physical') || dept.includes('athletic')) return 'activity';
+      if (dept.includes('library')) return 'library';
+      if (dept.includes('counseling')) return 'heart-handshake';
+      return 'folder';
+    }
+
     function showError(error) {
-      document.getElementById('loading').innerHTML = `
+      document.getElementById('loading').style.display = 'none';
+      const errorContainer = document.getElementById('error');
+      errorContainer.style.display = 'block';
+      errorContainer.innerHTML = `
         <div class="error-state">
           <h3>Error Loading Dashboard</h3>
-          <p>${error}</p>
-          <p style="margin-top: 16px;">Please check your configuration and try refreshing the page.</p>
+          <p>${error.message || 'An unknown error occurred.'}</p>
+          <p style="margin-top: 16px;">Please try refreshing the page. If the problem persists, contact support.</p>
         </div>
       `;
     }
@@ -1518,3 +710,4 @@
 
 </body>
 </html>
+
