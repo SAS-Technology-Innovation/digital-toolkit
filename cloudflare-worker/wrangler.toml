@@ -16,9 +16,37 @@ compatibility_flags = ["nodejs_compat"]
 # id = "your-kv-namespace-id"
 # preview_id = "your-preview-kv-namespace-id"
 
-# Environment variables (optional)
+# Environment variables
 [vars]
-ENVIRONMENT = "production"
+ENVIRONMENT = "development"
+
+# ⚠️  SECURITY CONFIGURATION (CRITICAL FOR PRODUCTION) ⚠️
+#
+# For DEVELOPMENT: Use wildcards (allows all origins)
+# ALLOWED_ORIGINS = "*"
+# FRAME_ANCESTORS = "*"
+#
+# For PRODUCTION: ALWAYS restrict to specific domains!
+# ALLOWED_ORIGINS = "https://yourdomain.com,https://docs.yourdomain.com"
+# FRAME_ANCESTORS = "https://yourdomain.com https://docs.yourdomain.com"
+#
+# Example for SAS:
+# ALLOWED_ORIGINS = "https://sas.edu.sg,https://docs.sas.edu.sg"
+# FRAME_ANCESTORS = "https://sas.edu.sg https://docs.sas.edu.sg"
+#
+# ⚠️  WARNING: Wildcard (*) in production allows embedding from ANY site,
+#    which could enable clickjacking and data exposure. Always restrict!
+#
+# See cloudflare-worker/SECURITY.md for detailed guidelines
+
+# Production environment configuration (RECOMMENDED)
+# Uncomment and configure before deploying to production
+[env.production]
+vars = {
+  ENVIRONMENT = "production",
+  ALLOWED_ORIGINS = "https://sas.edu.sg,https://script.google.com,https://mintlify.app,https://sas-innovation.workers.dev",
+  FRAME_ANCESTORS = "https://sas.edu.sg https://script.google.com https://mintlify.app https://sas-innovation.workers.dev"
+}
 
 # Custom routes (optional - for custom domains)
 # [[routes]]

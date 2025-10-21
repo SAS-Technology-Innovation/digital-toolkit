@@ -25,9 +25,31 @@
   'use strict';
 
   /**
+   * Validate URL to prevent SSRF attacks
+   * @param {string} url - URL to validate
+   * @returns {boolean} - True if valid HTTPS URL
+   */
+  function isValidHttpsUrl(url) {
+    try {
+      const parsed = new URL(url);
+      // Only allow HTTPS (or HTTP for localhost development)
+      if (parsed.protocol === 'https:') {
+        return true;
+      }
+      // Allow HTTP only for localhost (development)
+      if (parsed.protocol === 'http:' && (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')) {
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Initialize the Digital Toolkit Dashboard
    * @param {Object} options - Configuration options
-   * @param {string} options.apiUrl - Google Apps Script web app URL
+   * @param {string} options.apiUrl - Google Apps Script web app URL (must be HTTPS)
    * @param {string} options.containerId - ID of container element (default: 'toolkit-dashboard')
    * @param {string} options.defaultDivision - Default tab to show (default: 'wholeSchool')
    * @param {boolean} options.showHeader - Show header (default: true)
@@ -42,8 +64,16 @@
       compact: options.compact || false
     };
 
+    // Validate required parameters
     if (!config.apiUrl) {
       console.error('Toolkit Dashboard: apiUrl is required');
+      return;
+    }
+
+    // Validate URL to prevent SSRF attacks
+    if (!isValidHttpsUrl(config.apiUrl)) {
+      console.error('Toolkit Dashboard: apiUrl must be a valid HTTPS URL (or HTTP localhost for development)');
+      console.error('Provided URL:', config.apiUrl);
       return;
     }
 

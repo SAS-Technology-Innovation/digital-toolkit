@@ -47,12 +47,19 @@ function exportDashboardToJSON() {
 
 /**
  * Alternative: Create a menu item for easy access
+ * Runs automatically when the spreadsheet opens
  */
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Digital Toolkit')
-    .addItem('Export to JSON', 'exportDashboardToJSON')
-    .addToUi();
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu('Digital Toolkit')
+      .addItem('Export to JSON', 'exportDashboardToJSON')
+      .addToUi();
+  } catch (error) {
+    // Log error but don't fail - this is a convenience feature
+    Logger.log('Error creating menu: ' + error.message);
+    // Don't throw - we don't want to prevent the spreadsheet from opening
+  }
 }
 
 /**
