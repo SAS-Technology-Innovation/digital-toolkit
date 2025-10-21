@@ -1,0 +1,80 @@
+---
+title: 'Digital Toolkit'
+description: 'Browse all available applications and digital resources for the SAS community'
+---
+
+# SAS Digital Toolkit
+
+Welcome to the Singapore American School Digital Toolkit! This dashboard provides an overview of all educational applications and digital resources available to our community.
+
+## Applications Dashboard
+
+<div id="toolkit-dashboard"></div>
+
+<script src="https://your-cdn.com/import-toolkit.js"></script>
+<script>
+  {`
+  // Initialize the dashboard when the page loads
+  if (typeof window !== 'undefined') {
+    window.addEventListener('load', function() {
+      initToolkitDashboard({
+        apiUrl: 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL',
+        containerId: 'toolkit-dashboard',
+        defaultDivision: 'wholeSchool',
+        showHeader: true,
+        compact: false
+      });
+    });
+  }
+  `}
+</script>
+
+## How to Use This Dashboard
+
+<Steps>
+  <Step title="Select Your Division">
+    Click on one of the tabs (Whole School, Elementary, Middle School, or High School) to view applications relevant to your division.
+  </Step>
+
+  <Step title="Browse Applications">
+    Scroll through the "Apps Everyone Can Use" section for applications available to all users in your division.
+  </Step>
+
+  <Step title="Explore Department-Specific Apps">
+    View applications organized by department to find specialized tools for your subject area.
+  </Step>
+
+  <Step title="Access an Application">
+    Click on any application name to visit its website and get started.
+  </Step>
+</Steps>
+
+## Need Help?
+
+If you have questions about any of these applications or need technical support, please contact:
+
+<Card title="Technology & Innovation Team" icon="envelope" href="mailto:edtech@sas.edu.sg">
+  Email us at edtech@sas.edu.sg for support
+</Card>
+
+## App Categories
+
+The dashboard organizes applications into several categories:
+
+<CardGroup cols={2}>
+  <Card title="Productivity Suite" icon="laptop">
+    Tools for document creation, collaboration, and communication
+  </Card>
+
+  <Card title="Learning Management" icon="graduation-cap">
+    Platforms for course content, assignments, and grades
+  </Card>
+
+  <Card title="Subject-Specific" icon="book-open">
+    Applications tailored for specific academic subjects
+  </Card>
+
+  <Card title="Development Tools" icon="code">
+    Programming, design, and technical development resources
+  </Card>
+</CardGroup>

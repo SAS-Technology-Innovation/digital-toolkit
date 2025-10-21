@@ -1,6 +1,6 @@
 # SAS Digital Toolkit Dashboard
 
-A modern web dashboard for managing and viewing school application data at Singapore American School. Available in two deployment options: **Google Apps Script** (dynamic) or **Cloudflare Worker** (static, optimized for embedding).
+A modern web dashboard for managing and viewing school application data at Singapore American School. Available in **three deployment options**: Google Apps Script (dynamic), Cloudflare Worker (iframe embed), or Mintlify/MDX (native integration).
 
 ## 🎯 Overview
 
@@ -47,6 +47,25 @@ Google Sheets → Export to JSON → Cloudflare Worker → Embedded Dashboard
 - [Migration Guide](MIGRATION_GUIDE.md) - Detailed migration instructions
 - [Cloudflare Worker README](cloudflare-worker/README.md) - Advanced configuration
 
+### Option 3: Mintlify/MDX Integration (Native)
+**Best for:** Documentation sites, Mintlify pages, native integration (no iframe)
+
+**Technology Stack:**
+- **Integration**: JavaScript component / React widget
+- **Frontend**: Vanilla JS or React
+- **Data Source**: Google Apps Script (live) or static JSON
+- **Deployment**: Embedded directly in MDX pages
+
+**Data Flow:**
+```
+Google Sheets → Apps Script → JavaScript Component → Mintlify Page
+```
+
+**Quick Links:**
+- [Mintlify Integration Guide](mintlify/README.md) - Complete setup instructions
+- [Example MDX File](mintlify/example.mdx) - Working example
+- [JavaScript Component](mintlify/import-toolkit.js) - Ready to use
+
 ## 📊 Features
 
 ### Division-Based Organization
@@ -69,16 +88,17 @@ Google Sheets → Export to JSON → Cloudflare Worker → Embedded Dashboard
 
 ## 🆚 Which Deployment Option Should I Choose?
 
-| Feature | Google Apps Script | Cloudflare Worker |
-|---------|-------------------|-------------------|
-| **Setup Complexity** | ⭐⭐ Easy | ⭐⭐⭐ Moderate |
-| **Load Speed** | 2-4 seconds | < 500ms |
-| **Data Updates** | Real-time | Manual export |
-| **Cost** | Free (with limits) | Free (100K req/day) |
-| **Best for Embedding** | Good | Excellent |
-| **Custom Domain** | Limited | Full support |
-| **Scalability** | Limited | Unlimited |
-| **Requires Node.js** | No | Yes |
+| Feature | Google Apps Script | Cloudflare Worker | Mintlify/MDX |
+|---------|-------------------|-------------------|--------------|
+| **Setup Complexity** | ⭐⭐ Easy | ⭐⭐⭐ Moderate | ⭐⭐ Easy |
+| **Load Speed** | 2-4 seconds | < 500ms | 2-3 seconds |
+| **Data Updates** | Real-time | Manual export | Real-time |
+| **Cost** | Free (limits) | Free (100K/day) | Free |
+| **Integration Type** | Full page | iframe embed | Native (no iframe) |
+| **Best for Embedding** | Good | Excellent (iframe) | Excellent (native) |
+| **Custom Domain** | Limited | Full support | Site's domain |
+| **Customization** | Limited | Medium | High |
+| **Requires Node.js** | No | Yes | No |
 
 **Choose Google Apps Script if:**
 - You want real-time data from Google Sheets
@@ -88,10 +108,17 @@ Google Sheets → Export to JSON → Cloudflare Worker → Embedded Dashboard
 
 **Choose Cloudflare Worker if:**
 - You need fast loading times (< 500ms)
-- You're embedding on a public website
+- You're embedding via iframe on multiple sites
 - You want a professional, custom domain
 - You're okay with manual data updates
 - You need global CDN distribution
+
+**Choose Mintlify/MDX Integration if:**
+- You're using Mintlify or similar documentation platforms
+- You want native integration without iframes
+- You need real-time data from Google Sheets
+- You want maximum customization control
+- You're embedding on a single documentation site
 
 ## 🚀 Quick Start
 
@@ -178,6 +205,58 @@ Google Sheets → Export to JSON → Cloudflare Worker → Embedded Dashboard
 - [Quick Start Guide](QUICKSTART.md)
 - [Migration Guide](MIGRATION_GUIDE.md)
 - [Cloudflare Worker README](cloudflare-worker/README.md)
+
+### Option 3: Mintlify/MDX Integration
+
+#### Prerequisites
+- Mintlify documentation site or MDX-compatible platform
+- Google Apps Script web app URL
+- (Optional) CDN to host the JavaScript file
+
+#### Quick Setup (5 minutes)
+
+1. **Get your Apps Script URL:**
+   ```bash
+   # Deploy your Google Apps Script as a web app
+   # Copy the web app URL
+   ```
+
+2. **Add to your MDX page:**
+   ```mdx
+   ---
+   title: 'Digital Toolkit'
+   ---
+
+   # SAS Digital Toolkit
+
+   <div id="toolkit-dashboard"></div>
+
+   <script src="https://your-cdn.com/import-toolkit.js"></script>
+   <script>
+     {`
+     if (typeof window !== 'undefined') {
+       window.addEventListener('load', function() {
+         initToolkitDashboard({
+           apiUrl: 'YOUR_GOOGLE_APPS_SCRIPT_URL',
+           containerId: 'toolkit-dashboard'
+         });
+       });
+     }
+     `}
+   </script>
+   ```
+
+3. **Or use the React component:**
+   ```mdx
+   import DashboardWidget from '@/components/DashboardWidget';
+
+   <DashboardWidget apiUrl="YOUR_APPS_SCRIPT_URL" />
+   ```
+
+**For detailed instructions, see:**
+- [Mintlify Integration Guide](mintlify/README.md)
+- [Example MDX File](mintlify/example.mdx)
+- [React Component](mintlify/DashboardWidget.jsx)
 
 ## 📋 Configuration
 
