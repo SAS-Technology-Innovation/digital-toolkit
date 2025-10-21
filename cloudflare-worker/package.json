@@ -1,0 +1,23 @@
+{
+  "name": "sas-digital-toolkit-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for SAS Digital Toolkit Dashboard",
+  "main": "worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "test": "wrangler dev --test"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "dashboard",
+    "education"
+  ],
+  "author": "SAS Technology & Innovation",
+  "license": "ISC",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

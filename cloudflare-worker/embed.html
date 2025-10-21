@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SAS Digital Toolkit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fc;
+      overflow-x: hidden;
+    }
+
+    .embed-container {
+      width: 100%;
+      margin: 0 auto;
+      background: white;
+      min-height: 100vh;
+    }
+
+    /* Compact header for embed */
+    .embed-header {
+      background: linear-gradient(135deg, #192f59 0%, #295c9c 100%);
+      color: white;
+      padding: 12px 20px;
+      border-bottom: 3px solid #295c9c;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .embed-header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Tabs */
+    .tabs-container {
+      background: #192f59;
+      border-bottom: 3px solid #295c9c;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .tabs {
+      display: flex;
+      width: 100%;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+    }
+
+    .tabs::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .tabs::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .tabs::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+    }
+
+    .tab-button {
+      flex: 1;
+      min-width: 160px;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+      position: relative;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-button i {
+      width: 14px;
+      height: 14px;
+    }
+
+    .tab-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .tab-button.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Division-specific tab colors */
+    .tab-button[data-tab="wholeSchool"].active {
+      border-bottom-color: #6f42c1;
+      box-shadow: inset 0 -3px 0 #6f42c1;
+    }
+
+    .tab-button[data-tab="elementary"].active {
+      border-bottom-color: #28a745;
+      box-shadow: inset 0 -3px 0 #28a745;
+    }
+
+    .tab-button[data-tab="middleSchool"].active {
+      border-bottom-color: #dc3545;
+      box-shadow: inset 0 -3px 0 #dc3545;
+    }
+
+    .tab-button[data-tab="highSchool"].active {
+      border-bottom-color: #007bff;
+      box-shadow: inset 0 -3px 0 #007bff;
+    }
+
+    .main-content {
+      width: 100%;
+      padding: 20px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Main Apps Everyone Can Use Container */
+    .everyone-apps-container {
+      background: linear-gradient(135deg, #f8f9fc, #ffffff);
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .everyone-apps-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .main-subtitle {
+      color: #6c757d;
+      font-size: 13px;
+      margin-bottom: 14px;
+      font-weight: 400;
+    }
+
+    /* Division-specific colors for Apps Everyone Can Use */
+    .whole-school-content .everyone-apps-title { color: #6f42c1; }
+    .elementary-content .everyone-apps-title { color: #28a745; }
+    .middleSchool-content .everyone-apps-title { color: #dc3545; }
+    .highSchool-content .everyone-apps-title { color: #007bff; }
+
+    .everyone-apps-title i {
+      width: 22px;
+      height: 22px;
+    }
+
+    .everyone-apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+      gap: 14px;
+    }
+
+    /* App Cards */
+    .app-card {
+      background: #ffffff;
+      border: 1px solid #e9ecef;
+      border-radius: 10px;
+      padding: 14px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-card:hover {
+      border-color: #192f59;
+      box-shadow: 0 4px 12px rgba(25, 47, 89, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .app-name {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      color: #192f59;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .app-name:hover {
+      color: #295c9c;
+      text-decoration: underline;
+    }
+
+    .app-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: auto;
+      padding-top: 10px;
+    }
+
+    .app-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 500;
+      background-color: #e9ecef;
+      color: #495057;
+    }
+
+    .app-tag i {
+      width: 11px;
+      height: 11px;
+    }
+
+    .tag-category { background-color: #e0e7ff; color: #3730a3; }
+    .tag-subject { background-color: #d1fae5; color: #047857; }
+    .tag-license { background-color: #ffedd5; color: #9a3412; }
+    .tag-department { background-color: #fee2e2; color: #991b1b; }
+
+    /* Departments Section */
+    .departments-section {
+      margin-top: 40px;
+    }
+
+    .departments-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.6rem;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .departments-title i {
+      width: 22px;
+      height: 22px;
+    }
+
+    .whole-school-content .departments-title { color: #6f42c1; }
+    .elementary-content .departments-title { color: #28a745; }
+    .middleSchool-content .departments-title { color: #dc3545; }
+    .highSchool-content .departments-title { color: #007bff; }
+
+    .department-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+      gap: 20px;
+    }
+
+    .department-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    .department-card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .whole-school-content .department-card:hover { border-color: #6f42c1; }
+    .elementary-content .department-card:hover { border-color: #28a745; }
+    .middleSchool-content .department-card:hover { border-color: #dc3545; }
+    .highSchool-content .department-card:hover { border-color: #007bff; }
+
+    .department-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f1f3f5;
+    }
+
+    .department-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .whole-school-content .department-title { color: #6f42c1; }
+    .elementary-content .department-title { color: #28a745; }
+    .middleSchool-content .department-title { color: #dc3545; }
+    .highSchool-content .department-title { color: #007bff; }
+
+    .department-title i {
+      width: 18px;
+      height: 18px;
+    }
+
+    .department-count {
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .whole-school-content .department-count { background: #6f42c1; }
+    .elementary-content .department-count { background: #28a745; }
+    .middleSchool-content .department-count { background: #dc3545; }
+    .highSchool-content .department-count { background: #007bff; }
+
+    .department-apps {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    /* Loading and error states */
+    .loading, .error-state {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .loading h3, .error-state h3 {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.6rem;
+      letter-spacing: 1px;
+    }
+
+    .loading h3 { color: #192f59; }
+    .loading p { color: #6c757d; font-size: 14px; }
+    .error-state h3 { color: #dc3545; }
+    .error-state p { color: #dc3545; font-size: 14px; }
+
+    @media (max-width: 768px) {
+      .main-content { padding: 14px; }
+      .everyone-apps-grid, .department-container {
+        grid-template-columns: 1fr;
+      }
+      .tab-button {
+        min-width: 140px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="embed-container">
+    <!-- Compact Header -->
+    <div class="embed-header">
+      <h1>SAS Digital Toolkit</h1>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <button class="tab-button active" data-tab="wholeSchool"><i data-lucide="globe"></i> Whole School</button>
+        <button class="tab-button" data-tab="elementary"><i data-lucide="baby"></i> Elementary</button>
+        <button class="tab-button" data-tab="middleSchool"><i data-lucide="graduation-cap"></i> Middle School</button>
+        <button class="tab-button" data-tab="highSchool"><i data-lucide="university"></i> High School</button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+      <h3>Loading Dashboard</h3>
+      <p>Please wait while we fetch the digital toolkit data...</p>
+    </div>
+
+    <!-- Error State Container -->
+    <div id="error" style="display: none;"></div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="main-content" style="display: none;">
+
+      <!-- Whole School Tab Content -->
+      <div id="wholeSchool-content" class="tab-content active whole-school-content">
+        <div class="everyone-apps-container">
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Apps Everyone Can Use</h2>
+          <p class="main-subtitle">These core applications are available to the entire SAS community.</p>
+          <div id="wholeSchool-everyone-apps" class="everyone-apps-grid"></div>
+        </div>
+        <div class="departments-section">
+          <h3 class="departments-title"><i data-lucide="building-2"></i> Department-Specific Apps</h3>
+          <div id="wholeSchool-departments" class="department-container"></div>
+        </div>
+      </div>
+
+      <!-- Elementary School Tab Content -->
+      <div id="elementary-content" class="tab-content elementary-content">
+        <div class="everyone-apps-container">
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for Elementary</h2>
+          <p class="main-subtitle">These applications are available to all elementary students and staff.</p>
+          <div id="elementary-everyone-apps" class="everyone-apps-grid"></div>
+        </div>
+        <div class="departments-section">
+          <h3 class="departments-title"><i data-lucide="building-2"></i> Elementary Department Apps</h3>
+          <div id="elementary-departments" class="department-container"></div>
+        </div>
+      </div>
+
+      <!-- Middle School Tab Content -->
+      <div id="middleSchool-content" class="tab-content middleSchool-content">
+        <div class="everyone-apps-container">
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for Middle School</h2>
+          <p class="main-subtitle">These applications are available to all middle school students and staff.</p>
+          <div id="middleSchool-everyone-apps" class="everyone-apps-grid"></div>
+        </div>
+        <div class="departments-section">
+          <h3 class="departments-title"><i data-lucide="building-2"></i> Middle School Department Apps</h3>
+          <div id="middleSchool-departments" class="department-container"></div>
+        </div>
+      </div>
+
+      <!-- High School Tab Content -->
+      <div id="highSchool-content" class="tab-content highSchool-content">
+        <div class="everyone-apps-container">
+          <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for High School</h2>
+          <p class="main-subtitle">These applications are available to all high school students and staff.</p>
+          <div id="highSchool-everyone-apps" class="everyone-apps-grid"></div>
+        </div>
+        <div class="departments-section">
+          <h3 class="departments-title"><i data-lucide="building-2"></i> High School Department Apps</h3>
+          <div id="highSchool-departments" class="department-container"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Fetch dashboard data from the API endpoint
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const response = await fetch('/api/data');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        renderDashboard(data);
+      } catch (error) {
+        showError(error);
+      }
+    });
+
+    function renderDashboard(data) {
+      try {
+        if (data.error) {
+          showError({ message: data.error });
+          return;
+        }
+
+        // Hide loading and show main content
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+
+        // --- RENDER FUNCTIONS ---
+
+        // Creates a generic app card. Used for both "Everyone" and "Department" sections.
+        function createAppCard(app) {
+          return `
+            <div class="app-card">
+              <a href="${app.website}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+                <h4 class="app-name">${app.product}</h4>
+              </a>
+              <div class="app-tags">
+                ${app.category ? `<span class="app-tag tag-category">${app.category}</span>` : ''}
+                ${app.subject ? `<span class="app-tag tag-subject">${app.subject}</span>` : ''}
+                ${app.licenseType ? `<span class="app-tag tag-license">${app.licenseType}</span>` : ''}
+              </div>
+            </div>
+          `;
+        }
+
+        // Creates a card for a specific department, containing its apps.
+        function createDepartmentCard(department, apps) {
+          const icon = getDepartmentIcon(department);
+          const appCardsHTML = apps.map(createAppCard).join('');
+
+          return `
+            <div class="department-card">
+              <div class="department-header">
+                <h3 class="department-title">
+                  <i data-lucide="${icon}"></i>
+                  ${department}
+                </h3>
+                <span class="department-count">${apps.length}</span>
+              </div>
+              <div class="department-apps">
+                ${appCardsHTML}
+              </div>
+            </div>
+          `;
+        }
+
+        // Renders all the content for a specific division tab.
+        function renderDivisionContent(divisionData, division) {
+          const everyoneContainer = document.getElementById(`${division}-everyone-apps`);
+          if (everyoneContainer) {
+            const everyoneApps = divisionData.everyoneApps || [];
+            if (everyoneApps.length > 0) {
+              everyoneContainer.innerHTML = everyoneApps.map(createAppCard).join('');
+            } else {
+              everyoneContainer.innerHTML = '<p style="color: #6c757d; text-align: center; padding: 20px;">No core apps found for this division.</p>';
+            }
+          }
+
+          const departmentContainer = document.getElementById(`${division}-departments`);
+          if (departmentContainer) {
+            const departments = divisionData.byDepartment || {};
+            if (Object.keys(departments).length > 0) {
+              const departmentCardsHTML = Object.entries(departments)
+                .sort(([a], [b]) => a.localeCompare(b)) // Sort departments alphabetically
+                .map(([dept, apps]) => createDepartmentCard(dept, apps))
+                .join('');
+              departmentContainer.innerHTML = departmentCardsHTML;
+            } else {
+              departmentContainer.innerHTML = '<p style="color: #6c757d; text-align: center; padding: 20px;">No department-specific apps found.</p>';
+            }
+          }
+        }
+
+        // --- INITIALIZE DASHBOARD ---
+
+        ['wholeSchool', 'elementary', 'middleSchool', 'highSchool'].forEach(division => {
+          if (data[division]) {
+            renderDivisionContent(data[division], division);
+          }
+        });
+
+        setupTabs();
+
+        // Re-initialize Lucide icons after rendering new content
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    function setupTabs() {
+      const tabs = document.querySelectorAll('.tab-button');
+      const contents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          contents.forEach(c => c.classList.remove('active'));
+
+          tab.classList.add('active');
+          const targetContent = document.getElementById(tab.dataset.tab + '-content');
+          if (targetContent) {
+            targetContent.classList.add('active');
+          }
+        });
+      });
+    }
+
+    function getDepartmentIcon(department) {
+      const dept = department.toLowerCase();
+      if (dept.includes('tech') || dept.includes('it')) return 'monitor';
+      if (dept.includes('english') || dept.includes('language')) return 'book-open';
+      if (dept.includes('math')) return 'calculator';
+      if (dept.includes('science')) return 'flask-conical';
+      if (dept.includes('art') || dept.includes('music') || dept.includes('drama')) return 'palette';
+      if (dept.includes('pe') || dept.includes('physical') || dept.includes('athletic')) return 'activity';
+      if (dept.includes('library')) return 'library';
+      if (dept.includes('counseling')) return 'heart-handshake';
+      return 'folder';
+    }
+
+    function showError(error) {
+      document.getElementById('loading').style.display = 'none';
+      const errorContainer = document.getElementById('error');
+      errorContainer.style.display = 'block';
+      errorContainer.innerHTML = `
+        <div class="error-state">
+          <h3>Error Loading Dashboard</h3>
+          <p>${error.message || 'An unknown error occurred.'}</p>
+          <p style="margin-top: 16px;">Please try refreshing the page. If the problem persists, contact support.</p>
+        </div>
+      `;
+    }
+  </script>
+
+</body>
+</html>

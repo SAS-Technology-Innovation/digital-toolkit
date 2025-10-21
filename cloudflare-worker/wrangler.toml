@@ -1,0 +1,38 @@
+# Cloudflare Workers configuration for SAS Digital Toolkit Dashboard
+# See: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "sas-digital-toolkit"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Specify the account ID (get this from your Cloudflare dashboard)
+# account_id = "your-account-id-here"
+
+# KV Namespace for dynamic data updates (optional)
+# If you want to update the JSON data without redeploying, use KV:
+# [[kv_namespaces]]
+# binding = "DASHBOARD_DATA"
+# id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-namespace-id"
+
+# Environment variables (optional)
+[vars]
+ENVIRONMENT = "production"
+
+# Custom routes (optional - for custom domains)
+# [[routes]]
+# pattern = "toolkit.yourdomain.com/*"
+# zone_name = "yourdomain.com"
+
+# Rules for bundling - tell wrangler to include HTML and JSON
+[rules]
+# Allow importing .html files as text
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+
+# Allow importing .json files as modules
+[[rules]]
+type = "Data"
+globs = ["**/*.json"]

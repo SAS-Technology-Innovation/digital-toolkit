@@ -1,0 +1,232 @@
+{
+  "wholeSchool": {
+    "apps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      },
+      {
+        "product": "Canvas LMS",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Learning Management",
+        "budget": "IT",
+        "licenseType": "Enterprise",
+        "licenses": 1500,
+        "category": "LMS",
+        "website": "https://canvas.instructure.com",
+        "spend": "$75,000"
+      },
+      {
+        "product": "Zoom",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Video Conferencing",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Communication",
+        "website": "https://zoom.us",
+        "spend": "$45,000"
+      },
+      {
+        "product": "GitHub Enterprise",
+        "division": "Whole School",
+        "department": "Technology",
+        "subject": "Computer Science",
+        "budget": "IT",
+        "licenseType": "Individual",
+        "licenses": 50,
+        "category": "Development",
+        "website": "https://github.com",
+        "spend": "$5,000"
+      }
+    ],
+    "everyoneApps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      },
+      {
+        "product": "Canvas LMS",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Learning Management",
+        "budget": "IT",
+        "licenseType": "Enterprise",
+        "licenses": 1500,
+        "category": "LMS",
+        "website": "https://canvas.instructure.com",
+        "spend": "$75,000"
+      },
+      {
+        "product": "Zoom",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Video Conferencing",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Communication",
+        "website": "https://zoom.us",
+        "spend": "$45,000"
+      }
+    ],
+    "byDepartment": {
+      "Technology": [
+        {
+          "product": "GitHub Enterprise",
+          "division": "Whole School",
+          "department": "Technology",
+          "subject": "Computer Science",
+          "budget": "IT",
+          "licenseType": "Individual",
+          "licenses": 50,
+          "category": "Development",
+          "website": "https://github.com",
+          "spend": "$5,000"
+        }
+      ]
+    }
+  },
+  "elementary": {
+    "apps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      },
+      {
+        "product": "Seesaw",
+        "division": "Elementary",
+        "department": "Elementary Education",
+        "subject": "Student Portfolio",
+        "budget": "Elementary",
+        "licenseType": "School",
+        "licenses": 500,
+        "category": "Portfolio",
+        "website": "https://web.seesaw.me",
+        "spend": "$12,000"
+      }
+    ],
+    "everyoneApps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      },
+      {
+        "product": "Seesaw",
+        "division": "Elementary",
+        "department": "Elementary Education",
+        "subject": "Student Portfolio",
+        "budget": "Elementary",
+        "licenseType": "School",
+        "licenses": 500,
+        "category": "Portfolio",
+        "website": "https://web.seesaw.me",
+        "spend": "$12,000"
+      }
+    ],
+    "byDepartment": {}
+  },
+  "middleSchool": {
+    "apps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      }
+    ],
+    "everyoneApps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      }
+    ],
+    "byDepartment": {}
+  },
+  "highSchool": {
+    "apps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      }
+    ],
+    "everyoneApps": [
+      {
+        "product": "Google Workspace",
+        "division": "Whole School",
+        "department": "School Operations",
+        "subject": "Productivity",
+        "budget": "IT",
+        "licenseType": "Site",
+        "licenses": 1500,
+        "category": "Productivity Suite",
+        "website": "https://workspace.google.com",
+        "spend": "$150,000"
+      }
+    ],
+    "byDepartment": {}
+  },
+  "stats": {
+    "totalApps": 4,
+    "wholeSchoolCount": 4,
+    "elementaryCount": 2,
+    "middleSchoolCount": 1,
+    "highSchoolCount": 1
+  }
+}

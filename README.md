@@ -1,6 +1,6 @@
 # SAS Digital Toolkit Dashboard
 
-A Google Apps Script web application that provides a comprehensive dashboard for managing and viewing school application data at Singapore American School.
+A modern web dashboard for managing and viewing school application data at Singapore American School. Available in two deployment options: **Google Apps Script** (dynamic) or **Cloudflare Worker** (static, optimized for embedding).
 
 ## 🎯 Overview
 
@@ -8,18 +8,44 @@ The Digital Toolkit Dashboard displays educational applications organized by sch
 
 ## 🏗️ Architecture
 
+Choose the deployment option that best fits your needs:
+
+### Option 1: Google Apps Script (Dynamic)
+**Best for:** Real-time data, simple setup, internal dashboards
+
 **Technology Stack:**
 - **Backend**: Google Apps Script (JavaScript V8 runtime)
 - **Frontend**: HTML5, CSS3, JavaScript
 - **Styling**: Tailwind CSS (via CDN)
 - **Icons**: Lucide Icons
-- **Data Source**: Google Sheets
+- **Data Source**: Google Sheets (live)
 - **Deployment**: Google Apps Script Web App
 
 **Data Flow:**
 ```
 Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
 ```
+
+### Option 2: Cloudflare Worker (Static)
+**Best for:** Fast loading, embedding, public dashboards
+
+**Technology Stack:**
+- **Backend**: Cloudflare Worker (Edge computing)
+- **Frontend**: HTML5, CSS3, JavaScript (embed-optimized)
+- **Styling**: Tailwind CSS (via CDN)
+- **Icons**: Lucide Icons
+- **Data Source**: Static JSON file (exported from Google Sheets)
+- **Deployment**: Cloudflare Workers (Global CDN)
+
+**Data Flow:**
+```
+Google Sheets → Export to JSON → Cloudflare Worker → Embedded Dashboard
+```
+
+**Quick Links:**
+- [Quick Start (Cloudflare)](QUICKSTART.md) - Get started in 10 minutes
+- [Migration Guide](MIGRATION_GUIDE.md) - Detailed migration instructions
+- [Cloudflare Worker README](cloudflare-worker/README.md) - Advanced configuration
 
 ## 📊 Features
 
@@ -41,14 +67,42 @@ Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
 - Visual tags for categories, subjects, and license types
 - Department cards with app counts and icons
 
+## 🆚 Which Deployment Option Should I Choose?
+
+| Feature | Google Apps Script | Cloudflare Worker |
+|---------|-------------------|-------------------|
+| **Setup Complexity** | ⭐⭐ Easy | ⭐⭐⭐ Moderate |
+| **Load Speed** | 2-4 seconds | < 500ms |
+| **Data Updates** | Real-time | Manual export |
+| **Cost** | Free (with limits) | Free (100K req/day) |
+| **Best for Embedding** | Good | Excellent |
+| **Custom Domain** | Limited | Full support |
+| **Scalability** | Limited | Unlimited |
+| **Requires Node.js** | No | Yes |
+
+**Choose Google Apps Script if:**
+- You want real-time data from Google Sheets
+- You prefer simpler setup and maintenance
+- You're using it internally (not embedded)
+- You don't need ultra-fast loading times
+
+**Choose Cloudflare Worker if:**
+- You need fast loading times (< 500ms)
+- You're embedding on a public website
+- You want a professional, custom domain
+- You're okay with manual data updates
+- You need global CDN distribution
+
 ## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Google Apps Script Setup
+
+#### Prerequisites
 - Google Account with access to Google Apps Script
 - Google Sheets document with application data
 - Node.js installed (for development)
 
-### Local Setup & Development
+#### Local Setup & Development
 
 1.  **Clone the repository:**
     ```bash
@@ -74,6 +128,56 @@ Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
 
 4.  **Start developing:**
     Use the npm scripts in `package.json` to push, pull, and deploy your code.
+
+### Option 2: Cloudflare Worker Setup
+
+#### Prerequisites
+- Node.js 16+ installed
+- Cloudflare account (free tier works)
+- Dashboard data exported from Google Sheets
+
+#### Quick Setup (10 minutes)
+
+1. **Export your data from Google Sheets:**
+   ```bash
+   # Run exportDashboardToJSON() in your Apps Script project
+   # Download the JSON file from Google Drive
+   ```
+
+2. **Set up Cloudflare Worker:**
+   ```bash
+   cd cloudflare-worker
+   npm install
+   npx wrangler login
+   ```
+
+3. **Add your data:**
+   ```bash
+   # Place dashboard-data.json in cloudflare-worker/
+   cp ~/Downloads/dashboard-data-*.json ./dashboard-data.json
+   ```
+
+4. **Test locally:**
+   ```bash
+   npm run dev
+   # Visit http://localhost:8787
+   ```
+
+5. **Deploy:**
+   ```bash
+   npm run deploy
+   # Your worker URL will be displayed
+   ```
+
+6. **Embed on your website:**
+   ```html
+   <iframe src="YOUR_WORKER_URL" width="100%" height="800" style="border:none;"></iframe>
+   ```
+
+**For detailed instructions, see:**
+- [Quick Start Guide](QUICKSTART.md)
+- [Migration Guide](MIGRATION_GUIDE.md)
+- [Cloudflare Worker README](cloudflare-worker/README.md)
 
 ## 📋 Configuration
 
