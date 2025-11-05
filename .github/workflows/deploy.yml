@@ -23,11 +23,19 @@ jobs:
         mkdir -p ~/.config/clasp
         echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.config/clasp/.clasprc.json
         chmod 600 ~/.config/clasp/.clasprc.json
-        
+
     - name: Verify clasp setup
       run: |
         ls -la ~/.config/clasp/
         echo "Credentials file exists: $(test -f ~/.config/clasp/.clasprc.json && echo 'YES' || echo 'NO')"
+        echo "Credentials file size: $(wc -c < ~/.config/clasp/.clasprc.json) bytes"
+        # Verify JSON is valid (without showing content)
+        if jq empty ~/.config/clasp/.clasprc.json 2>/dev/null; then
+          echo "Credentials JSON is valid"
+        else
+          echo "ERROR: Credentials JSON is invalid!"
+          exit 1
+        fi
         
     - name: Install clasp globally
       run: npm install -g @google/clasp
