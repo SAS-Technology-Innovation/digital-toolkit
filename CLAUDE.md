@@ -1,282 +1,305 @@
 # CLAUDE.md
 
-This file provides comprehensive guidance to Claude AI when working with the SAS Digital Toolkit Dashboard codebase.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 🎯 Project Overview
 
-The **SAS Digital Toolkit Dashboard** is a Google Apps Script web application that displays educational applications for Singapore American School. The system provides a clean, organized view of apps categorized by school divisions with smart filtering and department grouping.
+The **SAS Digital Toolkit Dashboard** is a Google Apps Script web application that displays educational applications for Singapore American School. Apps are categorized by school divisions with smart filtering and department grouping.
 
 ### Core Components
 
-- **`Code.js`**: Google Apps Script backend that reads from Google Sheets and processes data
-- **`index.html`**: Single-page frontend with embedded CSS/JavaScript for the dashboard UI
-- **`appsscript.json`**: Google Apps Script configuration and permissions
-- **`package.json`**: npm scripts for clasp-based deployment workflow
+- **[Code.js](Code.js)**: Google Apps Script backend (reads from Google Sheets, processes data)
+- **[index.html](index.html)**: Single-page frontend with embedded CSS/JS
+- **[appsscript.json](appsscript.json)**: Google Apps Script configuration
+- **[package.json](package.json)**: npm scripts for clasp-based deployment
 
-## 🏗️ Architecture & Data Flow
+## 🏗️ Architecture & Critical Business Logic
 
-### System Architecture
+### Data Flow
 ```
-Google Sheets (Data Source)
-    ↓
-Google Apps Script Backend (Code.js)
-    ↓ (JSON API)
-Frontend Dashboard (index.html)
-    ↓
-User Interface (Responsive Web App)
+Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard → User Interface
 ```
 
-### Data Processing Pipeline
+### Division Assignment Logic (Code.js)
 
-1. **Data Ingestion**: `getDashboardData()` reads from Google Sheets
-2. **Division Categorization**: Apps sorted into Whole School, Elementary, Middle, High
-3. **License Filtering**: Separation of "everyone" vs "department-specific" apps
-4. **Department Grouping**: Valid departments grouped with app counts
-5. **JSON Response**: Structured data sent to frontend for rendering
+Apps are categorized based on these business rules in [Code.js:91-126](Code.js#L91-L126):
 
-### Business Logic Rules
+**Three-Tier Hierarchy:**
 
-**Division Assignment:**
-- **Whole School Apps**: 
-  - Multiple divisions listed (ES + MS + HS)
-  - "School Operations" or "school-wide" department
-  - Site/School/Enterprise/Unlimited licenses
-  - Apps with "school-wide" in division field
-- **Division-Specific Apps**: Apps listed for single division only
+1. **Enterprise Apps** (ONLY on Whole School tab):
+   - `Enterprise` column = TRUE checkbox
+   - Highest priority, premium styling
+   - Official SAS-approved core tools
 
-**License Categorization:**
-- **"Apps Everyone Can Use"**: Site, School, Enterprise, Unlimited licenses + school-wide department
-- **"Department Apps"**: Individual and other license types grouped by department
+2. **Apps Everyone Can Use**:
+   - **Whole School tab**: Site/School/Enterprise/Unlimited licenses (non-Enterprise checkbox)
+   - **Division tabs**: ONLY division-specific "everyone" apps (excludes whole school apps)
+   - Site/School/Enterprise/Unlimited license types + NOT whole school
 
-**Department Filtering:**
-- Excludes division names (Elementary, Middle, High School, etc.)
-- Filters out "N/A", empty, or placeholder departments
-- Only shows valid department names with actual apps
+3. **Department-Specific Apps**:
+   - Individual licenses or apps not in above categories
+   - Grouped by department with counts
+   - Filtered to exclude invalid department names
 
-## 💻 Technical Implementation
-
-### Backend (Code.js)
-
-**Key Functions:**
-- `doGet()`: Serves HTML as Google Apps Script web app
-- `getDashboardData()`: Main data processing function
-
-**Data Processing Pattern:**
+**Whole School Determination**:
 ```javascript
-// Modern JavaScript data processing
-const allApps = values
-  .map(row => convertToAppObject(row))
-  .filter(app => app.Active === true)
-  .map(app => cleanAppData(app));
-
-// Division categorization with clear business rules
-const isEffectivelyWholeSchool = 
+// An app is "Whole School" if it meets ANY of these:
+const isEffectivelyWholeSchool =
   licenseType.includes('site') ||
+  licenseType.includes('school') ||
+  licenseType.includes('enterprise') ||
+  licenseType.includes('unlimited') ||
   department === 'school operations' ||
-  (divisionsPresent.es && divisionsPresent.ms && divisionsPresent.hs);
+  department === 'school-wide' ||
+  division.includes('school-wide') ||
+  division.includes('whole school') ||
+  (hasElementary && hasMiddle && hasHigh); // All 3 divisions listed
 ```
 
-**Error Handling:**
-- Try-catch wrapper for all Google Sheets operations
-- Graceful fallback with error messages
-- Detailed logging for debugging
+**Key Rules:**
+- Enterprise apps NEVER appear on division tabs (Elementary/Middle/High)
+- Whole school apps do NOT appear in division tabs' "Everyone" section
+- Division tabs only show division-specific apps + department apps
 
-### Frontend (index.html)
+## 💻 Google Apps Script Environment
 
-**Architecture Principles:**
-- **No Build Process**: All dependencies via CDN
-- **Embedded Styles**: CSS included in HTML for Apps Script compatibility
-- **Progressive Enhancement**: Works without JavaScript for basic content
-- **Responsive Design**: Mobile-first approach with Tailwind CSS
+### Critical Constraints
+- **No Node.js modules**: All dependencies via CDN (Tailwind CSS, Lucide Icons)
+- **No build process**: Everything embedded in HTML/JS files
+- **Backend-Frontend communication**: Must use `google.script.run` pattern
+- **Configuration**: Uses Script Properties (not hardcoded values)
 
-**Key Functions:**
-- `renderDashboard(dataString)`: Main rendering orchestrator
-- `createAppCard(app)`: Reusable app card component
-- `createDepartmentCard(department, apps)`: Department container with apps
-- `renderDivisionContent(divisionData, division)`: Tab content renderer
-
-**Google Apps Script Integration:**
+### Backend Pattern (Code.js)
 ```javascript
-// Always use google.script.run for data fetching
-google.script.run
-  .withSuccessHandler(renderDashboard)
-  .withFailureHandler(showError)
-  .getDashboardData();
-```
+// Configuration via Script Properties (not in code)
+const scriptProperties = PropertiesService.getScriptProperties();
+const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
 
-## 🔧 Development Patterns
-
-### Google Apps Script Specifics
-
-**Environment Constraints:**
-- No Node.js modules or npm packages
-- All dependencies must be CDN-based
-- V8 JavaScript runtime with some limitations
-- HTML must be served via `HtmlService`
-
-**Required Patterns:**
-```javascript
-// Backend function structure
+// Always wrap in try-catch
 function getDashboardData() {
   try {
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    // Process data
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    // ... processing
     return JSON.stringify(result);
   } catch (error) {
     Logger.log('Error: ' + error.message);
     return JSON.stringify({ error: error.message });
   }
 }
-
-// Frontend API call pattern
-google.script.run
-  .withSuccessHandler(successCallback)
-  .withFailureHandler(errorCallback)
-  .backendFunction();
 ```
 
-### Data Structure Standards
-
-**Expected Google Sheets Columns:**
-- `Active`: Boolean (TRUE/FALSE)
-- `Product`: String (App name)
-- `Division`: String (Elementary, Middle, High, or combinations)
-- `Department`: String (Actual department name)
-- `Subject`: String (Subject area)
-- `License Type`: String (Site, Individual, Enterprise, etc.)
-- `Licenses`: Number (License count)
-- `Category`: String (App category)
-- `Website`: String (App URL)
-- `Spend`: String/Number (Cost information)
-
-**Output JSON Structure:**
+### Frontend Pattern (index.html)
 ```javascript
-{
-  wholeSchool: {
-    apps: [...],           // All whole school apps
-    everyoneApps: [...],   // Site/enterprise license apps
-    byDepartment: {...}    // Department-grouped apps
-  },
-  elementary: { /* same structure */ },
-  middleSchool: { /* same structure */ },
-  highSchool: { /* same structure */ },
-  stats: { /* app counts */ }
+// Environment detection for local testing vs deployed
+if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
+  google.script.run
+    .withSuccessHandler(renderDashboard)
+    .withFailureHandler(showError)
+    .getDashboardData();
+} else {
+  renderDashboard(JSON.stringify(mockData)); // Local testing
 }
 ```
 
-## 🚀 Development Workflow
+### Expected Google Sheets Structure
+**Required columns in exact order** (case-sensitive):
+1. `Active`: Boolean (TRUE/FALSE) - only TRUE apps processed
+2. `product_name`: String - app name
+3. `Division`: String - "Elementary", "Middle", "High", "Whole School", or combinations
+4. `Department`: String - department name (filters out division names)
+5. `subjects_or_department`: String - for tagging/categorization
+6. `Enterprise`: Boolean (TRUE/FALSE) - **Enterprise checkbox (core SAS tools)**
+7. `budget`: Number/String - budget information
+8. `audience`: String - comma-separated: "Staff,Teachers,Students,Parents"
+9. `License Type`: String - "Site", "Individual", "Enterprise", "School", etc.
+10. `licence_count`: Number - number of licenses
+11. `value`: Number/String - cost/spend information
+12. `date_added`: Date - when app was added
+13. `renewal_date`: Date - subscription renewal date
+14. `Category`: String - for tagging
+15. `Website`: String - app URL
+16. `description`: String - 1-2 sentence app description
+17. `grade_levels`: String - "K-5", "6-8", "9-12", "K-12", etc.
+18. `support_email`: String - support contact email
+19. `tutorial_link`: String - training/help URL
+20. `mobile_app`: String - "Yes", "No", or "iOS/Android"
+21. `sso_enabled`: Boolean (TRUE/FALSE) - single sign-on available
+22. `logo_url`: String - app logo/icon URL
 
-### Local Development
+**See [expected-data-template.csv](expected-data-template.csv) for example data.**
+
+## 🚀 Development Commands
+
+### Setup (First Time)
 ```bash
-# No build process required
-open index.html  # Uses empty mock data for testing UI
+# Clone the Apps Script project (creates .clasp.json)
+npx @google/clasp clone "YOUR_SCRIPT_ID"
+
+# Login to Google
+npm run login
 ```
 
-### Deployment Process
+### Daily Development
 ```bash
-npm run push     # Push code to Google Apps Script
-npm run deploy   # Create new web app deployment
-npm run logs     # View execution logs for debugging
+npm run push      # Push code changes to Apps Script
+npm run deploy    # Create new deployment
+npm run logs      # View execution logs
+npm run open      # Open Apps Script editor
+npm run pull      # Pull latest from cloud
 ```
 
 ### Testing Strategy
-- **Frontend Testing**: Open `index.html` locally (uses mock data)
-- **Backend Testing**: Deploy to Apps Script and test with real data
-- **Integration Testing**: Full deployment with actual Google Sheets
+- **Frontend only**: Open `index.html` locally (uses mock data)
+- **Full integration**: Deploy to Apps Script and test with real Google Sheets
 
-## 🎨 UI/UX Guidelines
+## 🔧 Configuration
 
-### Design System
-- **Typography**: Poppins (body), Bebas Neue (headings)
-- **Color Scheme**: Professional blue/gray palette
-- **Spacing**: Tailwind CSS spacing scale
-- **Icons**: Lucide icons for consistency
+### Script Properties Setup
+Configuration is **NOT in code**. Set via Apps Script Editor:
+1. Open project: `npm run open`
+2. Go to **Project Settings (⚙️) > Script Properties**
+3. Add properties:
+   - `SPREADSHEET_ID`: Your Google Sheets ID
+   - `SHEET_NAME`: Your sheet name
 
-### Component Patterns
-- **Cards**: Consistent app card design across all sections
-- **Tags**: Color-coded tags for categories, subjects, licenses
-- **Navigation**: Tab-based division navigation
-- **Responsive**: Mobile-first responsive design
+### GitHub Actions Deployment
+Auto-deploys on push to `main`. Requires three repository secrets:
 
-### Accessibility
-- Semantic HTML structure
-- Proper heading hierarchy
-- Focus management for keyboard navigation
-- Color contrast compliance
+1. **`CLASP_CREDENTIALS`**: Run `npm run login`, then `cat ~/.config/clasp/.clasprc.json` and copy entire JSON
+2. **`APPS_SCRIPT_ID`**: Find in Apps Script Editor → Project Settings → IDs
+3. **`APPS_SCRIPT_DEPLOYMENT_ID`**: Find in Deploy → Manage deployments → Copy deployment ID
 
-## ⚠️ Common Pitfalls & Solutions
+**Note**: `.clasp.json` is NOT in repo. Created locally via `npx @google/clasp clone` or dynamically in GitHub Actions.
 
-### Google Apps Script Limitations
-- **No ES6 Modules**: Use global functions and CDN imports
-- **CORS Restrictions**: Use `google.script.run` for all backend calls
-- **File Size Limits**: Keep HTML file under 100MB (rarely an issue)
+## ⚠️ Common Issues
 
-### Data Processing Issues
-- **Division String Variations**: Account for different division naming patterns
-- **Empty/Invalid Departments**: Always filter out placeholder values
-- **License Type Variations**: Use case-insensitive string matching
+### Configuration Errors
+- **"Configuration error: SPREADSHEET_ID not set"**: Set Script Properties (see above)
+- **"Script not found"**: Check `.clasp.json` has correct scriptId (local) or `APPS_SCRIPT_ID` secret (GitHub Actions)
+- **Permission denied**: Run `npm run login` and verify Google Sheets access
 
-### Performance Considerations
-- **Single Sheet Read**: Minimize SpreadsheetApp API calls
-- **Client-Side Filtering**: Avoid complex filtering in frontend
-- **Efficient Rendering**: Use document fragments for large lists
+### Business Logic Issues
+- **Apps in wrong division**: Check division string matching logic in [Code.js:85-99](Code.js#L85-L99)
+- **Division names appearing as departments**: Verify department filtering array matches actual division names
+- **Missing apps**: Ensure `Active` column is TRUE (case-insensitive)
 
-## 🔒 Security & Permissions
+### Deployment Issues
+- **GitHub Actions "No credentials found"**: `CLASP_CREDENTIALS` secret must contain complete, valid JSON
+- **OAuth scope error**: Ensure `appsscript.json` includes `spreadsheets.readonly` scope
 
-### Google Apps Script Security
-- `@OnlyCurrentDoc` annotation for limited scope
-- Domain-restricted web app access
-- No external API calls without explicit permission
+## 🎨 Design Patterns & New Features
 
-### Data Privacy
-- No persistent data storage in Apps Script
-- Direct read-only access to Google Sheets
-- No user data collection or tracking
+### Three-Section Layout (per tab)
+1. **Enterprise Apps** (Whole School only): Premium gold styling, "Official SAS Core Tools"
+2. **Apps Everyone Can Use**: Blue/standard styling, site/school licenses
+3. **Department Apps**: Grouped by department with icons and counts
 
-## 📚 Key Dependencies
+### UI Components (index.html)
+- **Search Bar**: Global search across all fields (sticky, filters in real-time)
+- **Enterprise Section**: Premium gold gradient with border, award icon
+- **Tab Navigation**: Division-based tabs with color coding
+- **App Cards**: Enhanced with descriptions, audience tags, SSO/Mobile badges
+- **Audience Tags**: Color-coded (Staff=purple, Teachers=green, Students=yellow, Parents=pink)
+- **Meta Badges**: SSO (green), Mobile (blue) indicators
+- **Department Grouping**: Collapsible cards with app counts and icons
+- **Responsive Grid**: CSS Grid with `repeat(auto-fit, minmax(280px, 1fr))`
 
-### CDN Dependencies
-- **Tailwind CSS**: `https://cdn.tailwindcss.com`
-- **Lucide Icons**: `https://unpkg.com/lucide@latest/dist/umd/lucide.js`
-- **Google Fonts**: Poppins and Bebas Neue
+### Search Functionality
+- Searches across: product name, category, subject, department, audience
+- Real-time filtering (hides non-matching cards)
+- Clear button to reset search
+- Hides empty sections when searching
 
-### Development Dependencies
-- **@google/clasp**: Google Apps Script CLI tool
-- **Node.js**: For running npm scripts
+### Icon Assignment Logic
+Department icons auto-assigned based on keywords:
+- Technology/IT → Monitor
+- English/Language → Book
+- Math → Calculator
+- Science → Flask
+- Arts/Music → Palette
+- PE/Athletics → Activity
 
-## 🐛 Debugging & Troubleshooting
+## 🚀 Phase 3 Features (Recently Implemented)
 
-### Common Issues
-1. **"Script not found"**: Check `.clasp.json` scriptId
-2. **Permission denied**: Verify Google Sheets access or run `npm run login`.
-3. **Deployment fails**: Check for syntax errors in Apps Script editor
-4. **Data not loading**: Verify `SPREADSHEET_ID` and `SHEET_NAME` in Script Properties.
+### Enhanced App Cards
+**Visual Enhancements:**
+- **App Logos**: Displays `logo_url` field with error handling (60x60px, top of card)
+- **Grade Level Badges**: Shows `grade_levels` with graduation cap icon (yellow badge)
+- **"NEW" Badge**: Animated badge for apps added in last 30 days (red gradient, top-right corner)
+- **Description Display**: Shows app descriptions from `description` field
+- **Action Buttons**: Tutorial link button (if `tutorial_link` exists) and Details button
 
-### Debugging Tools
-- `Logger.log()` for backend debugging
-- `npm run logs` to view execution logs
-- Browser DevTools for frontend debugging
-- Apps Script editor for syntax checking
+**Code Location:** [index.html:1221-1281](index.html#L1221-L1281) - `createAppCard()` function
 
-## 📝 Code Style Guidelines
+### App Detail Modal
+Interactive modal popup with comprehensive app information:
+- **Trigger**: "Details" button on app cards
+- **Content**: Full app details, description, license info, features, renewal date
+- **Actions**: Visit Website, View Tutorial buttons
+- **UX**: Click outside or press ESC to close, prevents body scroll
 
-### JavaScript
-- Use modern ES6+ syntax where supported
-- Consistent naming conventions (camelCase)
-- Clear function documentation
-- Error handling for all external API calls
+**Code Location:** [index.html:1403-1557](index.html#L1403-L1557) - `showAppDetails()` and `closeModal()` functions
 
-### HTML/CSS
-- Semantic HTML structure
-- Tailwind CSS for styling
-- Embedded CSS for Apps Script compatibility
-- Mobile-first responsive design
+**CSS Styles:** [index.html:741-960](index.html#L741-L960)
+
+### What's New Section
+Dynamic section showing recently added apps:
+- **Display Logic**: Only shows if apps added in last 30 days exist
+- **Placement**: Top of each division tab (before Enterprise/Everyone sections)
+- **Styling**: SAS Red themed container with gradient border
+- **Date Check**: Uses `isWithinDays()` helper to filter by `date_added` field
+
+**Code Location:**
+- HTML: Each division tab has `<div id="{division}-whats-new">` container
+- JS: [index.html:1320-1335](index.html#L1320-L1335) in `renderDivisionContent()`
+- CSS: [index.html:269-318](index.html#L269-L318)
+
+### SAS Brand Implementation
+**Colors Applied:**
+- Primary: SAS Blue (#1a2d58), SAS Red (#a0192a), Eagle Yellow (#fabc00)
+- Division colors: Elementary (#228ec2), Middle (#a0192a), High (#1a2d58)
+- Typography: Bebas Neue (headings), DM Sans (body text)
+
+**CSS Variables:** [index.html:12-30](index.html#L12-L30)
+
+### Date Handling
+**Helper Function**: `isWithinDays(dateString, days)`
+- Checks if `date_added` is within specified number of days
+- Used for "NEW" badge and "What's New" section
+- Handles invalid dates gracefully
+
+**Code Location:** [index.html:1284-1295](index.html#L1284-L1295)
+
+### Search Enhancements
+**Search Fields**: Now includes audience field in search
+- Searches: product name, category, subject, department, **audience**
+- Real-time filtering with section hiding for empty results
+
+**Code Location:** [index.html:1404-1453](index.html#L1404-L1453) - `setupSearch()` function
+
+### Data Attributes for Search
+All app cards include searchable data attributes:
+- `data-product`, `data-category`, `data-subject`, `data-department`, `data-audience`
+- Enables efficient client-side filtering
+
+**Implementation:** [index.html:1262](index.html#L1262) in `createAppCard()`
+
+## 📋 Phase 4: Future Features
+See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for planned advanced features:
+- User favorites/bookmarks
+- Ratings and reviews
+- Usage analytics
+- Dark mode
+- Mobile PWA
+- Advanced search
+- Google Workspace SSO integration
 
 ---
 
-**When modifying this codebase:**
-1. Test locally first with `index.html`
-2. Ensure Google Sheets compatibility
-3. Maintain clean separation between backend logic and frontend presentation
-4. Follow existing patterns for consistency
-5. Document any business logic changes
+**Key Development Principles:**
+1. Test locally with `index.html` before deploying
+2. All business logic changes should update division/department categorization rules
+3. Never hardcode configuration - always use Script Properties
+4. Google Sheets column names are case-sensitive and must match exactly
+5. Always provide clickable file references using `[filename:line](path#Lline)` format

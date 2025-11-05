@@ -5,10 +5,30 @@
   <title>SAS Digital Toolkit</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    /* SAS Brand Colors */
+    :root {
+      /* Primary Colors */
+      --sas-red: #a0192a;
+      --sas-blue: #1a2d58;
+      --sas-yellow: #fabc00;
+      --sas-gray: #d8dadb;
+
+      /* Division Colors */
+      --elementary: #228ec2;
+      --middle-school: #a0192a;
+      --high-school: #1a2d58;
+      --admin: #6d6f72;
+
+      /* Semantic Colors */
+      --primary: var(--sas-blue);
+      --secondary: var(--sas-red);
+      --accent: var(--sas-yellow);
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -16,7 +36,7 @@
     }
 
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       line-height: 1.6;
       color: #333;
       background-color: #f8f9fc;
@@ -44,12 +64,15 @@
       align-items: center;
       justify-content: space-between;
       gap: 24px;
+      flex-wrap: wrap;
     }
 
     .header-brand {
       display: flex;
       align-items: center;
       gap: 16px;
+      flex: 1;
+      min-width: 0;
     }
 
     .header-logo {
@@ -64,12 +87,12 @@
     }
 
     .header h1 {
-      font-family: 'Poppins', sans-serif;
-      font-size: 1.8rem;
-      font-weight: 600;
+      font-family: 'Bebas Neue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
       margin: 0;
-      letter-spacing: 0.5px;
-      color: #1A4190;
+      letter-spacing: 1px;
+      color: var(--sas-blue);
     }
 
     .header p {
@@ -79,21 +102,14 @@
       color: #6c757d;
     }
 
-    .header-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 0.85rem;
-      color: #6c757d;
-    }
-
-    .header-meta .separator {
-      color: #dee2e6;
+    .header-search {
+      flex: 0 1 400px;
+      min-width: 250px;
     }
 
     .tabs-container {
-      background: #192f59;
-      border-bottom: 3px solid #295c9c;
+      background: var(--sas-blue);
+      border-bottom: 3px solid var(--sas-red);
     }
 
     .tabs {
@@ -139,25 +155,25 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
-    /* Division-specific tab colors */
+    /* Division-specific tab colors - SAS Brand */
     .tab-button[data-tab="wholeSchool"].active {
-      border-bottom-color: #6f42c1; /* Purple */
-      box-shadow: inset 0 -3px 0 #6f42c1;
+      border-bottom-color: var(--admin);
+      box-shadow: inset 0 -3px 0 var(--admin);
     }
 
     .tab-button[data-tab="elementary"].active {
-      border-bottom-color: #28a745; /* Green */
-      box-shadow: inset 0 -3px 0 #28a745;
+      border-bottom-color: var(--elementary);
+      box-shadow: inset 0 -3px 0 var(--elementary);
     }
 
     .tab-button[data-tab="middleSchool"].active {
-      border-bottom-color: #dc3545; /* Red */
-      box-shadow: inset 0 -3px 0 #dc3545;
+      border-bottom-color: var(--middle-school);
+      box-shadow: inset 0 -3px 0 var(--middle-school);
     }
 
     .tab-button[data-tab="highSchool"].active {
-      border-bottom-color: #007bff; /* Blue */
-      box-shadow: inset 0 -3px 0 #007bff;
+      border-bottom-color: var(--high-school);
+      box-shadow: inset 0 -3px 0 var(--high-school);
     }
 
     .main-content {
@@ -183,6 +199,165 @@
         opacity: 1;
         transform: translateY(0);
       }
+    }
+
+    /* Search Bar Styles */
+    .search-input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 36px 10px 36px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--sas-blue);
+      box-shadow: 0 0 0 3px rgba(26, 45, 88, 0.1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: #6c757d;
+      pointer-events: none;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6c757d;
+      padding: 4px;
+      display: none;
+    }
+
+    .search-clear.visible {
+      display: block;
+    }
+
+    /* What's New Section */
+    .whats-new-container {
+      background: linear-gradient(135deg, #fef2f2, #ffffff);
+      border: 2px solid var(--sas-red);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 16px rgba(160, 25, 42, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .whats-new-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--sas-red), #c81e3b, var(--sas-red));
+    }
+
+    .whats-new-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--sas-red);
+    }
+
+    .whats-new-title i {
+      width: 24px;
+      height: 24px;
+    }
+
+    .whats-new-subtitle {
+      color: #6c757d;
+      font-size: 13px;
+      margin-bottom: 16px;
+      font-weight: 400;
+    }
+
+    .whats-new-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: 16px;
+    }
+
+    /* Enterprise Apps Container (Premium Style) */
+    .enterprise-apps-container {
+      background: linear-gradient(135deg, #fef3e2, #ffffff);
+      border: 3px solid #f59e0b;
+      border-radius: 18px;
+      padding: 28px;
+      margin-bottom: 32px;
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .enterprise-apps-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
+    }
+
+    .enterprise-apps-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2rem;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #d97706;
+    }
+
+    .enterprise-apps-title i {
+      width: 28px;
+      height: 28px;
+    }
+
+    .enterprise-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: auto;
+    }
+
+    .enterprise-badge i {
+      width: 14px;
+      height: 14px;
     }
 
     /* Main Apps Everyone Can Use Container */
@@ -212,11 +387,11 @@
       font-weight: 400;
     }
 
-    /* Division-specific colors for Apps Everyone Can Use */
-    .whole-school-content .everyone-apps-title { color: #6f42c1; }
-    .elementary-content .everyone-apps-title { color: #28a745; }
-    .middleSchool-content .everyone-apps-title { color: #dc3545; }
-    .highSchool-content .everyone-apps-title { color: #007bff; }
+    /* Division-specific colors for Apps Everyone Can Use - SAS Brand */
+    .whole-school-content .everyone-apps-title { color: var(--admin); }
+    .elementary-content .everyone-apps-title { color: var(--elementary); }
+    .middleSchool-content .everyone-apps-title { color: var(--middle-school); }
+    .highSchool-content .everyone-apps-title { color: var(--high-school); }
 
     .everyone-apps-title i {
       width: 24px;
@@ -238,24 +413,25 @@
       transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
+      position: relative;
     }
     
     .app-card:hover {
-      border-color: #192f59;
-      box-shadow: 0 4px 12px rgba(25, 47, 89, 0.15);
+      border-color: var(--sas-blue);
+      box-shadow: 0 4px 12px rgba(26, 45, 88, 0.15);
       transform: translateY(-2px);
     }
     
     .app-name {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'DM Sans', sans-serif;
       font-weight: 600;
-      color: #192f59;
+      color: var(--sas-blue);
       margin-bottom: 8px;
       font-size: 1.1rem;
     }
 
     .app-name:hover {
-      color: #295c9c;
+      color: var(--sas-red);
       text-decoration: underline;
     }
 
@@ -289,6 +465,171 @@
     .tag-license { background-color: #ffedd5; color: #9a3412; }
     .tag-department { background-color: #fee2e2; color: #991b1b; }
 
+    /* Audience Tags */
+    .tag-audience {
+      background-color: #dbeafe;
+      color: #1e40af;
+      font-weight: 600;
+    }
+    .tag-staff { background-color: #f3e8ff; color: #6b21a8; }
+    .tag-teachers { background-color: #dcfce7; color: #15803d; }
+    .tag-students { background-color: #fef3c7; color: #b45309; }
+    .tag-parents { background-color: #fed7e2; color: #9f1239; }
+
+    /* App Description */
+    .app-description {
+      font-size: 13px;
+      color: #6c757d;
+      margin: 8px 0;
+      line-height: 1.4;
+    }
+
+    /* App Meta Info */
+    .app-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #6c757d;
+      background: #f8f9fa;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .meta-badge i {
+      width: 12px;
+      height: 12px;
+    }
+
+    .meta-badge.sso {
+      background: #d1fae5;
+      color: #047857;
+    }
+
+    .meta-badge.mobile {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .meta-badge.grade-level {
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    /* App Logo */
+    .app-logo {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-logo img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    /* NEW Badge */
+    .new-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: linear-gradient(135deg, var(--sas-red), #c81e3b);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(160, 25, 42, 0.3);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+    }
+
+    /* App Card Content Wrapper */
+    .app-card-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* App Action Buttons */
+    .app-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f1f3f5;
+    }
+
+    .app-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .app-action-btn i {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .tutorial-btn {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e40af;
+    }
+
+    .tutorial-btn:hover {
+      background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(30, 64, 175, 0.2);
+    }
+
+    .details-btn {
+      background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+      color: var(--sas-blue);
+    }
+
+    .details-btn:hover {
+      background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(26, 45, 88, 0.15);
+    }
+
     /* Departments Section */
     .departments-section {
       margin-top: 48px;
@@ -309,10 +650,10 @@
       height: 24px;
     }
     
-    .whole-school-content .departments-title { color: #6f42c1; }
-    .elementary-content .departments-title { color: #28a745; }
-    .middleSchool-content .departments-title { color: #dc3545; }
-    .highSchool-content .departments-title { color: #007bff; }
+    .whole-school-content .departments-title { color: var(--admin); }
+    .elementary-content .departments-title { color: var(--elementary); }
+    .middleSchool-content .departments-title { color: var(--middle-school); }
+    .highSchool-content .departments-title { color: var(--high-school); }
 
     .department-container {
       display: grid;
@@ -358,10 +699,10 @@
       gap: 8px;
     }
     
-    .whole-school-content .department-title { color: #6f42c1; }
-    .elementary-content .department-title { color: #28a745; }
-    .middleSchool-content .department-title { color: #dc3545; }
-    .highSchool-content .department-title { color: #007bff; }
+    .whole-school-content .department-title { color: var(--admin); }
+    .elementary-content .department-title { color: var(--elementary); }
+    .middleSchool-content .department-title { color: var(--middle-school); }
+    .highSchool-content .department-title { color: var(--high-school); }
 
     .department-title i {
       width: 20px;
@@ -388,7 +729,7 @@
     }
 
     .footer {
-      background: #192f59;
+      background: var(--sas-blue);
       color: white;
       padding: 32px 24px;
       margin-top: 60px;
@@ -427,21 +768,249 @@
       font-size: 1.8rem;
       letter-spacing: 1px;
     }
-    
-    .loading h3 { color: #192f59; }
+
+    .loading h3 { color: var(--sas-blue); }
     .loading p { color: #6c757d; }
     .error-state h3 { color: #dc3545; }
     .error-state p { color: #dc3545; }
 
+    /* App Detail Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: modalSlideIn 0.3s ease;
+      position: relative;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: 24px 24px 16px 24px;
+      border-bottom: 2px solid #f1f3f5;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .modal-header-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      color: var(--sas-blue);
+      margin: 0 0 8px 0;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-close {
+      background: #f1f3f5;
+      border: none;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      color: #6c757d;
+    }
+
+    .modal-close:hover {
+      background: #e9ecef;
+      color: var(--sas-red);
+    }
+
+    .modal-close i {
+      width: 20px;
+      height: 20px;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-section {
+      margin-bottom: 20px;
+    }
+
+    .modal-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-section-title {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-section-title i {
+      width: 14px;
+      height: 14px;
+    }
+
+    .modal-section-content {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .modal-link {
+      color: var(--sas-blue);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-link:hover {
+      color: var(--sas-red);
+      text-decoration: underline;
+    }
+
+    .modal-link i {
+      width: 16px;
+      height: 16px;
+    }
+
+    .modal-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+    }
+
+    .modal-info-item {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .modal-info-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .modal-info-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #f1f3f5;
+      background: #f8f9fa;
+      border-radius: 0 0 16px 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .modal-action-btn {
+      flex: 1;
+      min-width: 140px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-action-btn i {
+      width: 16px;
+      height: 16px;
+    }
+
+    .modal-action-primary {
+      background: linear-gradient(135deg, var(--sas-blue), #2d4678);
+      color: white;
+    }
+
+    .modal-action-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(26, 45, 88, 0.3);
+    }
+
+    .modal-action-secondary {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e40af;
+    }
+
+    .modal-action-secondary:hover {
+      background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(30, 64, 175, 0.2);
+    }
+
     @media (max-width: 768px) {
       .header-content {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         gap: 16px;
         text-align: center;
       }
+      .header-brand {
+        justify-content: center;
+      }
       .header-brand, .header-text {
         align-items: center;
+      }
+      .header-search {
+        width: 100%;
+        min-width: 0;
       }
       .main-content { padding: 16px; }
       .everyone-apps-grid, .department-container {
@@ -463,8 +1032,15 @@
             <p>Applications and digital resources for the SAS community</p>
           </div>
         </div>
-        <div class="header-meta">
-          <span>Technology & Innovation</span>
+        <!-- Search Bar in Header -->
+        <div class="header-search">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="app-search" class="search-input" placeholder="Search apps...">
+            <button id="search-clear" class="search-clear">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -493,19 +1069,49 @@
 
       <!-- Whole School Tab Content -->
       <div id="wholeSchool-content" class="tab-content active whole-school-content">
+        <!-- What's New Section -->
+        <div id="wholeSchool-whats-new" class="whats-new-container" style="display: none;">
+          <h2 class="whats-new-title">
+            <i data-lucide="sparkles"></i>
+            What's New
+          </h2>
+          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <div id="wholeSchool-new-apps" class="whats-new-grid"></div>
+        </div>
+
+        <!-- Enterprise Apps Section (NEW - Top Priority) -->
+        <div class="enterprise-apps-container">
+          <h2 class="enterprise-apps-title">
+            <i data-lucide="award"></i>
+            Official SAS Core Tools
+            <span class="enterprise-badge">
+              <i data-lucide="shield-check"></i>
+              Enterprise
+            </span>
+          </h2>
+          <p class="main-subtitle">Officially approved and supported tools for all SAS staff, teachers, students, and parents.</p>
+          <div id="wholeSchool-enterprise-apps" class="everyone-apps-grid"></div>
+        </div>
+
         <div class="everyone-apps-container">
           <h2 class="everyone-apps-title"><i data-lucide="users"></i> Apps Everyone Can Use</h2>
-          <p class="main-subtitle">These core applications are available to the entire SAS community.</p>
+          <p class="main-subtitle">These applications are available to the entire SAS community.</p>
           <div id="wholeSchool-everyone-apps" class="everyone-apps-grid"></div>
-        </div>
-        <div class="departments-section">
-          <h3 class="departments-title"><i data-lucide="building-2"></i> Department-Specific Apps</h3>
-          <div id="wholeSchool-departments" class="department-container"></div>
         </div>
       </div>
 
       <!-- Elementary School Tab Content -->
       <div id="elementary-content" class="tab-content elementary-content">
+        <!-- What's New Section -->
+        <div id="elementary-whats-new" class="whats-new-container" style="display: none;">
+          <h2 class="whats-new-title">
+            <i data-lucide="sparkles"></i>
+            What's New
+          </h2>
+          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <div id="elementary-new-apps" class="whats-new-grid"></div>
+        </div>
+
         <div class="everyone-apps-container">
           <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for Elementary</h2>
           <p class="main-subtitle">These applications are available to all elementary students and staff.</p>
@@ -519,6 +1125,16 @@
 
       <!-- Middle School Tab Content -->
       <div id="middleSchool-content" class="tab-content middleSchool-content">
+        <!-- What's New Section -->
+        <div id="middleSchool-whats-new" class="whats-new-container" style="display: none;">
+          <h2 class="whats-new-title">
+            <i data-lucide="sparkles"></i>
+            What's New
+          </h2>
+          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <div id="middleSchool-new-apps" class="whats-new-grid"></div>
+        </div>
+
         <div class="everyone-apps-container">
           <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for Middle School</h2>
           <p class="main-subtitle">These applications are available to all middle school students and staff.</p>
@@ -532,6 +1148,16 @@
 
       <!-- High School Tab Content -->
       <div id="highSchool-content" class="tab-content highSchool-content">
+        <!-- What's New Section -->
+        <div id="highSchool-whats-new" class="whats-new-container" style="display: none;">
+          <h2 class="whats-new-title">
+            <i data-lucide="sparkles"></i>
+            What's New
+          </h2>
+          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <div id="highSchool-new-apps" class="whats-new-grid"></div>
+        </div>
+
         <div class="everyone-apps-container">
           <h2 class="everyone-apps-title"><i data-lucide="users"></i> Core Apps for High School</h2>
           <p class="main-subtitle">These applications are available to all high school students and staff.</p>
@@ -581,18 +1207,79 @@
         
         // Creates a generic app card. Used for both "Everyone" and "Department" sections.
         function createAppCard(app) {
+          // Parse audience string (comma-separated)
+          const audiences = app.audience ? app.audience.split(',').map(a => a.trim()).filter(a => a) : [];
+
+          // Build audience tags HTML
+          const audienceTags = audiences.map(aud => {
+            const audLower = aud.toLowerCase();
+            const tagClass = `tag-${audLower}`;
+            return `<span class="app-tag ${tagClass}">${aud}</span>`;
+          }).join('');
+
+          // Build meta badges (SSO, Mobile, Grade Levels)
+          const metaBadges = [];
+          if (app.ssoEnabled) {
+            metaBadges.push('<span class="meta-badge sso"><i data-lucide="shield-check"></i>SSO</span>');
+          }
+          if (app.mobileApp && app.mobileApp.toLowerCase() !== 'no') {
+            metaBadges.push('<span class="meta-badge mobile"><i data-lucide="smartphone"></i>Mobile</span>');
+          }
+          if (app.gradeLevels && app.gradeLevels !== 'N/A') {
+            metaBadges.push(`<span class="meta-badge grade-level"><i data-lucide="graduation-cap"></i>${app.gradeLevels}</span>`);
+          }
+          const metaHTML = metaBadges.length > 0 ? `<div class="app-meta">${metaBadges.join('')}</div>` : '';
+
+          // Build action buttons
+          const actionButtons = [];
+          if (app.tutorialLink) {
+            actionButtons.push(`<a href="${app.tutorialLink}" target="_blank" class="app-action-btn tutorial-btn" title="View Tutorial"><i data-lucide="play-circle"></i>Tutorial</a>`);
+          }
+          actionButtons.push(`<button class="app-action-btn details-btn" onclick="showAppDetails(event, ${JSON.stringify(app).replace(/"/g, '&quot;')})" title="View Details"><i data-lucide="info"></i>Details</button>`);
+          const actionsHTML = actionButtons.length > 0 ? `<div class="app-actions">${actionButtons.join('')}</div>` : '';
+
+          // Logo/Icon display
+          const logoHTML = app.logoUrl ?
+            `<div class="app-logo"><img src="${app.logoUrl}" alt="${app.product} logo" onerror="this.parentElement.style.display='none'"></div>` : '';
+
+          // Check if app is new (added in last 30 days)
+          const isNew = app.dateAdded && isWithinDays(app.dateAdded, 30);
+          const newBadge = isNew ? '<span class="new-badge">NEW</span>' : '';
+
           return `
-            <div class="app-card">
-              <a href="${app.website}" target="_blank" style="text-decoration: none; color: inherit;">
-                <h4 class="app-name">${app.product}</h4>
-              </a>
-              <div class="app-tags">
-                ${app.category ? `<span class="app-tag tag-category">${app.category}</span>` : ''}
-                ${app.subject ? `<span class="app-tag tag-subject">${app.subject}</span>` : ''}
-                ${app.licenseType ? `<span class="app-tag tag-license">${app.licenseType}</span>` : ''}
+            <div class="app-card" data-product="${app.product.toLowerCase()}" data-category="${app.category.toLowerCase()}" data-subject="${app.subject.toLowerCase()}" data-department="${app.department.toLowerCase()}" data-audience="${app.audience.toLowerCase()}">
+              ${logoHTML}
+              ${newBadge}
+              <div class="app-card-content">
+                <a href="${app.website}" target="_blank" style="text-decoration: none; color: inherit;">
+                  <h4 class="app-name">${app.product}</h4>
+                </a>
+                ${app.description ? `<p class="app-description">${app.description}</p>` : ''}
+                ${metaHTML}
+                <div class="app-tags">
+                  ${audienceTags}
+                  ${app.category ? `<span class="app-tag tag-category">${app.category}</span>` : ''}
+                  ${app.subject ? `<span class="app-tag tag-subject">${app.subject}</span>` : ''}
+                  ${app.licenseType ? `<span class="app-tag tag-license">${app.licenseType}</span>` : ''}
+                </div>
+                ${actionsHTML}
               </div>
             </div>
           `;
+        }
+
+        // Helper function to check if date is within X days
+        function isWithinDays(dateString, days) {
+          if (!dateString) return false;
+          try {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= days;
+          } catch (e) {
+            return false;
+          }
         }
         
         // Creates a card for a specific department, containing its apps.
@@ -618,6 +1305,34 @@
         
         // Renders all the content for a specific division tab.
         function renderDivisionContent(divisionData, division) {
+          // NEW: Render What's New Section
+          const whatsNewContainer = document.getElementById(`${division}-whats-new`);
+          const whatsNewAppsContainer = document.getElementById(`${division}-new-apps`);
+          if (whatsNewContainer && whatsNewAppsContainer) {
+            // Filter apps added in last 30 days from all apps in this division
+            const newApps = (divisionData.apps || []).filter(app =>
+              app.dateAdded && isWithinDays(app.dateAdded, 30)
+            );
+
+            if (newApps.length > 0) {
+              whatsNewAppsContainer.innerHTML = newApps.map(createAppCard).join('');
+              whatsNewContainer.style.display = 'block';
+            } else {
+              whatsNewContainer.style.display = 'none';
+            }
+          }
+
+          // NEW: Render Enterprise Apps (highest priority)
+          const enterpriseContainer = document.getElementById(`${division}-enterprise-apps`);
+          if (enterpriseContainer) {
+            const enterpriseApps = divisionData.enterpriseApps || [];
+            if (enterpriseApps.length > 0) {
+              enterpriseContainer.innerHTML = enterpriseApps.map(createAppCard).join('');
+            } else {
+              enterpriseContainer.innerHTML = '<p class="text-gray-500">No enterprise apps found for this division.</p>';
+            }
+          }
+
           const everyoneContainer = document.getElementById(`${division}-everyone-apps`);
           if (everyoneContainer) {
             const everyoneApps = divisionData.everyoneApps || [];
@@ -652,7 +1367,8 @@
         });
 
         setupTabs();
-        
+        setupSearch();
+
         // Re-initialize Lucide icons after rendering new content
         if (typeof lucide !== 'undefined') {
           lucide.createIcons();
@@ -681,6 +1397,78 @@
       });
     }
 
+    function setupSearch() {
+      const searchInput = document.getElementById('app-search');
+      const searchClear = document.getElementById('search-clear');
+
+      if (!searchInput) return;
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+
+        // Show/hide clear button
+        if (query) {
+          searchClear.classList.add('visible');
+        } else {
+          searchClear.classList.remove('visible');
+        }
+
+        // Filter all app cards
+        const allAppCards = document.querySelectorAll('.app-card');
+        let visibleCount = 0;
+
+        allAppCards.forEach(card => {
+          const product = card.dataset.product || '';
+          const category = card.dataset.category || '';
+          const subject = card.dataset.subject || '';
+          const department = card.dataset.department || '';
+          const audience = card.dataset.audience || '';
+
+          // Search across all fields
+          const matches = product.includes(query) ||
+                         category.includes(query) ||
+                         subject.includes(query) ||
+                         department.includes(query) ||
+                         audience.includes(query);
+
+          if (matches || query === '') {
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        // Hide empty sections and department cards
+        document.querySelectorAll('.enterprise-apps-container, .everyone-apps-container, .department-card').forEach(section => {
+          const visibleCards = Array.from(section.querySelectorAll('.app-card')).filter(card => card.style.display !== 'none');
+          if (visibleCards.length === 0 && query) {
+            section.style.display = 'none';
+          } else {
+            section.style.display = '';
+          }
+        });
+      });
+
+      // Clear button functionality
+      searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        searchClear.classList.remove('visible');
+
+        // Show all cards
+        document.querySelectorAll('.app-card').forEach(card => {
+          card.style.display = '';
+        });
+
+        // Show all sections
+        document.querySelectorAll('.enterprise-apps-container, .everyone-apps-container, .department-card').forEach(section => {
+          section.style.display = '';
+        });
+
+        searchInput.focus();
+      });
+    }
+
     function getDepartmentIcon(department) {
       const dept = department.toLowerCase();
       if (dept.includes('tech') || dept.includes('it')) return 'monitor';
@@ -706,6 +1494,163 @@
         </div>
       `;
     }
+
+    // App Detail Modal
+    function showAppDetails(event, app) {
+      // Prevent button click from triggering any parent element clicks
+      if (event) event.stopPropagation();
+
+      // Build modal HTML
+      const modalHTML = `
+        <div class="modal-overlay" onclick="closeModal(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+              <div class="modal-header-content">
+                <h2 class="modal-title">${app.product}</h2>
+                ${app.description ? `<p style="color: #6c757d; margin: 0; font-size: 14px;">${app.description}</p>` : ''}
+              </div>
+              <button class="modal-close" onclick="closeModal()" title="Close">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+
+            <div class="modal-body">
+              ${app.description && app.description !== 'N/A' ? `
+              <div class="modal-section">
+                <div class="modal-section-title"><i data-lucide="info"></i>Description</div>
+                <div class="modal-section-content">${app.description}</div>
+              </div>
+              ` : ''}
+
+              <div class="modal-section">
+                <div class="modal-section-title"><i data-lucide="layers"></i>Details</div>
+                <div class="modal-info-grid">
+                  ${app.category && app.category !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Category</div>
+                    <div class="modal-info-value">${app.category}</div>
+                  </div>
+                  ` : ''}
+                  ${app.subject && app.subject !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Subject</div>
+                    <div class="modal-info-value">${app.subject}</div>
+                  </div>
+                  ` : ''}
+                  ${app.department && app.department !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Department</div>
+                    <div class="modal-info-value">${app.department}</div>
+                  </div>
+                  ` : ''}
+                  ${app.division && app.division !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Division</div>
+                    <div class="modal-info-value">${app.division}</div>
+                  </div>
+                  ` : ''}
+                  ${app.gradeLevels && app.gradeLevels !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Grade Levels</div>
+                    <div class="modal-info-value">${app.gradeLevels}</div>
+                  </div>
+                  ` : ''}
+                  ${app.audience && app.audience !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Audience</div>
+                    <div class="modal-info-value">${app.audience}</div>
+                  </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <div class="modal-section-title"><i data-lucide="key"></i>License Information</div>
+                <div class="modal-info-grid">
+                  ${app.licenseType && app.licenseType !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">License Type</div>
+                    <div class="modal-info-value">${app.licenseType}</div>
+                  </div>
+                  ` : ''}
+                  ${app.licenses ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Licenses</div>
+                    <div class="modal-info-value">${app.licenses === 'Unlimited' ? 'Unlimited' : app.licenses}</div>
+                  </div>
+                  ` : ''}
+                  ${app.renewalDate && app.renewalDate !== 'N/A' ? `
+                  <div class="modal-info-item">
+                    <div class="modal-info-label">Renewal Date</div>
+                    <div class="modal-info-value">${app.renewalDate}</div>
+                  </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              ${app.ssoEnabled || (app.mobileApp && app.mobileApp.toLowerCase() !== 'no') ? `
+              <div class="modal-section">
+                <div class="modal-section-title"><i data-lucide="shield-check"></i>Features</div>
+                <div class="modal-section-content">
+                  ${app.ssoEnabled ? '<span class="meta-badge sso"><i data-lucide="shield-check"></i>SSO Enabled</span> ' : ''}
+                  ${app.mobileApp && app.mobileApp.toLowerCase() !== 'no' ? '<span class="meta-badge mobile"><i data-lucide="smartphone"></i>Mobile App Available</span>' : ''}
+                </div>
+              </div>
+              ` : ''}
+            </div>
+
+            <div class="modal-footer">
+              ${app.website && app.website !== '#' && app.website !== 'N/A' ? `
+              <a href="${app.website}" target="_blank" class="modal-action-btn modal-action-primary">
+                <i data-lucide="external-link"></i>Visit Website
+              </a>
+              ` : ''}
+              ${app.tutorialLink && app.tutorialLink !== 'N/A' ? `
+              <a href="${app.tutorialLink}" target="_blank" class="modal-action-btn modal-action-secondary">
+                <i data-lucide="play-circle"></i>View Tutorial
+              </a>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Insert modal into DOM
+      const modalContainer = document.createElement('div');
+      modalContainer.id = 'app-modal';
+      modalContainer.innerHTML = modalHTML;
+      document.body.appendChild(modalContainer);
+
+      // Initialize Lucide icons in the modal
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(event) {
+      // If event is provided, check if clicking overlay (not modal content)
+      if (event && event.target.classList.contains('modal-content')) {
+        return;
+      }
+
+      const modal = document.getElementById('app-modal');
+      if (modal) {
+        modal.remove();
+      }
+
+      // Restore body scroll
+      document.body.style.overflow = '';
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    });
   </script>
 
 </body>
