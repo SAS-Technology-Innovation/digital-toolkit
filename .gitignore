@@ -1,8 +1,39 @@
- # Local clasp configuration
+# Local clasp configuration
 .clasp.json
 
 # Node dependencies
-node_modules
+node_modules/
 
 # Clasp credentials
 .clasprc.json
+
+# macOS system files
+.DS_Store
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
