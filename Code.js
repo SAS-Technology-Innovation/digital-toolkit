@@ -81,7 +81,7 @@ function queryGeminiAPI(systemPrompt, userPrompt, userQuery) {
     });
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
 
   const payload = {
     contents: [{
@@ -147,7 +147,7 @@ function queryClaudeAPI(systemPrompt, userPrompt, userQuery) {
   const url = 'https://api.anthropic.com/v1/messages';
 
   const payload = {
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-5-20250929',
     max_tokens: 1024,
     system: systemPrompt,
     messages: [{
@@ -196,6 +196,176 @@ function queryClaudeAPI(systemPrompt, userPrompt, userQuery) {
     return JSON.stringify({
       error: 'No response from Claude. Please rephrase your question.'
     });
+  }
+}
+
+/**
+ * TEST FUNCTION: Test Gemini API connection
+ * Run this from Apps Script Editor to test Gemini integration
+ */
+function testGemini() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
+
+  Logger.log('=== GEMINI API TEST ===');
+  Logger.log('API Key configured: ' + (GEMINI_API_KEY ? 'YES (length: ' + GEMINI_API_KEY.length + ')' : 'NO'));
+
+  if (!GEMINI_API_KEY) {
+    Logger.log('ERROR: GEMINI_API_KEY not found in Script Properties');
+    return 'ERROR: API key not configured';
+  }
+
+  const testPrompt = 'Hello! Can you recommend a math app?';
+  const mockAppData = [{
+    name: 'Khan Academy',
+    description: 'Free math practice',
+    category: 'Math',
+    subject: 'Mathematics',
+    division: 'Whole School',
+    audience: 'Students,Teachers',
+    gradeLevels: 'K-12',
+    sso: true,
+    mobile: 'Yes'
+  }];
+
+  const systemPrompt = 'You are an educational technology assistant.';
+  const userPrompt = `Available Apps: ${JSON.stringify(mockAppData)}\n\nUser Question: "${testPrompt}"\n\nRecommend relevant apps.`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
+
+  const payload = {
+    contents: [{
+      parts: [{
+        text: systemPrompt + '\n\n' + userPrompt
+      }]
+    }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 1024
+    }
+  };
+
+  Logger.log('Request URL: ' + url.replace(GEMINI_API_KEY, 'API_KEY_HIDDEN'));
+  Logger.log('Request Payload: ' + JSON.stringify(payload, null, 2));
+
+  try {
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+
+    Logger.log('Response Code: ' + responseCode);
+    Logger.log('Response Body: ' + responseText);
+
+    if (responseCode === 200) {
+      const result = JSON.parse(responseText);
+      if (result.candidates && result.candidates.length > 0) {
+        const aiResponse = result.candidates[0].content.parts[0].text;
+        Logger.log('SUCCESS! AI Response: ' + aiResponse);
+        return 'SUCCESS: ' + aiResponse;
+      }
+    } else {
+      Logger.log('ERROR: HTTP ' + responseCode);
+      return 'ERROR: HTTP ' + responseCode + ' - ' + responseText;
+    }
+  } catch (error) {
+    Logger.log('EXCEPTION: ' + error.message);
+    Logger.log('Stack: ' + error.stack);
+    return 'EXCEPTION: ' + error.message;
+  }
+}
+
+/**
+ * TEST FUNCTION: Test Claude API connection
+ * Run this from Apps Script Editor to test Claude integration
+ */
+function testClaude() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
+
+  Logger.log('=== CLAUDE API TEST ===');
+  Logger.log('API Key configured: ' + (CLAUDE_API_KEY ? 'YES (length: ' + CLAUDE_API_KEY.length + ')' : 'NO'));
+
+  if (!CLAUDE_API_KEY) {
+    Logger.log('ERROR: CLAUDE_API_KEY not found in Script Properties');
+    return 'ERROR: API key not configured';
+  }
+
+  const testPrompt = 'Hello! Can you recommend a math app?';
+  const mockAppData = [{
+    name: 'Khan Academy',
+    description: 'Free math practice',
+    category: 'Math',
+    subject: 'Mathematics',
+    division: 'Whole School',
+    audience: 'Students,Teachers',
+    gradeLevels: 'K-12',
+    sso: true,
+    mobile: 'Yes'
+  }];
+
+  const systemPrompt = 'You are an educational technology assistant.';
+  const userPrompt = `Available Apps: ${JSON.stringify(mockAppData)}\n\nUser Question: "${testPrompt}"\n\nRecommend relevant apps.`;
+
+  const url = 'https://api.anthropic.com/v1/messages';
+
+  const payload = {
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: [{
+      role: 'user',
+      content: [{
+        type: 'text',
+        text: userPrompt
+      }]
+    }]
+  };
+
+  Logger.log('Request URL: ' + url);
+  Logger.log('Request Payload: ' + JSON.stringify(payload, null, 2));
+  Logger.log('API Key (first 10 chars): ' + CLAUDE_API_KEY.substring(0, 10) + '...');
+
+  try {
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+
+    Logger.log('Response Code: ' + responseCode);
+    Logger.log('Response Body: ' + responseText);
+
+    if (responseCode === 200) {
+      const result = JSON.parse(responseText);
+      if (result.content && result.content.length > 0) {
+        const aiResponse = result.content[0].text;
+        Logger.log('SUCCESS! AI Response: ' + aiResponse);
+        return 'SUCCESS: ' + aiResponse;
+      }
+    } else {
+      Logger.log('ERROR: HTTP ' + responseCode);
+      return 'ERROR: HTTP ' + responseCode + ' - ' + responseText;
+    }
+  } catch (error) {
+    Logger.log('EXCEPTION: ' + error.message);
+    Logger.log('Stack: ' + error.stack);
+    return 'EXCEPTION: ' + error.message;
   }
 }
 

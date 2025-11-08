@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* SAS Brand Colors */
@@ -1280,7 +1281,7 @@
       background: white;
       padding: 12px 16px;
       border-radius: 12px;
-      max-width: 75%;
+      max-width: 85%;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       line-height: 1.5;
       font-size: 14px;
@@ -1294,6 +1295,60 @@
     .ai-message.assistant .ai-message-content {
       background: white;
       color: #333;
+    }
+
+    /* Markdown styling in AI messages */
+    .ai-message-content h1,
+    .ai-message-content h2,
+    .ai-message-content h3 {
+      font-weight: 700;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      color: var(--sas-blue);
+    }
+
+    .ai-message-content h1 { font-size: 1.25em; }
+    .ai-message-content h2 { font-size: 1.15em; }
+    .ai-message-content h3 { font-size: 1.05em; }
+
+    .ai-message-content ul,
+    .ai-message-content ol {
+      margin: 8px 0;
+      padding-left: 24px;
+    }
+
+    .ai-message-content li {
+      margin: 4px 0;
+    }
+
+    .ai-message-content p {
+      margin: 8px 0;
+    }
+
+    .ai-message-content strong {
+      font-weight: 600;
+      color: var(--sas-blue);
+    }
+
+    .ai-message-content code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .ai-message-content pre {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+
+    .ai-message-content pre code {
+      background: none;
+      padding: 0;
     }
 
     .ai-message-loading {
@@ -2321,8 +2376,20 @@
       const contentDiv = document.createElement('div');
       contentDiv.className = 'ai-message-content';
 
-      // Format response with line breaks
-      contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+      // Format response with markdown rendering (for AI) or escape HTML (for user)
+      if (role === 'assistant' && typeof marked !== 'undefined') {
+        // Configure marked for safe rendering
+        marked.setOptions({
+          breaks: true,
+          gfm: true,
+          headerIds: false,
+          mangle: false
+        });
+        contentDiv.innerHTML = marked.parse(content);
+      } else {
+        // For user messages, just replace line breaks
+        contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+      }
 
       messageDiv.appendChild(avatarDiv);
       messageDiv.appendChild(contentDiv);
