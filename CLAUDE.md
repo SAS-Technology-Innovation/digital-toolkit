@@ -285,14 +285,47 @@ All app cards include searchable data attributes:
 
 **Implementation:** [index.html:1262](index.html#L1262) in `createAppCard()`
 
-## 📋 Phase 4: Future Features
+## 🤖 Phase 4: AI-Powered Search & Recommendations
+
+### Gemini AI Integration (Implemented)
+The dashboard now features **intelligent natural language search** powered by Google's Gemini API.
+
+**Features:**
+- **AI Toggle in Search Bar**: Click "AI" button to enable natural language queries
+- **Floating Chat Bubble**: Bottom-right corner bot icon for instant AI assistance
+- **Smart Recommendations**: Ask questions like "What can I use for collaborative writing with 8th graders?"
+- **Contextual Understanding**: AI analyzes grade levels, subjects, SSO, mobile support, and audience
+
+**Key Files:**
+- [Code.js:22-119](Code.js#L22-L119) - `queryAI()` function (Gemini API integration)
+- [index.html:2134-2349](index.html#L2134-L2349) - AI chat interface and message handling
+- [AI_FEATURES.md](AI_FEATURES.md) - Complete AI features documentation
+
+**Setup Required:**
+1. Get Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Add to Script Properties: `GEMINI_API_KEY` = your key
+3. Deploy and test
+
+**How It Works:**
+```
+User Query → queryAI(query, appsData) → Gemini API
+→ Contextual Prompt + Apps Database → AI Response
+→ Smart Recommendations → Display in Chat
+```
+
+**See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.**
+
+---
+
+## 📋 Phase 5: Future Features
 See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for planned advanced features:
-- User favorites/bookmarks
+- User favorites/bookmarks (with AI-suggested collections)
 - Ratings and reviews
 - Usage analytics
 - Dark mode
 - Mobile PWA
-- Advanced search
+- Conversation history persistence
+- Multi-language AI support
 - Google Workspace SSO integration
 
 ---
@@ -300,6 +333,7 @@ See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for planned advanced features:
 **Key Development Principles:**
 1. Test locally with `index.html` before deploying
 2. All business logic changes should update division/department categorization rules
-3. Never hardcode configuration - always use Script Properties
+3. Never hardcode configuration - always use Script Properties (including API keys)
 4. Google Sheets column names are case-sensitive and must match exactly
 5. Always provide clickable file references using `[filename:line](path#Lline)` format
+6. AI features require `GEMINI_API_KEY` in Script Properties to function
