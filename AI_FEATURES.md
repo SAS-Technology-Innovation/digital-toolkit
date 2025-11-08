@@ -125,18 +125,18 @@ Or commit to GitHub to trigger auto-deployment via GitHub Actions.
    - User question
    - Instructions to recommend 3-5 relevant apps
 5. Routes to appropriate AI provider:
-   - **Gemini**: Calls `queryGeminiAPI()` - uses `gemini-pro` model
-   - **Claude**: Calls `queryClaudeAPI()` - uses `claude-3-5-sonnet-20241022` model
+   - **Gemini**: Calls `queryGeminiAPI()` - uses `gemini-2.0-flash-exp` model
+   - **Claude**: Calls `queryClaudeAPI()` - uses `claude-sonnet-4-5-20250929` model
 6. Returns formatted response with provider identifier
 
 **Gemini Implementation ([Code.js:72-132](Code.js#L72-L132)):**
-- Model: `gemini-pro`
-- Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`
+- Model: `gemini-2.0-flash-exp` (latest experimental model)
+- Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent`
 - Temperature: 0.7
 - Max tokens: 1024
 
 **Claude Implementation ([Code.js:134-196](Code.js#L134-L196)):**
-- Model: `claude-3-5-sonnet-20241022`
+- Model: `claude-sonnet-4-5-20250929` (Claude Sonnet 4.5)
 - Endpoint: `https://api.anthropic.com/v1/messages`
 - Max tokens: 1024
 - API Version: 2023-06-01
@@ -172,8 +172,8 @@ User Selects Provider (Gemini/Claude) → User Input → sendAIMessage()
 
 ### Gemini API (Google)
 
-**Model:** `gemini-pro`
-**Endpoint:** `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`
+**Model:** `gemini-2.0-flash-exp` (experimental, latest features)
+**Endpoint:** `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent`
 
 **Generation Config:**
 - **Temperature:** 0.7 (balanced creativity and accuracy)
@@ -188,21 +188,21 @@ User Selects Provider (Gemini/Claude) → User Input → sendAIMessage()
 
 ### Claude API (Anthropic)
 
-**Model:** `claude-3-5-sonnet-20241022`
+**Model:** `claude-sonnet-4-5-20250929` (Claude Sonnet 4.5)
 **Endpoint:** `https://api.anthropic.com/v1/messages`
 
 **Configuration:**
 - **Max Tokens:** 1024 (keeps responses concise)
 - **API Version:** 2023-06-01
 
-**Cost:** Claude API pricing (as of 2025):
+**Cost:** Claude Sonnet 4.5 pricing (as of 2025):
 - Input: $3 per million tokens
 - Output: $15 per million tokens
 - Estimated cost per query: ~$0.01-0.02
 
 [View Claude Pricing](https://www.anthropic.com/api)
 
-**Note:** Claude generally provides more detailed reasoning and structured responses compared to Gemini.
+**Note:** Claude Sonnet 4.5 provides excellent reasoning, structured responses, and strong coding capabilities. Both providers support markdown formatting in responses.
 
 ---
 
