@@ -10,6 +10,7 @@ The **SAS Digital Toolkit Dashboard** is a Google Apps Script web application th
 
 - **[Code.js](Code.js)**: Google Apps Script backend (reads from Google Sheets, processes data)
 - **[index.html](index.html)**: Single-page frontend with embedded CSS/JS
+- **[signage.html](signage.html)**: Digital signage slideshow display (access via `?page=signage`)
 - **[appsscript.json](appsscript.json)**: Google Apps Script configuration
 - **[package.json](package.json)**: npm scripts for clasp-based deployment
 
@@ -314,6 +315,52 @@ User Query → queryAI(query, appsData) → Gemini API
 ```
 
 **See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.**
+
+---
+
+## 📺 Digital Signage Display
+
+### Overview
+The **Digital Signage** feature provides a full-screen, auto-advancing slideshow designed for display on digital signage boards throughout the school.
+
+**Access:** Add `?page=signage` to your web app URL
+```
+https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?page=signage
+```
+
+### Key Features
+- **Auto-advancing slideshow** - 12-second intervals between slides
+- **Multiple slide types** - Welcome, Stats, Enterprise Apps, What's New, Spotlights, Division Apps
+- **Auto-refresh** - Fetches fresh data every 5 minutes
+- **SAS branded** - Uses official colors, fonts, and styling
+- **Full-screen optimized** - Designed for visibility from a distance
+- **Smooth animations** - Professional transitions and visual effects
+
+### Slide Types
+1. **Welcome Slide** - SAS branding and introduction
+2. **Stats Overview** - Key metrics with visual stat cards
+3. **Enterprise Apps** - Premium gold-styled core tools showcase
+4. **What's New** - Recently added apps (last 30 days) with red theme
+5. **App Spotlights** - Featured apps with detailed information
+6. **Division Apps** - Elementary, Middle, and High School app showcases
+
+### Configuration
+Edit settings in [signage.html](signage.html):
+```javascript
+const SLIDE_DURATION = 12000; // 12 seconds per slide
+const REFRESH_INTERVAL = 300000; // Refresh data every 5 minutes
+const NEW_APP_THRESHOLD_DAYS = 30; // Apps added in last 30 days
+const MAX_APPS_PER_SLIDE = 6; // Maximum apps per slide
+```
+
+### Use Cases
+- **Main entrance** - Welcome visitors and showcase tools
+- **Library** - Highlight educational resources
+- **Teacher lounges** - Keep staff informed
+- **Cafeteria** - Engage students during breaks
+- **Division offices** - Show division-specific apps
+
+**See [SIGNAGE.md](SIGNAGE.md) for complete documentation, setup instructions, and customization options.**
 
 ---
 

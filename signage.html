@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <title>SAS Digital Toolkit - Signage</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    /* SAS Brand Colors */
+    :root {
+      --sas-red: #a0192a;
+      --sas-blue: #1a2d58;
+      --sas-yellow: #fabc00;
+      --sas-gray: #d8dadb;
+      --elementary: #228ec2;
+      --middle-school: #a0192a;
+      --high-school: #1a2d58;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--sas-blue) 0%, #0f1a35 100%);
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+    }
+
+    .slide.active {
+      opacity: 1;
+      z-index: 10;
+    }
+
+    /* Welcome Slide */
+    .welcome-slide {
+      background: linear-gradient(135deg, var(--sas-blue) 0%, #2a4178 50%, var(--sas-red) 100%);
+      text-align: center;
+    }
+
+    .welcome-slide .logo {
+      font-size: 8rem;
+      margin-bottom: 40px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .welcome-slide h1 {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 6rem;
+      letter-spacing: 4px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .welcome-slide .subtitle {
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: var(--sas-yellow);
+      margin-bottom: 40px;
+    }
+
+    .welcome-slide .tagline {
+      font-size: 1.8rem;
+      font-weight: 400;
+      opacity: 0.9;
+      max-width: 900px;
+      line-height: 1.5;
+    }
+
+    /* Stats Slide */
+    .stats-slide {
+      background: linear-gradient(135deg, #0f1a35 0%, var(--sas-blue) 100%);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 24px;
+      padding: 50px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-number {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 7rem;
+      color: var(--sas-yellow);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .stat-label {
+      font-size: 2rem;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    .stats-title {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 5rem;
+      letter-spacing: 3px;
+      margin-bottom: 60px;
+      text-align: center;
+    }
+
+    /* Enterprise Apps Slide */
+    .enterprise-slide {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    }
+
+    .enterprise-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .enterprise-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+      color: #1a1a1a;
+      padding: 15px 40px;
+      border-radius: 50px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(255,215,0,0.3);
+    }
+
+    .enterprise-title {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 5rem;
+      letter-spacing: 3px;
+      color: #ffd700;
+    }
+
+    .enterprise-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .enterprise-app-card {
+      background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(255,237,78,0.1) 100%);
+      border: 3px solid #ffd700;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .enterprise-app-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+      border-radius: 20px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .enterprise-app-card:hover::before {
+      opacity: 1;
+    }
+
+    .enterprise-app-logo {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 5px 15px rgba(255,215,0,0.3));
+    }
+
+    .enterprise-app-name {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #ffd700;
+      margin-bottom: 15px;
+    }
+
+    .enterprise-app-desc {
+      font-size: 1.3rem;
+      opacity: 0.9;
+      line-height: 1.4;
+      color: white;
+    }
+
+    /* What's New Slide */
+    .whats-new-slide {
+      background: linear-gradient(135deg, var(--sas-red) 0%, #800e1f 100%);
+    }
+
+    .whats-new-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .new-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+      color: white;
+      padding: 15px 40px;
+      border-radius: 50px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(255,68,68,0.4);
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 10px 30px rgba(255,68,68,0.4); }
+      50% { box-shadow: 0 15px 40px rgba(255,68,68,0.6); }
+    }
+
+    .whats-new-title {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 5rem;
+      letter-spacing: 3px;
+    }
+
+    .new-apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .new-app-card {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .new-app-card::after {
+      content: 'NEW';
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: 0 5px 15px rgba(255,68,68,0.4);
+    }
+
+    .new-app-logo {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 5px 15px rgba(255,255,255,0.3));
+    }
+
+    .new-app-name {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 15px;
+    }
+
+    .new-app-desc {
+      font-size: 1.3rem;
+      opacity: 0.9;
+      line-height: 1.4;
+      margin-bottom: 15px;
+    }
+
+    .new-app-date {
+      font-size: 1.1rem;
+      opacity: 0.7;
+      font-style: italic;
+    }
+
+    /* App Spotlight Slide */
+    .spotlight-slide {
+      background: linear-gradient(135deg, var(--sas-blue) 0%, var(--sas-red) 100%);
+    }
+
+    .spotlight-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      max-width: 1400px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .spotlight-visual {
+      text-align: center;
+    }
+
+    .spotlight-logo {
+      width: 300px;
+      height: 300px;
+      object-fit: contain;
+      margin-bottom: 30px;
+      filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .spotlight-badges {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .spotlight-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      padding: 10px 25px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .spotlight-info {
+      text-align: left;
+    }
+
+    .spotlight-category {
+      color: var(--sas-yellow);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .spotlight-name {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 5rem;
+      letter-spacing: 3px;
+      margin-bottom: 30px;
+      line-height: 1;
+    }
+
+    .spotlight-description {
+      font-size: 1.8rem;
+      line-height: 1.6;
+      margin-bottom: 30px;
+      opacity: 0.95;
+    }
+
+    .spotlight-features {
+      list-style: none;
+    }
+
+    .spotlight-features li {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .spotlight-features li::before {
+      content: '✓';
+      color: var(--sas-yellow);
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    /* Division Apps Slide */
+    .division-slide {
+      background: linear-gradient(135deg, var(--elementary) 0%, #1a6b94 100%);
+    }
+
+    .division-slide.middle {
+      background: linear-gradient(135deg, var(--middle-school) 0%, #70111f 100%);
+    }
+
+    .division-slide.high {
+      background: linear-gradient(135deg, var(--high-school) 0%, #0f1a35 100%);
+    }
+
+    .division-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .division-title {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 5rem;
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+    }
+
+    .division-subtitle {
+      font-size: 2rem;
+      opacity: 0.9;
+    }
+
+    .division-apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .division-app-card {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .division-app-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .division-app-logo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 15px;
+    }
+
+    .division-app-name {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .division-app-subject {
+      font-size: 1.2rem;
+      opacity: 0.8;
+      color: var(--sas-yellow);
+    }
+
+    /* Footer with progress indicator */
+    .slide-footer {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .progress-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .progress-dot.active {
+      background: var(--sas-yellow);
+      width: 40px;
+      border-radius: 6px;
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(255,255,255,0.3);
+      border-top-color: var(--sas-yellow);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 30px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 2rem;
+      font-weight: 600;
+    }
+
+    /* Error State */
+    .error {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      padding: 60px;
+    }
+
+    .error-icon {
+      font-size: 5rem;
+      margin-bottom: 30px;
+      color: #ff4444;
+    }
+
+    .error-title {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .error-message {
+      font-size: 1.5rem;
+      opacity: 0.9;
+      max-width: 700px;
+    }
+
+    /* Auto-refresh indicator */
+    .refresh-indicator {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      z-index: 30;
+    }
+
+    .refresh-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 1024px) {
+      .welcome-slide h1 { font-size: 4rem; }
+      .welcome-slide .subtitle { font-size: 2rem; }
+      .welcome-slide .tagline { font-size: 1.5rem; }
+      .stats-title, .enterprise-title, .whats-new-title, .division-title { font-size: 4rem; }
+      .spotlight-name { font-size: 4rem; }
+      .spotlight-content { grid-template-columns: 1fr; text-align: center; }
+      .spotlight-info { text-align: center; }
+      .stat-number { font-size: 5rem; }
+    }
+
+    @media (max-width: 768px) {
+      .slide { padding: 30px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .enterprise-grid, .new-apps-grid, .division-apps-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Auto-refresh indicator -->
+  <div class="refresh-indicator">
+    <div class="refresh-dot"></div>
+    <span>Live Updates</span>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading SAS Digital Toolkit...</div>
+  </div>
+
+  <!-- Error State -->
+  <div id="error" class="error" style="display: none;">
+    <div class="error-icon">⚠️</div>
+    <h2 class="error-title">Connection Error</h2>
+    <p class="error-message" id="error-message"></p>
+  </div>
+
+  <!-- Slideshow Container -->
+  <div id="slideshow" class="slideshow-container" style="display: none;">
+    <!-- Slides will be dynamically generated here -->
+  </div>
+
+  <!-- Progress Indicator -->
+  <div class="slide-footer" id="progress-indicator">
+    <!-- Progress dots will be dynamically generated here -->
+  </div>
+
+  <script>
+    // Configuration
+    const SLIDE_DURATION = 12000; // 12 seconds per slide
+    const REFRESH_INTERVAL = 300000; // Refresh data every 5 minutes
+    const NEW_APP_THRESHOLD_DAYS = 30; // Apps added in last 30 days are "new"
+    const MAX_APPS_PER_SLIDE = 6; // Maximum apps to show per slide
+
+    let currentSlideIndex = 0;
+    let slides = [];
+    let slideInterval;
+    let appData = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      lucide.createIcons();
+      loadData();
+
+      // Set up auto-refresh
+      setInterval(loadData, REFRESH_INTERVAL);
+    });
+
+    /**
+     * Load data from Google Apps Script backend
+     */
+    function loadData() {
+      console.log('Loading dashboard data...');
+
+      // Check if running in Google Apps Script environment
+      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
+        google.script.run
+          .withSuccessHandler(handleDataLoaded)
+          .withFailureHandler(handleError)
+          .getDashboardData();
+      } else {
+        // Local testing with mock data
+        console.log('Running in local test mode with mock data');
+        setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
+      }
+    }
+
+    /**
+     * Handle successful data load
+     */
+    function handleDataLoaded(jsonData) {
+      try {
+        const data = JSON.parse(jsonData);
+
+        if (data.error) {
+          handleError(data.error);
+          return;
+        }
+
+        appData = data;
+        console.log('Data loaded successfully:', data.stats);
+
+        generateSlides();
+        startSlideshow();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('slideshow').style.display = 'block';
+
+      } catch (error) {
+        console.error('Error parsing data:', error);
+        handleError('Failed to parse data: ' + error.message);
+      }
+    }
+
+    /**
+     * Handle data loading error
+     */
+    function handleError(error) {
+      console.error('Error loading data:', error);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'flex';
+      document.getElementById('error-message').textContent = error;
+    }
+
+    /**
+     * Generate all slides based on loaded data
+     */
+    function generateSlides() {
+      const slideshowContainer = document.getElementById('slideshow');
+      slideshowContainer.innerHTML = '';
+      slides = [];
+
+      // 1. Welcome Slide
+      slides.push(createWelcomeSlide());
+
+      // 2. Stats Overview Slide
+      slides.push(createStatsSlide());
+
+      // 3. Enterprise Apps Slide (if any)
+      const enterpriseApps = appData.wholeSchool.enterpriseApps || [];
+      if (enterpriseApps.length > 0) {
+        slides.push(createEnterpriseSlide(enterpriseApps));
+      }
+
+      // 4. What's New Slides (if any new apps)
+      const newApps = getAllNewApps();
+      if (newApps.length > 0) {
+        // Create multiple slides if there are many new apps
+        for (let i = 0; i < newApps.length; i += MAX_APPS_PER_SLIDE) {
+          const appsChunk = newApps.slice(i, i + MAX_APPS_PER_SLIDE);
+          slides.push(createWhatsNewSlide(appsChunk));
+        }
+      }
+
+      // 5. App Spotlight Slides (featured apps)
+      const featuredApps = getFeaturedApps(5);
+      featuredApps.forEach(app => {
+        slides.push(createSpotlightSlide(app));
+      });
+
+      // 6. Division Overview Slides
+      slides.push(createDivisionSlide('Elementary', appData.elementary, 'elementary'));
+      slides.push(createDivisionSlide('Middle School', appData.middleSchool, 'middle'));
+      slides.push(createDivisionSlide('High School', appData.highSchool, 'high'));
+
+      // Append all slides to container
+      slides.forEach((slide, index) => {
+        if (index === 0) slide.classList.add('active');
+        slideshowContainer.appendChild(slide);
+      });
+
+      // Create progress indicator
+      createProgressIndicator();
+    }
+
+    /**
+     * Create Welcome Slide
+     */
+    function createWelcomeSlide() {
+      const slide = document.createElement('div');
+      slide.className = 'slide welcome-slide';
+      slide.innerHTML = `
+        <div class="logo">
+          <i data-lucide="layout-grid" style="width: 120px; height: 120px;"></i>
+        </div>
+        <h1>SAS DIGITAL TOOLKIT</h1>
+        <p class="subtitle">Empowering Education Through Technology</p>
+        <p class="tagline">
+          Discover our curated collection of educational apps and digital tools<br>
+          designed to enhance teaching, learning, and collaboration
+        </p>
+      `;
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create Stats Overview Slide
+     */
+    function createStatsSlide() {
+      const slide = document.createElement('div');
+      slide.className = 'slide stats-slide';
+
+      const stats = appData.stats;
+
+      slide.innerHTML = `
+        <h2 class="stats-title">Our Digital Ecosystem</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalApps}</div>
+            <div class="stat-label">Total Applications</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${stats.wholeSchoolCount}</div>
+            <div class="stat-label">School-Wide Tools</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${stats.elementaryCount + stats.middleSchoolCount + stats.highSchoolCount}</div>
+            <div class="stat-label">Division-Specific Apps</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${(appData.wholeSchool.enterpriseApps || []).length}</div>
+            <div class="stat-label">Enterprise Core Tools</div>
+          </div>
+        </div>
+      `;
+
+      return slide;
+    }
+
+    /**
+     * Create Enterprise Apps Slide
+     */
+    function createEnterpriseSlide(apps) {
+      const slide = document.createElement('div');
+      slide.className = 'slide enterprise-slide';
+
+      const displayApps = apps.slice(0, MAX_APPS_PER_SLIDE);
+
+      const appsHTML = displayApps.map(app => `
+        <div class="enterprise-app-card">
+          ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="enterprise-app-logo" onerror="this.style.display='none'">` : ''}
+          <div class="enterprise-app-name">${app.product}</div>
+          <div class="enterprise-app-desc">${app.description || 'Official SAS core tool for enhanced productivity and collaboration'}</div>
+        </div>
+      `).join('');
+
+      slide.innerHTML = `
+        <div class="enterprise-header">
+          <div class="enterprise-badge">
+            <i data-lucide="award" style="width: 24px; height: 24px;"></i>
+            <span>OFFICIAL SAS CORE TOOLS</span>
+          </div>
+          <h2 class="enterprise-title">Enterprise Applications</h2>
+        </div>
+        <div class="enterprise-grid">
+          ${appsHTML}
+        </div>
+      `;
+
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create What's New Slide
+     */
+    function createWhatsNewSlide(apps) {
+      const slide = document.createElement('div');
+      slide.className = 'slide whats-new-slide';
+
+      const appsHTML = apps.map(app => `
+        <div class="new-app-card">
+          ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="new-app-logo" onerror="this.style.display='none'">` : ''}
+          <div class="new-app-name">${app.product}</div>
+          <div class="new-app-desc">${app.description || 'Recently added to our digital toolkit'}</div>
+          <div class="new-app-date">Added ${formatDate(app.dateAdded)}</div>
+        </div>
+      `).join('');
+
+      slide.innerHTML = `
+        <div class="whats-new-header">
+          <div class="new-badge">
+            <i data-lucide="sparkles" style="width: 24px; height: 24px;"></i>
+            <span>RECENTLY ADDED</span>
+          </div>
+          <h2 class="whats-new-title">What's New</h2>
+        </div>
+        <div class="new-apps-grid">
+          ${appsHTML}
+        </div>
+      `;
+
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create App Spotlight Slide
+     */
+    function createSpotlightSlide(app) {
+      const slide = document.createElement('div');
+      slide.className = 'slide spotlight-slide';
+
+      const features = [];
+      if (app.ssoEnabled) features.push('Single Sign-On Available');
+      if (app.mobileApp && app.mobileApp.toLowerCase() !== 'no') features.push('Mobile App Available');
+      if (app.gradeLevels) features.push(`For ${app.gradeLevels}`);
+      if (app.audience) features.push(`Audience: ${app.audience}`);
+
+      const featuresHTML = features.length > 0 ? `
+        <ul class="spotlight-features">
+          ${features.map(f => `<li>${f}</li>`).join('')}
+        </ul>
+      ` : '';
+
+      const badges = [];
+      if (app.ssoEnabled) badges.push(`<div class="spotlight-badge"><i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> SSO</div>`);
+      if (app.mobileApp && app.mobileApp.toLowerCase() !== 'no') badges.push(`<div class="spotlight-badge"><i data-lucide="smartphone" style="width: 16px; height: 16px;"></i> Mobile</div>`);
+
+      slide.innerHTML = `
+        <div class="spotlight-content">
+          <div class="spotlight-visual">
+            ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="spotlight-logo" onerror="this.style.display='none'">` : `<i data-lucide="star" style="width: 300px; height: 300px;" class="spotlight-logo"></i>`}
+            <div class="spotlight-badges">
+              ${badges.join('')}
+            </div>
+          </div>
+          <div class="spotlight-info">
+            <div class="spotlight-category">${app.category || app.subject || 'Featured App'}</div>
+            <h2 class="spotlight-name">${app.product}</h2>
+            <p class="spotlight-description">${app.description || 'A powerful tool for teaching and learning'}</p>
+            ${featuresHTML}
+          </div>
+        </div>
+      `;
+
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create Division Overview Slide
+     */
+    function createDivisionSlide(divisionName, divisionData, divisionClass) {
+      const slide = document.createElement('div');
+      slide.className = `slide division-slide ${divisionClass}`;
+
+      // Get a sample of apps from this division
+      const allApps = divisionData.apps || [];
+      const displayApps = allApps.slice(0, MAX_APPS_PER_SLIDE);
+
+      const appsHTML = displayApps.map(app => `
+        <div class="division-app-card">
+          ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="division-app-logo" onerror="this.style.display='none'">` : ''}
+          <div class="division-app-name">${app.product}</div>
+          <div class="division-app-subject">${app.subject || app.category}</div>
+        </div>
+      `).join('');
+
+      slide.innerHTML = `
+        <div class="division-header">
+          <h2 class="division-title">${divisionName}</h2>
+          <p class="division-subtitle">${allApps.length} Applications Available</p>
+        </div>
+        <div class="division-apps-grid">
+          ${appsHTML}
+        </div>
+      `;
+
+      return slide;
+    }
+
+    /**
+     * Create progress indicator dots
+     */
+    function createProgressIndicator() {
+      const indicator = document.getElementById('progress-indicator');
+      indicator.innerHTML = '';
+
+      slides.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (index === 0) dot.classList.add('active');
+        indicator.appendChild(dot);
+      });
+    }
+
+    /**
+     * Start the slideshow
+     */
+    function startSlideshow() {
+      if (slideInterval) clearInterval(slideInterval);
+
+      slideInterval = setInterval(() => {
+        nextSlide();
+      }, SLIDE_DURATION);
+    }
+
+    /**
+     * Go to next slide
+     */
+    function nextSlide() {
+      const currentSlide = slides[currentSlideIndex];
+      currentSlide.classList.remove('active');
+
+      currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+
+      const nextSlide = slides[currentSlideIndex];
+      nextSlide.classList.add('active');
+
+      updateProgressIndicator();
+    }
+
+    /**
+     * Update progress indicator
+     */
+    function updateProgressIndicator() {
+      const dots = document.querySelectorAll('.progress-dot');
+      dots.forEach((dot, index) => {
+        if (index === currentSlideIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    }
+
+    /**
+     * Get all new apps (added within threshold)
+     */
+    function getAllNewApps() {
+      const allApps = [
+        ...(appData.wholeSchool.apps || []),
+        ...(appData.elementary.apps || []),
+        ...(appData.middleSchool.apps || []),
+        ...(appData.highSchool.apps || [])
+      ];
+
+      // Remove duplicates
+      const uniqueApps = Array.from(new Map(allApps.map(app => [app.product, app])).values());
+
+      return uniqueApps.filter(app => isWithinDays(app.dateAdded, NEW_APP_THRESHOLD_DAYS));
+    }
+
+    /**
+     * Get featured apps for spotlight
+     */
+    function getFeaturedApps(count) {
+      // Prioritize: Enterprise apps > Apps with logos > Apps with descriptions
+      const enterpriseApps = appData.wholeSchool.enterpriseApps || [];
+      const everyoneApps = appData.wholeSchool.everyoneApps || [];
+
+      const featured = [...enterpriseApps, ...everyoneApps]
+        .filter(app => app.description && app.description.length > 10)
+        .sort((a, b) => {
+          // Prioritize apps with logos
+          if (a.logoUrl && !b.logoUrl) return -1;
+          if (!a.logoUrl && b.logoUrl) return 1;
+          // Then by description length
+          return (b.description?.length || 0) - (a.description?.length || 0);
+        })
+        .slice(0, count);
+
+      return featured;
+    }
+
+    /**
+     * Check if date is within specified days
+     */
+    function isWithinDays(dateString, days) {
+      if (!dateString) return false;
+
+      try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= days;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
+     * Format date for display
+     */
+    function formatDate(dateString) {
+      if (!dateString) return 'Recently';
+
+      try {
+        const date = new Date(dateString);
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+      } catch (e) {
+        return 'Recently';
+      }
+    }
+
+    /**
+     * Mock data for local testing
+     */
+    function getMockData() {
+      return {
+        wholeSchool: {
+          apps: [
+            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: '', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' }
+          ],
+          enterpriseApps: [
+            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: '', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' }
+          ],
+          everyoneApps: []
+        },
+        elementary: {
+          apps: [
+            { product: 'Seesaw', division: 'Elementary', department: 'Elementary', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Digital portfolio and parent communication', logoUrl: '', dateAdded: new Date().toISOString(), ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students,Parents', gradeLevels: 'K-5' }
+          ]
+        },
+        middleSchool: {
+          apps: [
+            { product: 'Kahoot!', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Game-based learning platform', logoUrl: '', dateAdded: '2024-10-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Engagement', audience: 'Teachers,Students', gradeLevels: '6-8' }
+          ]
+        },
+        highSchool: {
+          apps: [
+            { product: 'Turnitin', division: 'High', department: 'High School', subject: 'English', licenseType: 'School', enterprise: false, description: 'Plagiarism detection and feedback tool', logoUrl: '', dateAdded: '2024-09-01', ssoEnabled: true, mobileApp: 'No', category: 'Academic Integrity', audience: 'Teachers,Students', gradeLevels: '9-12' }
+          ]
+        },
+        stats: {
+          totalApps: 5,
+          wholeSchoolCount: 2,
+          elementaryCount: 1,
+          middleSchoolCount: 1,
+          highSchoolCount: 1
+        }
+      };
+    }
+  </script>
+</body>
+</html>
