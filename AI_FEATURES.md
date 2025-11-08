@@ -2,7 +2,7 @@
 
 ## Overview
 
-The SAS Digital Toolkit Dashboard now includes **AI-powered search and recommendations** using Google's Gemini API. This allows users to ask natural language questions and receive intelligent app recommendations based on their specific needs.
+The SAS Digital Toolkit Dashboard now includes **AI-powered search and recommendations** using both **Google's Gemini API** and **Anthropic's Claude API**. This allows users to ask natural language questions and receive intelligent app recommendations based on their specific needs, with the flexibility to choose their preferred AI provider.
 
 ---
 
@@ -35,11 +35,16 @@ The SAS Digital Toolkit Dashboard now includes **AI-powered search and recommend
 **Location:** Opens bottom-right when chat bubble is clicked
 
 **Components:**
+- **AI Provider Selector** - Choose between Gemini or Claude
 - **Welcome message** with example queries
 - **Suggestion chips** for quick queries
 - **Chat interface** with user and AI messages
 - **Text input** with auto-resize
 - **Loading animation** while AI processes queries
+
+**AI Provider Options:**
+- **Gemini** (Google) - Default, fast responses
+- **Claude** (Anthropic) - Alternative AI provider
 
 **Suggestion chips:**
 - "What tools support SSO?"
@@ -50,13 +55,25 @@ The SAS Digital Toolkit Dashboard now includes **AI-powered search and recommend
 
 ## Setup Instructions
 
-### Step 1: Get Gemini API Key
+### Step 1: Get API Keys
+
+#### Option A: Gemini API Key (Google)
 
 1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Sign in with your Google account
 3. Click **"Get API Key"**
 4. Create a new API key or use an existing one
 5. Copy the API key
+
+#### Option B: Claude API Key (Anthropic)
+
+1. Go to [Anthropic Console](https://console.anthropic.com/)
+2. Sign in or create an account
+3. Navigate to **API Keys** section
+4. Click **"Create Key"**
+5. Copy the API key
+
+**Note:** You can configure one or both providers. Users will only be able to select providers that have API keys configured.
 
 ### Step 2: Configure Script Properties
 
@@ -71,9 +88,12 @@ The SAS Digital Toolkit Dashboard now includes **AI-powered search and recommend
 
 4. Click **"Add script property"**
 
-5. Add the following property:
+5. Add one or both of the following properties:
    - **Property:** `GEMINI_API_KEY`
-   - **Value:** `YOUR_API_KEY_HERE` (paste your Gemini API key)
+   - **Value:** `YOUR_GEMINI_API_KEY_HERE`
+
+   - **Property:** `CLAUDE_API_KEY`
+   - **Value:** `YOUR_CLAUDE_API_KEY_HERE`
 
 6. Click **"Save script properties"**
 
@@ -91,26 +111,41 @@ Or commit to GitHub to trigger auto-deployment via GitHub Actions.
 
 ## Technical Architecture
 
-### Backend ([Code.js:22-119](Code.js#L22-L119))
+### Backend ([Code.js:22-196](Code.js#L22-L196))
 
-**Function: `queryAI(userQuery, allAppsData)`**
+**Function: `queryAI(userQuery, allAppsData, provider)`**
 
 **Process:**
-1. Receives user's natural language query
+1. Receives user's natural language query and selected AI provider
 2. Parses all apps data from dashboard
 3. Creates simplified context (reduces token usage)
-4. Constructs prompt for Gemini with:
+4. Constructs prompt with:
    - System role: "Educational technology assistant for SAS"
    - Apps database context
    - User question
    - Instructions to recommend 3-5 relevant apps
-5. Calls Gemini API (`gemini-pro` model)
-6. Returns formatted response
+5. Routes to appropriate AI provider:
+   - **Gemini**: Calls `queryGeminiAPI()` - uses `gemini-pro` model
+   - **Claude**: Calls `queryClaudeAPI()` - uses `claude-3-5-sonnet-20241022` model
+6. Returns formatted response with provider identifier
+
+**Gemini Implementation ([Code.js:72-132](Code.js#L72-L132)):**
+- Model: `gemini-pro`
+- Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`
+- Temperature: 0.7
+- Max tokens: 1024
+
+**Claude Implementation ([Code.js:134-196](Code.js#L134-L196)):**
+- Model: `claude-3-5-sonnet-20241022`
+- Endpoint: `https://api.anthropic.com/v1/messages`
+- Max tokens: 1024
+- API Version: 2023-06-01
 
 **Error handling:**
-- Missing API key check
+- Missing API key check for each provider
 - HTTP error responses
 - Empty/invalid responses
+- Provider-specific error messages
 - Logs all errors to Apps Script console
 
 ### Frontend ([index.html:2134-2349](index.html#L2134-L2349))
@@ -125,14 +160,17 @@ Or commit to GitHub to trigger auto-deployment via GitHub Actions.
 
 **Data Flow:**
 ```
-User Input → sendAIMessage() → google.script.run.queryAI()
-→ Backend API Call → Gemini Response → handleAIResponse()
-→ addMessageToChat() → Display in UI
+User Selects Provider (Gemini/Claude) → User Input → sendAIMessage()
+→ google.script.run.queryAI(message, appsData, selectedProvider)
+→ Backend Routes to queryGeminiAPI() OR queryClaudeAPI()
+→ AI Response → handleAIResponse() → addMessageToChat() → Display in UI
 ```
 
 ---
 
-## Gemini API Details
+## AI Provider Details
+
+### Gemini API (Google)
 
 **Model:** `gemini-pro`
 **Endpoint:** `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`
@@ -147,6 +185,24 @@ User Input → sendAIMessage() → google.script.run.queryAI()
 - Free for moderate usage
 
 [View Gemini Pricing](https://ai.google.dev/pricing)
+
+### Claude API (Anthropic)
+
+**Model:** `claude-3-5-sonnet-20241022`
+**Endpoint:** `https://api.anthropic.com/v1/messages`
+
+**Configuration:**
+- **Max Tokens:** 1024 (keeps responses concise)
+- **API Version:** 2023-06-01
+
+**Cost:** Claude API pricing (as of 2025):
+- Input: $3 per million tokens
+- Output: $15 per million tokens
+- Estimated cost per query: ~$0.01-0.02
+
+[View Claude Pricing](https://www.anthropic.com/api)
+
+**Note:** Claude generally provides more detailed reasoning and structured responses compared to Gemini.
 
 ---
 
@@ -163,12 +219,14 @@ User Input → sendAIMessage() → google.script.run.queryAI()
 ### Chat Bubble Workflow
 1. User clicks floating **yellow bot icon**
 2. Chat window slides up from bottom-right
-3. Welcome message explains capabilities
-4. User can:
+3. **Select AI Provider** (Gemini or Claude) using toggle buttons in header
+4. Welcome message explains capabilities
+5. User can:
    - Type custom questions
    - Click suggestion chips for quick queries
    - View conversation history
-5. AI responds with:
+   - Switch between AI providers mid-conversation
+6. AI responds with:
    - App recommendations
    - Reasoning for each suggestion
    - Feature highlights (SSO, Mobile, Grade Levels)
@@ -217,20 +275,37 @@ generationConfig: {
 
 ### "API key not configured" Error
 
-**Solution:** Set `GEMINI_API_KEY` in Script Properties (see Setup Step 2)
+**For Gemini:** Set `GEMINI_API_KEY` in Script Properties (see Setup Step 2)
+**For Claude:** Set `CLAUDE_API_KEY` in Script Properties (see Setup Step 2)
 
-### "AI service temporarily unavailable"
+### "Gemini AI temporarily unavailable"
 
 **Possible causes:**
-- Invalid API key
-- Exceeded API rate limits (60/min)
+- Invalid Gemini API key
+- Exceeded API rate limits (60/min, 1500/day)
 - Network connectivity issues
 - Gemini API outage
 
 **Check:**
-1. Verify API key is valid
+1. Verify `GEMINI_API_KEY` is valid in Script Properties
 2. Check [Google Cloud Status Dashboard](https://status.cloud.google.com/)
 3. Review Apps Script logs: `npm run logs`
+4. Try switching to Claude provider
+
+### "Claude AI temporarily unavailable"
+
+**Possible causes:**
+- Invalid Claude API key
+- Exceeded Claude API rate limits
+- Insufficient Claude API credits
+- Network connectivity issues
+- Anthropic API outage
+
+**Check:**
+1. Verify `CLAUDE_API_KEY` is valid in Script Properties
+2. Check Claude account credits at [Anthropic Console](https://console.anthropic.com/)
+3. Review Apps Script logs: `npm run logs`
+4. Try switching to Gemini provider
 
 ### Chat window not opening
 

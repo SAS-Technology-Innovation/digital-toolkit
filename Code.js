@@ -17,18 +17,12 @@ function doGet() {
 }
 
 /**
- * Processes AI query using Gemini API and returns intelligent app recommendations
+ * Processes AI query using selected AI provider (Gemini or Claude)
  */
-function queryAI(userQuery, allAppsData) {
+function queryAI(userQuery, allAppsData, provider) {
   try {
     const scriptProperties = PropertiesService.getScriptProperties();
-    const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
-
-    if (!GEMINI_API_KEY) {
-      return JSON.stringify({
-        error: 'Gemini API key not configured. Please set GEMINI_API_KEY in Script Properties.'
-      });
-    }
+    provider = provider || 'gemini'; // Default to Gemini
 
     // Parse apps data
     const apps = JSON.parse(allAppsData);
@@ -46,10 +40,10 @@ function queryAI(userQuery, allAppsData) {
       mobile: app.mobileApp
     }));
 
-    // Construct the prompt for Gemini
-    const prompt = `You are an educational technology assistant for Singapore American School. Your job is to help teachers, staff, students, and parents find the right digital tools from our toolkit.
+    // Construct the prompt
+    const systemPrompt = `You are an educational technology assistant for Singapore American School. Your job is to help teachers, staff, students, and parents find the right digital tools from our toolkit.`;
 
-Available Apps Database:
+    const userPrompt = `Available Apps Database:
 ${JSON.stringify(appContext, null, 2)}
 
 User Question: "${userQuery}"
@@ -61,59 +55,142 @@ Please analyze the user's question and recommend 3-5 most relevant apps from the
 
 Format your response as a conversational, friendly answer. Be concise but helpful.`;
 
-    // Call Gemini API
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
-
-    const payload = {
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1024,
-      }
-    };
-
-    const options = {
-      method: 'post',
-      contentType: 'application/json',
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    };
-
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-    const responseText = response.getContentText();
-
-    if (responseCode !== 200) {
-      Logger.log('Gemini API Error: ' + responseText);
-      return JSON.stringify({
-        error: 'AI service temporarily unavailable. Please try again later.'
-      });
-    }
-
-    const result = JSON.parse(responseText);
-
-    if (result.candidates && result.candidates.length > 0) {
-      const aiResponse = result.candidates[0].content.parts[0].text;
-
-      return JSON.stringify({
-        success: true,
-        response: aiResponse,
-        query: userQuery
-      });
+    if (provider.toLowerCase() === 'claude') {
+      return queryClaudeAPI(systemPrompt, userPrompt, scriptProperties, userQuery);
     } else {
-      return JSON.stringify({
-        error: 'No response from AI. Please rephrase your question.'
-      });
+      return queryGeminiAPI(systemPrompt, userPrompt, scriptProperties, userQuery);
     }
 
   } catch (error) {
     Logger.log('Error in queryAI: ' + error.message);
     return JSON.stringify({
       error: 'Failed to process AI query: ' + error.message
+    });
+  }
+}
+
+/**
+ * Query Gemini API
+ */
+function queryGeminiAPI(systemPrompt, userPrompt, scriptProperties, userQuery) {
+  const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
+
+  if (!GEMINI_API_KEY) {
+    return JSON.stringify({
+      error: 'Gemini API key not configured. Please set GEMINI_API_KEY in Script Properties.'
+    });
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+
+  const payload = {
+    contents: [{
+      parts: [{
+        text: systemPrompt + '\n\n' + userPrompt
+      }]
+    }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 1024,
+    }
+  };
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const responseCode = response.getResponseCode();
+  const responseText = response.getContentText();
+
+  if (responseCode !== 200) {
+    Logger.log('Gemini API Error: ' + responseText);
+    return JSON.stringify({
+      error: 'Gemini AI temporarily unavailable. Try Claude or try again later.'
+    });
+  }
+
+  const result = JSON.parse(responseText);
+
+  if (result.candidates && result.candidates.length > 0) {
+    const aiResponse = result.candidates[0].content.parts[0].text;
+
+    return JSON.stringify({
+      success: true,
+      response: aiResponse,
+      query: userQuery,
+      provider: 'gemini'
+    });
+  } else {
+    return JSON.stringify({
+      error: 'No response from Gemini. Please rephrase your question.'
+    });
+  }
+}
+
+/**
+ * Query Claude API (Anthropic)
+ */
+function queryClaudeAPI(systemPrompt, userPrompt, scriptProperties, userQuery) {
+  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
+
+  if (!CLAUDE_API_KEY) {
+    return JSON.stringify({
+      error: 'Claude API key not configured. Please set CLAUDE_API_KEY in Script Properties.'
+    });
+  }
+
+  const url = 'https://api.anthropic.com/v1/messages';
+
+  const payload = {
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: [{
+      role: 'user',
+      content: userPrompt
+    }]
+  };
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-api-key': CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const responseCode = response.getResponseCode();
+  const responseText = response.getContentText();
+
+  if (responseCode !== 200) {
+    Logger.log('Claude API Error: ' + responseText);
+    return JSON.stringify({
+      error: 'Claude AI temporarily unavailable. Try Gemini or try again later.'
+    });
+  }
+
+  const result = JSON.parse(responseText);
+
+  if (result.content && result.content.length > 0) {
+    const aiResponse = result.content[0].text;
+
+    return JSON.stringify({
+      success: true,
+      response: aiResponse,
+      query: userQuery,
+      provider: 'claude'
+    });
+  } else {
+    return JSON.stringify({
+      error: 'No response from Claude. Please rephrase your question.'
     });
   }
 }
