@@ -21,7 +21,6 @@ function doGet() {
  */
 function queryAI(userQuery, allAppsData, provider) {
   try {
-    const scriptProperties = PropertiesService.getScriptProperties();
     provider = provider || 'gemini'; // Default to Gemini
 
     // Parse apps data
@@ -56,9 +55,9 @@ Please analyze the user's question and recommend 3-5 most relevant apps from the
 Format your response as a conversational, friendly answer. Be concise but helpful.`;
 
     if (provider.toLowerCase() === 'claude') {
-      return queryClaudeAPI(systemPrompt, userPrompt, scriptProperties, userQuery);
+      return queryClaudeAPI(systemPrompt, userPrompt, userQuery);
     } else {
-      return queryGeminiAPI(systemPrompt, userPrompt, scriptProperties, userQuery);
+      return queryGeminiAPI(systemPrompt, userPrompt, userQuery);
     }
 
   } catch (error) {
@@ -72,7 +71,8 @@ Format your response as a conversational, friendly answer. Be concise but helpfu
 /**
  * Query Gemini API
  */
-function queryGeminiAPI(systemPrompt, userPrompt, scriptProperties, userQuery) {
+function queryGeminiAPI(systemPrompt, userPrompt, userQuery) {
+  const scriptProperties = PropertiesService.getScriptProperties();
   const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
 
   if (!GEMINI_API_KEY) {
@@ -134,7 +134,8 @@ function queryGeminiAPI(systemPrompt, userPrompt, scriptProperties, userQuery) {
 /**
  * Query Claude API (Anthropic)
  */
-function queryClaudeAPI(systemPrompt, userPrompt, scriptProperties, userQuery) {
+function queryClaudeAPI(systemPrompt, userPrompt, userQuery) {
+  const scriptProperties = PropertiesService.getScriptProperties();
   const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
 
   if (!CLAUDE_API_KEY) {
