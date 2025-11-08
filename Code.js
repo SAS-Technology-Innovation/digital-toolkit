@@ -9,8 +9,18 @@
 
 /**
  * Serves the HTML content of the web app.
+ * Use ?page=signage to display the digital signage slideshow
  */
-function doGet() {
+function doGet(e) {
+  const page = e.parameter.page || 'index';
+
+  if (page === 'signage') {
+    return HtmlService.createTemplateFromFile('signage').evaluate()
+      .setTitle('SAS Digital Toolkit - Signage')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
+  // Default to main dashboard
   return HtmlService.createTemplateFromFile('index').evaluate()
     .setTitle('SAS Apps Dashboard')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
