@@ -17,6 +17,108 @@ function doGet() {
 }
 
 /**
+ * Processes AI query using Gemini API and returns intelligent app recommendations
+ */
+function queryAI(userQuery, allAppsData) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
+
+    if (!GEMINI_API_KEY) {
+      return JSON.stringify({
+        error: 'Gemini API key not configured. Please set GEMINI_API_KEY in Script Properties.'
+      });
+    }
+
+    // Parse apps data
+    const apps = JSON.parse(allAppsData);
+
+    // Create a simplified app list for context (to reduce token usage)
+    const appContext = apps.map(app => ({
+      name: app.product,
+      description: app.description || '',
+      category: app.category,
+      subject: app.subject,
+      division: app.division,
+      audience: app.audience,
+      gradeLevels: app.gradeLevels,
+      sso: app.ssoEnabled,
+      mobile: app.mobileApp
+    }));
+
+    // Construct the prompt for Gemini
+    const prompt = `You are an educational technology assistant for Singapore American School. Your job is to help teachers, staff, students, and parents find the right digital tools from our toolkit.
+
+Available Apps Database:
+${JSON.stringify(appContext, null, 2)}
+
+User Question: "${userQuery}"
+
+Please analyze the user's question and recommend 3-5 most relevant apps from the database above. For each recommendation:
+1. Explain WHY it matches their needs
+2. Highlight key features (SSO, Mobile, Grade Levels)
+3. Mention who it's best suited for (audience)
+
+Format your response as a conversational, friendly answer. Be concise but helpful.`;
+
+    // Call Gemini API
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+
+    const payload = {
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+      }
+    };
+
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+
+    if (responseCode !== 200) {
+      Logger.log('Gemini API Error: ' + responseText);
+      return JSON.stringify({
+        error: 'AI service temporarily unavailable. Please try again later.'
+      });
+    }
+
+    const result = JSON.parse(responseText);
+
+    if (result.candidates && result.candidates.length > 0) {
+      const aiResponse = result.candidates[0].content.parts[0].text;
+
+      return JSON.stringify({
+        success: true,
+        response: aiResponse,
+        query: userQuery
+      });
+    } else {
+      return JSON.stringify({
+        error: 'No response from AI. Please rephrase your question.'
+      });
+    }
+
+  } catch (error) {
+    Logger.log('Error in queryAI: ' + error.message);
+    return JSON.stringify({
+      error: 'Failed to process AI query: ' + error.message
+    });
+  }
+}
+
+/**
  * Reads data from the Google Sheet, processes it for the dashboard, and returns it as a JSON string.
  */
 function getDashboardData() {
