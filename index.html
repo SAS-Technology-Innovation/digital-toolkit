@@ -1164,6 +1164,37 @@
       height: 20px;
     }
 
+    .ai-provider-selector {
+      display: flex;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      padding: 4px;
+    }
+
+    .ai-provider-btn {
+      padding: 4px 12px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .ai-provider-btn:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .ai-provider-btn.active {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+
     .ai-chat-close {
       background: rgba(255, 255, 255, 0.2);
       border: none;
@@ -1604,6 +1635,10 @@
         <i data-lucide="sparkles"></i>
         AI Assistant
       </div>
+      <div class="ai-provider-selector">
+        <button class="ai-provider-btn active" data-provider="gemini">Gemini</button>
+        <button class="ai-provider-btn" data-provider="claude">Claude</button>
+      </div>
       <button class="ai-chat-close" id="ai-chat-close" title="Close">
         <i data-lucide="x"></i>
       </button>
@@ -1649,6 +1684,7 @@
     // Global variable to store all apps data for AI queries
     let globalAppsData = [];
     let aiModeEnabled = false;
+    let selectedAIProvider = 'gemini'; // Default to Gemini
 
     document.addEventListener('DOMContentLoaded', () => {
       // Always use google.script.run to get data from the server (Code.gs)
@@ -2142,6 +2178,16 @@
       const aiChatInput = document.getElementById('ai-chat-input');
       const aiChatSend = document.getElementById('ai-chat-send');
       const aiSuggestions = document.querySelectorAll('.ai-suggestion-chip');
+      const providerBtns = document.querySelectorAll('.ai-provider-btn');
+
+      // AI Provider selection
+      providerBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          providerBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selectedAIProvider = btn.dataset.provider;
+        });
+      });
 
       // AI Toggle in search bar
       if (aiToggle) {
@@ -2235,6 +2281,13 @@
 
       if (!message) return;
 
+      // Check if apps data is loaded
+      if (!globalAppsData || globalAppsData.length === 0) {
+        addMessageToChat('user', message);
+        addMessageToChat('assistant', 'Please wait for the dashboard to finish loading before using AI search.');
+        return;
+      }
+
       // Add user message to chat
       addMessageToChat('user', message);
 
@@ -2250,7 +2303,7 @@
       google.script.run
         .withSuccessHandler(handleAIResponse)
         .withFailureHandler(handleAIError)
-        .queryAI(message, JSON.stringify(globalAppsData));
+        .queryAI(message, JSON.stringify(globalAppsData), selectedAIProvider);
     }
 
     function addMessageToChat(role, content) {
