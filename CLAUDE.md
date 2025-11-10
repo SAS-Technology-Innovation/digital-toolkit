@@ -93,15 +93,26 @@ function getDashboardData() {
 ### Frontend Pattern (index.html)
 ```javascript
 // Environment detection for local testing vs deployed
-if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
-  google.script.run
-    .withSuccessHandler(renderDashboard)
-    .withFailureHandler(showError)
-    .getDashboardData();
-} else {
-  renderDashboard(JSON.stringify(mockData)); // Local testing
+function loadData() {
+  if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
+    // Production: Use google.script.run to get data from the server
+    google.script.run
+      .withSuccessHandler(renderDashboard)
+      .withFailureHandler(showError)
+      .getDashboardData();
+  } else {
+    // Local testing: Use mock data
+    console.log('Running in local test mode with mock data');
+    setTimeout(() => renderDashboard(JSON.stringify(getMockData())), 500);
+  }
 }
 ```
+
+**Mock Data for Local Testing:**
+- **index.html** [index.html:2490-2567](index.html#L2490-L2567): `getMockData()` function with 11 sample apps across all divisions
+- **signage.html** [signage.html:1130-1166](signage.html#L1130-L1166): `getMockData()` function with simplified sample data
+- Both mock data functions return the same structure as `getDashboardData()` backend function
+- Local testing automatically works when opening HTML files directly in browser (outside Apps Script environment)
 
 ### Expected Google Sheets Structure
 **Required columns in exact order** (case-sensitive):
@@ -151,8 +162,13 @@ npm run pull      # Pull latest from cloud
 ```
 
 ### Testing Strategy
-- **Frontend only**: Open `index.html` locally (uses mock data)
-- **Full integration**: Deploy to Apps Script and test with real Google Sheets
+- **Frontend only**: Open `index.html` or `signage.html` locally in browser (automatically uses mock data)
+  - Environment detection checks for `google.script` object
+  - If not present, uses `getMockData()` function
+  - Console will show: "Running in local test mode with mock data"
+  - All UI features work (search, tabs, modals, cards, "What's New" section)
+  - AI features disabled in local mode (requires backend API keys)
+- **Full integration**: Deploy to Apps Script and test with real Google Sheets data
 
 ## 🔧 Configuration
 
@@ -189,198 +205,112 @@ Auto-deploys on push to `main`. Requires three repository secrets:
 - **GitHub Actions "No credentials found"**: `CLASP_CREDENTIALS` secret must contain complete, valid JSON
 - **OAuth scope error**: Ensure `appsscript.json` includes `spreadsheets.readonly` scope
 
-## 🎨 Design Patterns & New Features
+## 🎨 UI Architecture & Key Patterns
 
 ### Three-Section Layout (per tab)
+
 1. **Enterprise Apps** (Whole School only): Premium gold styling, "Official SAS Core Tools"
 2. **Apps Everyone Can Use**: Blue/standard styling, site/school licenses
 3. **Department Apps**: Grouped by department with icons and counts
 
-### UI Components (index.html)
-- **Search Bar**: Global search across all fields (sticky, filters in real-time)
-- **Enterprise Section**: Premium gold gradient with border, award icon
-- **Tab Navigation**: Division-based tabs with color coding
-- **App Cards**: Enhanced with descriptions, audience tags, SSO/Mobile badges
-- **Audience Tags**: Color-coded (Staff=purple, Teachers=green, Students=yellow, Parents=pink)
-- **Meta Badges**: SSO (green), Mobile (blue) indicators
-- **Department Grouping**: Collapsible cards with app counts and icons
-- **Responsive Grid**: CSS Grid with `repeat(auto-fit, minmax(280px, 1fr))`
+### Critical Frontend Functions
 
-### Search Functionality
-- Searches across: product name, category, subject, department, audience
-- Real-time filtering (hides non-matching cards)
-- Clear button to reset search
-- Hides empty sections when searching
+- **`createAppCard(app)`** [index.html:1221-1281](index.html#L1221-L1281): Generates app cards with logos, badges, and data attributes
+- **`renderDivisionContent(division, apps)`** [index.html:1320-1335](index.html#L1320-L1335): Renders division-specific content including "What's New"
+- **`showAppDetails(app)`** [index.html:1403-1557](index.html#L1403-L1557): Modal popup for detailed app information
+- **`setupSearch()`** [index.html:1404-1453](index.html#L1404-L1453): Real-time search across product, category, subject, department, audience
+- **`isWithinDays(dateString, days)`** [index.html:1284-1295](index.html#L1284-L1295): Date helper for "NEW" badges (30-day threshold)
+- **`getDepartmentIcon(department)`**: Auto-assigns icons based on department keywords (Technology→Monitor, Math→Calculator, etc.)
 
-### Icon Assignment Logic
-Department icons auto-assigned based on keywords:
-- Technology/IT → Monitor
-- English/Language → Book
-- Math → Calculator
-- Science → Flask
-- Arts/Music → Palette
-- PE/Athletics → Activity
+### App Request Process Section
 
-## 🚀 Phase 3 Features (Recently Implemented)
+A dedicated "Request a New App" section appears at the bottom of the Whole School tab [index.html:1840-1919](index.html#L1840-L1919):
 
-### Enhanced App Cards
-**Visual Enhancements:**
-- **App Logos**: Displays `logo_url` field with error handling (60x60px, top of card)
-- **Grade Level Badges**: Shows `grade_levels` with graduation cap icon (yellow badge)
-- **"NEW" Badge**: Animated badge for apps added in last 30 days (red gradient, top-right corner)
-- **Description Display**: Shows app descriptions from `description` field
-- **Action Buttons**: Tutorial link button (if `tutorial_link` exists) and Details button
+**Layout:**
+- Two-column responsive layout (content on left, flowchart image on right)
+- Image sticky positioning for easy reference while scrolling
+- Mobile-responsive: image appears above content on small screens
 
-**Code Location:** [index.html:1221-1281](index.html#L1221-L1281) - `createAppCard()` function
+**Three-Step Process:**
+1. **Search the Toolkit** - Ensure similar tool doesn't exist
+2. **Consult Your Team** - Talk to department lead or PLC coach
+3. **Submit App Request** - Formal request with required information
 
-### App Detail Modal
-Interactive modal popup with comprehensive app information:
-- **Trigger**: "Details" button on app cards
-- **Content**: Full app details, description, license info, features, renewal date
-- **Actions**: Visit Website, View Tutorial buttons
-- **UX**: Click outside or press ESC to close, prevents body scroll
+**Required Information (6 Questions):**
+- Problem/opportunity being addressed
+- Grade levels, subjects, and purpose
+- Success measurement criteria
+- Alternatives considered
+- Training/support needs
+- Cost, license count, and users
 
-**Code Location:** [index.html:1403-1557](index.html#L1403-L1557) - `showAppDetails()` and `closeModal()` functions
+**Visual Aid:**
+- Process flowchart image displayed on the right side
+- Provides visual reference for the app request workflow
+- Image source: Google Drive (converted to direct embed URL)
 
-**CSS Styles:** [index.html:741-960](index.html#L741-L960)
+### SAS Branding
 
-### What's New Section
-Dynamic section showing recently added apps:
-- **Display Logic**: Only shows if apps added in last 30 days exist
-- **Placement**: Top of each division tab (before Enterprise/Everyone sections)
-- **Styling**: SAS Red themed container with gradient border
-- **Date Check**: Uses `isWithinDays()` helper to filter by `date_added` field
+- **CSS Variables** [index.html:12-30](index.html#L12-L30): SAS Blue (#1a2d58), SAS Red (#a0192a), Eagle Yellow (#fabc00)
+- **Division Colors**: Elementary (#228ec2), Middle (#a0192a), High (#1a2d58)
+- **Typography**: Bebas Neue (headings), DM Sans (body text)
+- **Customization**: To rebrand for another school, update CSS variables and font imports
 
-**Code Location:**
-- HTML: Each division tab has `<div id="{division}-whats-new">` container
-- JS: [index.html:1320-1335](index.html#L1320-L1335) in `renderDivisionContent()`
-- CSS: [index.html:269-318](index.html#L269-L318)
+## 🤖 AI-Powered Search (Gemini & Claude Integration)
 
-### SAS Brand Implementation
-**Colors Applied:**
-- Primary: SAS Blue (#1a2d58), SAS Red (#a0192a), Eagle Yellow (#fabc00)
-- Division colors: Elementary (#228ec2), Middle (#a0192a), High (#1a2d58)
-- Typography: Bebas Neue (headings), DM Sans (body text)
+The dashboard includes intelligent natural language search powered by Google's Gemini API or Anthropic's Claude API.
 
-**CSS Variables:** [index.html:12-30](index.html#L12-L30)
+**Critical Implementation Details:**
 
-### Date Handling
-**Helper Function**: `isWithinDays(dateString, days)`
-- Checks if `date_added` is within specified number of days
-- Used for "NEW" badge and "What's New" section
-- Handles invalid dates gracefully
+- **Backend**: `queryAI(query, appsData, provider)` function in [Code.js:32-119](Code.js#L32-L119)
+- **Frontend**: AI chat interface in [index.html:2134-2349](index.html#L2134-L2349)
+- **Configuration**: Requires `GEMINI_API_KEY` or `CLAUDE_API_KEY` in Script Properties
+- **Architecture**: User query + apps database → AI API → contextual recommendations
 
-**Code Location:** [index.html:1284-1295](index.html#L1284-L1295)
+**Safety & Moderation Features:**
+- Content moderation to reject harmful/inappropriate requests
+- Closed system: AI can ONLY recommend apps from the database
+- If app not found, AI provides alternatives + guides through App Request Process
 
-### Search Enhancements
-**Search Fields**: Now includes audience field in search
-- Searches: product name, category, subject, department, **audience**
-- Real-time filtering with section hiding for empty results
+**App Request Process (when app not in database):**
+1. AI suggests similar alternatives from current toolkit
+2. Guides user to talk to department lead or PLC coach
+3. Provides complete app request checklist:
+   - Problem/opportunity being addressed
+   - Grade levels, subject areas, and purpose
+   - Impact measurement criteria
+   - Alternative tools considered
+   - Training/support needs
+   - Cost, license count, and user details
 
-**Code Location:** [index.html:1404-1453](index.html#L1404-L1453) - `setupSearch()` function
-
-### Data Attributes for Search
-All app cards include searchable data attributes:
-- `data-product`, `data-category`, `data-subject`, `data-department`, `data-audience`
-- Enables efficient client-side filtering
-
-**Implementation:** [index.html:1262](index.html#L1262) in `createAppCard()`
-
-## 🤖 Phase 4: AI-Powered Search & Recommendations
-
-### Gemini AI Integration (Implemented)
-The dashboard now features **intelligent natural language search** powered by Google's Gemini API.
-
-**Features:**
-- **AI Toggle in Search Bar**: Click "AI" button to enable natural language queries
-- **Floating Chat Bubble**: Bottom-right corner bot icon for instant AI assistance
-- **Smart Recommendations**: Ask questions like "What can I use for collaborative writing with 8th graders?"
-- **Contextual Understanding**: AI analyzes grade levels, subjects, SSO, mobile support, and audience
-
-**Key Files:**
-- [Code.js:22-119](Code.js#L22-L119) - `queryAI()` function (Gemini API integration)
-- [index.html:2134-2349](index.html#L2134-L2349) - AI chat interface and message handling
-- [AI_FEATURES.md](AI_FEATURES.md) - Complete AI features documentation
-
-**Setup Required:**
-1. Get Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add to Script Properties: `GEMINI_API_KEY` = your key
-3. Deploy and test
-
-**How It Works:**
-```
-User Query → queryAI(query, appsData) → Gemini API
-→ Contextual Prompt + Apps Database → AI Response
-→ Smart Recommendations → Display in Chat
-```
+**Important Gotcha**: AI features will silently fail if neither `GEMINI_API_KEY` nor `CLAUDE_API_KEY` is set in Script Properties. Always verify this configuration when troubleshooting AI-related issues.
 
 **See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.**
 
----
-
 ## 📺 Digital Signage Display
 
-### Overview
-The **Digital Signage** feature provides a full-screen, auto-advancing slideshow designed for display on digital signage boards throughout the school.
+Full-screen slideshow display accessed via `?page=signage` URL parameter.
 
-**Access:** Add `?page=signage` to your web app URL
-```
-https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?page=signage
-```
+**Key Architecture:**
 
-### Key Features
-- **Auto-advancing slideshow** - 12-second intervals between slides
-- **Multiple slide types** - Welcome, Stats, Enterprise Apps, What's New, Spotlights, Division Apps
-- **Auto-refresh** - Fetches fresh data every 5 minutes
-- **SAS branded** - Uses official colors, fonts, and styling
-- **Full-screen optimized** - Designed for visibility from a distance
-- **Smooth animations** - Professional transitions and visual effects
+- **File**: [signage.html](signage.html) - Separate HTML file, shares backend with main dashboard
+- **Configuration**:
+  - `SLIDE_DURATION = 8000` (8 seconds per slide)
+  - `REFRESH_INTERVAL = 300000` (5 minutes)
+  - `NEW_APP_THRESHOLD_DAYS = 30`
+  - `MAX_APPS_PER_SLIDE = 6`
+- **Auto-refresh**: Fetches fresh data every 5 minutes via `getDashboardData()`
+- **Slide Types**: Welcome, Stats, Enterprise Apps, What's New, Spotlights, Division Apps
 
-### Slide Types
-1. **Welcome Slide** - SAS branding and introduction
-2. **Stats Overview** - Key metrics with visual stat cards
-3. **Enterprise Apps** - Premium gold-styled core tools showcase
-4. **What's New** - Recently added apps (last 30 days) with red theme
-5. **App Spotlights** - Featured apps with detailed information
-6. **Division Apps** - Elementary, Middle, and High School app showcases
-
-### Configuration
-Edit settings in [signage.html](signage.html):
-```javascript
-const SLIDE_DURATION = 12000; // 12 seconds per slide
-const REFRESH_INTERVAL = 300000; // Refresh data every 5 minutes
-const NEW_APP_THRESHOLD_DAYS = 30; // Apps added in last 30 days
-const MAX_APPS_PER_SLIDE = 6; // Maximum apps per slide
-```
-
-### Use Cases
-- **Main entrance** - Welcome visitors and showcase tools
-- **Library** - Highlight educational resources
-- **Teacher lounges** - Keep staff informed
-- **Cafeteria** - Engage students during breaks
-- **Division offices** - Show division-specific apps
-
-**See [SIGNAGE.md](SIGNAGE.md) for complete documentation, setup instructions, and customization options.**
-
----
-
-## 📋 Phase 5: Future Features
-See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for planned advanced features:
-- User favorites/bookmarks (with AI-suggested collections)
-- Ratings and reviews
-- Usage analytics
-- Dark mode
-- Mobile PWA
-- Conversation history persistence
-- Multi-language AI support
-- Google Workspace SSO integration
+**See [SIGNAGE.md](SIGNAGE.md) for setup and customization.**
 
 ---
 
 **Key Development Principles:**
-1. Test locally with `index.html` before deploying
+1. Test locally with `index.html` before deploying (uses automatic mock data detection)
 2. All business logic changes should update division/department categorization rules
 3. Never hardcode configuration - always use Script Properties (including API keys)
 4. Google Sheets column names are case-sensitive and must match exactly
-5. Always provide clickable file references using `[filename:line](path#Lline)` format
-6. AI features require `GEMINI_API_KEY` in Script Properties to function
+5. Mock data in `getMockData()` should mirror the structure returned by `getDashboardData()`
+6. Always provide clickable file references using `[filename:line](path#Lline)` format
+7. AI features require `GEMINI_API_KEY` or `CLAUDE_API_KEY` in Script Properties to function
