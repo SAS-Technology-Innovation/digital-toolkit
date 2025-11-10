@@ -36,6 +36,19 @@
       box-sizing: border-box;
     }
 
+    /* Screen reader only text */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
     body {
       font-family: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       line-height: 1.6;
@@ -821,6 +834,186 @@
       text-decoration: underline;
     }
 
+    .footer-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--sas-yellow);
+      color: var(--sas-blue);
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 16px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .footer-button:hover {
+      background: #ffd93d;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(250, 188, 0, 0.4);
+    }
+
+    .footer-button i {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* App Request Section */
+    .app-request-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 2px solid #dee2e6;
+      border-radius: 16px;
+      padding: 32px;
+      margin: 48px 0 24px 0;
+    }
+
+    .app-request-layout {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .app-request-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .app-request-image-container {
+        order: -1;
+      }
+    }
+
+    .app-request-content {
+      flex: 1;
+    }
+
+    .app-request-image-container {
+      position: sticky;
+      top: 24px;
+    }
+
+    .app-request-image {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border: 2px solid #dee2e6;
+    }
+
+    .app-request-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .app-request-header i {
+      width: 32px;
+      height: 32px;
+      color: var(--sas-blue);
+    }
+
+    .app-request-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.8rem;
+      color: var(--sas-blue);
+      letter-spacing: 1px;
+      margin: 0;
+    }
+
+    .app-request-intro {
+      font-size: 1rem;
+      color: #495057;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .app-request-steps {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .app-request-step {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .app-request-step:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .app-request-step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--sas-blue);
+      color: white;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-right: 12px;
+    }
+
+    .app-request-step-title {
+      font-weight: 600;
+      color: #212529;
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .app-request-step-content {
+      color: #6c757d;
+      font-size: 0.95rem;
+      margin-left: 40px;
+    }
+
+    .app-request-questions {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .app-request-questions-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--sas-blue);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-request-questions-title i {
+      width: 20px;
+      height: 20px;
+    }
+
+    .app-request-question {
+      background: #f8f9fa;
+      padding: 12px 16px;
+      border-left: 4px solid var(--sas-yellow);
+      margin-bottom: 12px;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      color: #495057;
+    }
+
+    .app-request-question:last-child {
+      margin-bottom: 0;
+    }
+
     .loading, .error-state {
       text-align: center;
       padding: 60px 20px;
@@ -1525,14 +1718,27 @@
         <div class="header-search">
           <div class="search-input-wrapper">
             <div class="search-input-container">
-              <i data-lucide="search" class="search-icon"></i>
-              <input type="text" id="app-search" class="search-input" placeholder="Search apps...">
-              <button id="search-clear" class="search-clear">
-                <i data-lucide="x"></i>
+              <i data-lucide="search" class="search-icon" aria-hidden="true"></i>
+              <label for="app-search" class="sr-only">Search applications</label>
+              <input
+                type="text"
+                id="app-search"
+                class="search-input"
+                placeholder="Search apps..."
+                aria-label="Search applications by name, category, or department">
+              <button
+                id="search-clear"
+                class="search-clear"
+                aria-label="Clear search">
+                <i data-lucide="x" aria-hidden="true"></i>
               </button>
             </div>
-            <button id="ai-toggle" class="ai-toggle-btn" title="Toggle AI Search">
-              <i data-lucide="sparkles"></i>
+            <button
+              id="ai-toggle"
+              class="ai-toggle-btn"
+              aria-label="Toggle AI Search mode"
+              aria-pressed="false">
+              <i data-lucide="sparkles" aria-hidden="true"></i>
               AI
             </button>
           </div>
@@ -1542,11 +1748,43 @@
 
     <!-- Tab Navigation -->
     <div class="tabs-container">
-      <div class="tabs">
-        <button class="tab-button active" data-tab="wholeSchool"><i data-lucide="globe"></i> Whole School</button>
-        <button class="tab-button" data-tab="elementary"><i data-lucide="baby"></i> Elementary School</button>
-        <button class="tab-button" data-tab="middleSchool"><i data-lucide="graduation-cap"></i> Middle School</button>
-        <button class="tab-button" data-tab="highSchool"><i data-lucide="university"></i> High School</button>
+      <div class="tabs" role="tablist" aria-label="School divisions">
+        <button
+          class="tab-button active"
+          data-tab="wholeSchool"
+          role="tab"
+          aria-selected="true"
+          aria-controls="wholeSchool-content"
+          id="tab-wholeSchool">
+          <i data-lucide="globe" aria-hidden="true"></i> Whole School
+        </button>
+        <button
+          class="tab-button"
+          data-tab="elementary"
+          role="tab"
+          aria-selected="false"
+          aria-controls="elementary-content"
+          id="tab-elementary">
+          <i data-lucide="baby" aria-hidden="true"></i> Elementary School
+        </button>
+        <button
+          class="tab-button"
+          data-tab="middleSchool"
+          role="tab"
+          aria-selected="false"
+          aria-controls="middleSchool-content"
+          id="tab-middleSchool">
+          <i data-lucide="graduation-cap" aria-hidden="true"></i> Middle School
+        </button>
+        <button
+          class="tab-button"
+          data-tab="highSchool"
+          role="tab"
+          aria-selected="false"
+          aria-controls="highSchool-content"
+          id="tab-highSchool">
+          <i data-lucide="university" aria-hidden="true"></i> High School
+        </button>
       </div>
     </div>
 
@@ -1563,7 +1801,11 @@
     <div id="main-content" class="main-content" style="display: none;">
 
       <!-- Whole School Tab Content -->
-      <div id="wholeSchool-content" class="tab-content active whole-school-content">
+      <div
+        id="wholeSchool-content"
+        class="tab-content active whole-school-content"
+        role="tabpanel"
+        aria-labelledby="tab-wholeSchool">
         <!-- What's New Section -->
         <div id="wholeSchool-whats-new" class="whats-new-container" style="display: none;">
           <h2 class="whats-new-title">
@@ -1593,10 +1835,95 @@
           <p class="main-subtitle">These applications are available to the entire SAS community.</p>
           <div id="wholeSchool-everyone-apps" class="everyone-apps-grid"></div>
         </div>
+
+        <!-- App Request Section -->
+        <div class="app-request-section">
+          <div class="app-request-header">
+            <i data-lucide="file-plus" aria-hidden="true"></i>
+            <h2 class="app-request-title">Request a New App</h2>
+          </div>
+          <p class="app-request-intro">
+            Can't find the tool you need? Follow this process to request a new application for the SAS Digital Toolkit.
+          </p>
+
+          <div class="app-request-layout">
+            <div class="app-request-content">
+              <div class="app-request-steps">
+            <div class="app-request-step">
+              <div class="app-request-step-title">
+                <span class="app-request-step-number">1</span>
+                Search the Toolkit
+              </div>
+              <div class="app-request-step-content">
+                Use the search bar or browse through divisions to ensure a similar tool isn't already available. Try asking the AI Assistant for recommendations.
+              </div>
+            </div>
+
+            <div class="app-request-step">
+              <div class="app-request-step-title">
+                <span class="app-request-step-number">2</span>
+                Consult Your Team
+              </div>
+              <div class="app-request-step-content">
+                Talk to your department lead or PLC coach about your specific requirements. They may know of existing solutions or can help refine your needs.
+              </div>
+            </div>
+
+            <div class="app-request-step">
+              <div class="app-request-step-title">
+                <span class="app-request-step-number">3</span>
+                Submit App Request
+              </div>
+              <div class="app-request-step-content">
+                If no suitable solution exists, submit a formal app request with the information below.
+              </div>
+            </div>
+          </div>
+
+          <div class="app-request-questions">
+            <div class="app-request-questions-title">
+              <i data-lucide="help-circle" aria-hidden="true"></i>
+              Information Required for App Request
+            </div>
+            <div class="app-request-question">
+              <strong>1.</strong> What problem or opportunity does this tool seek to address?
+            </div>
+            <div class="app-request-question">
+              <strong>2.</strong> Which grade level and subject areas will this tool serve and for what purpose (e.g., classroom instruction, homework, assessment, differentiation, communication, data tracking)?
+            </div>
+            <div class="app-request-question">
+              <strong>3.</strong> How will you measure the impact or success of this tool?
+            </div>
+            <div class="app-request-question">
+              <strong>4.</strong> What other tools or alternatives have you considered?
+            </div>
+            <div class="app-request-question">
+              <strong>5.</strong> Do you foresee any training or support needs for this tool? If so, what kind?
+            </div>
+            <div class="app-request-question">
+              <strong>6.</strong> What is the cost, how many licenses will you need, and who will be using the tool?
+            </div>
+          </div>
+            </div>
+
+            <!-- Image on the right side -->
+            <div class="app-request-image-container">
+              <img
+                src="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/App%20Request%20Process%20for%20Teachers.png"
+                alt="App Request Process Flowchart"
+                class="app-request-image"
+                loading="lazy">
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Elementary School Tab Content -->
-      <div id="elementary-content" class="tab-content elementary-content">
+      <div
+        id="elementary-content"
+        class="tab-content elementary-content"
+        role="tabpanel"
+        aria-labelledby="tab-elementary">
         <!-- What's New Section -->
         <div id="elementary-whats-new" class="whats-new-container" style="display: none;">
           <h2 class="whats-new-title">
@@ -1619,7 +1946,11 @@
       </div>
 
       <!-- Middle School Tab Content -->
-      <div id="middleSchool-content" class="tab-content middleSchool-content">
+      <div
+        id="middleSchool-content"
+        class="tab-content middleSchool-content"
+        role="tabpanel"
+        aria-labelledby="tab-middleSchool">
         <!-- What's New Section -->
         <div id="middleSchool-whats-new" class="whats-new-container" style="display: none;">
           <h2 class="whats-new-title">
@@ -1642,7 +1973,11 @@
       </div>
 
       <!-- High School Tab Content -->
-      <div id="highSchool-content" class="tab-content highSchool-content">
+      <div
+        id="highSchool-content"
+        class="tab-content highSchool-content"
+        role="tabpanel"
+        aria-labelledby="tab-highSchool">
         <!-- What's New Section -->
         <div id="highSchool-whats-new" class="whats-new-container" style="display: none;">
           <h2 class="whats-new-title">
@@ -1672,30 +2007,57 @@
       <p class="footer-text">
         For support, contact <a href="mailto:edtech@sas.edu.sg" class="footer-link">edtech@sas.edu.sg</a>
       </p>
+      <a href="?page=signage" class="footer-button" aria-label="View Digital Signage Display">
+        <i data-lucide="monitor"></i>
+        View Digital Signage
+      </a>
     </footer>
 
   </div>
 
   <!-- AI Chat Bubble -->
   <div class="ai-chat-bubble">
-    <button class="ai-chat-button" id="ai-chat-toggle" title="Ask AI Assistant">
-      <i data-lucide="bot"></i>
+    <button
+      class="ai-chat-button"
+      id="ai-chat-toggle"
+      aria-label="Open AI Assistant chat"
+      aria-expanded="false"
+      aria-controls="ai-chat-window">
+      <i data-lucide="bot" aria-hidden="true"></i>
     </button>
   </div>
 
   <!-- AI Chat Window -->
-  <div class="ai-chat-window" id="ai-chat-window">
+  <div
+    class="ai-chat-window"
+    id="ai-chat-window"
+    role="dialog"
+    aria-labelledby="ai-chat-title"
+    aria-hidden="true">
     <div class="ai-chat-header">
-      <div class="ai-chat-header-title">
-        <i data-lucide="sparkles"></i>
+      <div class="ai-chat-header-title" id="ai-chat-title">
+        <i data-lucide="sparkles" aria-hidden="true"></i>
         AI Assistant
       </div>
-      <div class="ai-provider-selector">
-        <button class="ai-provider-btn active" data-provider="gemini">Gemini</button>
-        <button class="ai-provider-btn" data-provider="claude">Claude</button>
+      <div class="ai-provider-selector" role="group" aria-label="Select AI provider">
+        <button
+          class="ai-provider-btn active"
+          data-provider="gemini"
+          aria-pressed="true">
+          Gemini
+        </button>
+        <button
+          class="ai-provider-btn"
+          data-provider="claude"
+          aria-pressed="false">
+          Claude
+        </button>
       </div>
-      <button class="ai-chat-close" id="ai-chat-close" title="Close">
-        <i data-lucide="x"></i>
+      <button
+        class="ai-chat-close"
+        id="ai-chat-close"
+        aria-label="Close AI Assistant">
+        <i data-lucide="x" aria-hidden="true"></i>
       </button>
     </div>
 
@@ -1722,14 +2084,19 @@
 
     <div class="ai-chat-input-wrapper">
       <div class="ai-chat-input-container">
+        <label for="ai-chat-input" class="sr-only">Ask AI Assistant about applications</label>
         <textarea
           id="ai-chat-input"
           class="ai-chat-input"
           placeholder="Ask me anything about our apps..."
           rows="1"
+          aria-label="Message to AI Assistant"
         ></textarea>
-        <button class="ai-chat-send" id="ai-chat-send" title="Send message">
-          <i data-lucide="send"></i>
+        <button
+          class="ai-chat-send"
+          id="ai-chat-send"
+          aria-label="Send message to AI">
+          <i data-lucide="send" aria-hidden="true"></i>
         </button>
       </div>
     </div>
@@ -1742,15 +2109,30 @@
     let selectedAIProvider = 'gemini'; // Default to Gemini
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Always use google.script.run to get data from the server (Code.gs)
-      google.script.run
-        .withSuccessHandler(renderDashboard)
-        .withFailureHandler(showError)
-        .getDashboardData();
+      // Load data from server or use mock data for local testing
+      loadData();
 
       // Setup AI features
       setupAIFeatures();
     });
+
+    /**
+     * Load data from Apps Script backend or use mock data for local testing
+     */
+    function loadData() {
+      // Check if running in Google Apps Script environment
+      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
+        // Production: Use google.script.run to get data from the server
+        google.script.run
+          .withSuccessHandler(renderDashboard)
+          .withFailureHandler(showError)
+          .getDashboardData();
+      } else {
+        // Local testing: Use mock data
+        console.log('Running in local test mode with mock data');
+        setTimeout(() => renderDashboard(JSON.stringify(getMockData())), 500);
+      }
+    }
 
     function renderDashboard(dataString) {
       try {
@@ -1955,10 +2337,14 @@
 
       tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'));
+          tabs.forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+          });
           contents.forEach(c => c.classList.remove('active'));
 
           tab.classList.add('active');
+          tab.setAttribute('aria-selected', 'true');
           const targetContent = document.getElementById(tab.dataset.tab + '-content');
           if (targetContent) {
             targetContent.classList.add('active');
@@ -2238,8 +2624,12 @@
       // AI Provider selection
       providerBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-          providerBtns.forEach(b => b.classList.remove('active'));
+          providerBtns.forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
           btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
           selectedAIProvider = btn.dataset.provider;
         });
       });
@@ -2249,12 +2639,15 @@
         aiToggle.addEventListener('click', () => {
           aiModeEnabled = !aiModeEnabled;
           aiToggle.classList.toggle('active');
+          aiToggle.setAttribute('aria-pressed', aiModeEnabled.toString());
           searchInput.classList.toggle('ai-mode');
 
           if (aiModeEnabled) {
             searchInput.placeholder = 'Ask AI: "What tools can I use for..."';
+            searchInput.setAttribute('aria-label', 'Ask AI Assistant about applications');
           } else {
             searchInput.placeholder = 'Search apps...';
+            searchInput.setAttribute('aria-label', 'Search applications by name, category, or department');
           }
         });
       }
@@ -2273,8 +2666,10 @@
       // Chat bubble toggle
       if (aiChatToggle) {
         aiChatToggle.addEventListener('click', () => {
-          aiChatWindow.classList.toggle('open');
-          if (aiChatWindow.classList.contains('open')) {
+          const isOpen = aiChatWindow.classList.toggle('open');
+          aiChatToggle.setAttribute('aria-expanded', isOpen.toString());
+          aiChatWindow.setAttribute('aria-hidden', (!isOpen).toString());
+          if (isOpen) {
             aiChatInput.focus();
           }
         });
@@ -2284,6 +2679,8 @@
       if (aiChatClose) {
         aiChatClose.addEventListener('click', () => {
           aiChatWindow.classList.remove('open');
+          aiChatToggle.setAttribute('aria-expanded', 'false');
+          aiChatWindow.setAttribute('aria-hidden', 'true');
         });
       }
 
@@ -2466,6 +2863,89 @@
       removeLoadingMessage();
       aiChatSend.disabled = false;
       addMessageToChat('assistant', `Error: ${error.message || 'Unable to connect to AI service. Please try again later.'}`);
+    }
+
+    /**
+     * Mock data for local testing
+     * Mimics the structure returned by getDashboardData() in Code.js
+     */
+    function getMockData() {
+      const today = new Date().toISOString().split('T')[0];
+      const recentDate = new Date();
+      recentDate.setDate(recentDate.getDate() - 15); // 15 days ago
+      const recentDateStr = recentDate.toISOString().split('T')[0];
+
+      return {
+        wholeSchool: {
+          apps: [
+            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', licenses: 0, enterprise: true, description: 'Complete suite of productivity and collaboration tools including Gmail, Drive, Docs, Sheets, Slides, and more', logoUrl: '', dateAdded: '2024-01-15', renewalDate: '2025-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students,Parents', gradeLevels: 'K-12', website: 'https://workspace.google.com', tutorialLink: 'https://support.google.com/workspace' },
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', licenses: 0, enterprise: true, description: 'Learning Management System for course delivery, assignments, grading, and communication', logoUrl: '', dateAdded: '2024-02-01', renewalDate: '2025-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students', gradeLevels: 'K-12', website: 'https://www.instructure.com/canvas', tutorialLink: 'https://community.canvaslms.com' },
+            { product: 'Zoom', division: 'Whole School', department: 'IT', subject: 'Communication', licenseType: 'Site', licenses: 0, enterprise: true, description: 'Video conferencing and virtual meeting platform for remote learning and collaboration', logoUrl: '', dateAdded: recentDateStr, renewalDate: '2025-06-30', ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Staff,Teachers,Students', gradeLevels: 'K-12', website: 'https://zoom.us', tutorialLink: 'https://support.zoom.us' },
+            { product: 'ManageBac', division: 'Whole School', department: 'Administration', subject: 'Management', licenseType: 'School', licenses: 0, enterprise: false, description: 'Curriculum planning and assessment platform for IB programs', logoUrl: '', dateAdded: '2024-03-15', renewalDate: '2025-03-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Management', audience: 'Teachers,Students,Parents', gradeLevels: 'K-12', website: 'https://www.managebac.com', tutorialLink: 'https://help.managebac.com' }
+          ],
+          enterpriseApps: [
+            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', licenses: 0, enterprise: true, description: 'Complete suite of productivity and collaboration tools including Gmail, Drive, Docs, Sheets, Slides, and more', logoUrl: '', dateAdded: '2024-01-15', renewalDate: '2025-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students,Parents', gradeLevels: 'K-12', website: 'https://workspace.google.com', tutorialLink: 'https://support.google.com/workspace' },
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', licenses: 0, enterprise: true, description: 'Learning Management System for course delivery, assignments, grading, and communication', logoUrl: '', dateAdded: '2024-02-01', renewalDate: '2025-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students', gradeLevels: 'K-12', website: 'https://www.instructure.com/canvas', tutorialLink: 'https://community.canvaslms.com' },
+            { product: 'Zoom', division: 'Whole School', department: 'IT', subject: 'Communication', licenseType: 'Site', licenses: 0, enterprise: true, description: 'Video conferencing and virtual meeting platform for remote learning and collaboration', logoUrl: '', dateAdded: recentDateStr, renewalDate: '2025-06-30', ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Staff,Teachers,Students', gradeLevels: 'K-12', website: 'https://zoom.us', tutorialLink: 'https://support.zoom.us' }
+          ],
+          everyoneApps: [
+            { product: 'ManageBac', division: 'Whole School', department: 'Administration', subject: 'Management', licenseType: 'School', licenses: 0, enterprise: false, description: 'Curriculum planning and assessment platform for IB programs', logoUrl: '', dateAdded: '2024-03-15', renewalDate: '2025-03-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Management', audience: 'Teachers,Students,Parents', gradeLevels: 'K-12', website: 'https://www.managebac.com', tutorialLink: 'https://help.managebac.com' }
+          ],
+          byDepartment: {}
+        },
+        elementary: {
+          apps: [
+            { product: 'Seesaw', division: 'Elementary', department: 'Elementary', subject: 'Education', licenseType: 'School', licenses: 500, enterprise: false, description: 'Digital portfolio and parent communication platform for young learners', logoUrl: '', dateAdded: today, renewalDate: '2025-08-31', ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students,Parents', gradeLevels: 'K-5', website: 'https://web.seesaw.me', tutorialLink: 'https://help.seesaw.me' },
+            { product: 'Raz-Kids', division: 'Elementary', department: 'English', subject: 'Reading', licenseType: 'Individual', licenses: 300, enterprise: false, description: 'Online guided reading program with interactive ebooks and assessments', logoUrl: '', dateAdded: '2024-08-01', renewalDate: '2025-08-01', ssoEnabled: false, mobileApp: 'Yes', category: 'Literacy', audience: 'Students,Teachers', gradeLevels: 'K-5', website: 'https://www.raz-kids.com', tutorialLink: 'https://www.learninga-z.com/support' }
+          ],
+          enterpriseApps: [],
+          everyoneApps: [
+            { product: 'Seesaw', division: 'Elementary', department: 'Elementary', subject: 'Education', licenseType: 'School', licenses: 500, enterprise: false, description: 'Digital portfolio and parent communication platform for young learners', logoUrl: '', dateAdded: today, renewalDate: '2025-08-31', ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students,Parents', gradeLevels: 'K-5', website: 'https://web.seesaw.me', tutorialLink: 'https://help.seesaw.me' }
+          ],
+          byDepartment: {
+            'English': [
+              { product: 'Raz-Kids', division: 'Elementary', department: 'English', subject: 'Reading', licenseType: 'Individual', licenses: 300, enterprise: false, description: 'Online guided reading program with interactive ebooks and assessments', logoUrl: '', dateAdded: '2024-08-01', renewalDate: '2025-08-01', ssoEnabled: false, mobileApp: 'Yes', category: 'Literacy', audience: 'Students,Teachers', gradeLevels: 'K-5', website: 'https://www.raz-kids.com', tutorialLink: 'https://www.learninga-z.com/support' }
+            ]
+          }
+        },
+        middleSchool: {
+          apps: [
+            { product: 'Kahoot!', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', licenses: 0, enterprise: false, description: 'Game-based learning platform for interactive quizzes and engagement', logoUrl: '', dateAdded: '2024-10-15', renewalDate: '2025-10-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Engagement', audience: 'Teachers,Students', gradeLevels: '6-8', website: 'https://kahoot.com', tutorialLink: 'https://support.kahoot.com' },
+            { product: 'Desmos', division: 'Middle', department: 'Math', subject: 'Mathematics', licenseType: 'Individual', licenses: 50, enterprise: false, description: 'Interactive graphing calculator and math activities', logoUrl: '', dateAdded: '2024-07-01', renewalDate: '2025-07-01', ssoEnabled: false, mobileApp: 'Yes', category: 'Math', audience: 'Teachers,Students', gradeLevels: '6-8', website: 'https://www.desmos.com', tutorialLink: 'https://help.desmos.com' }
+          ],
+          enterpriseApps: [],
+          everyoneApps: [
+            { product: 'Kahoot!', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', licenses: 0, enterprise: false, description: 'Game-based learning platform for interactive quizzes and engagement', logoUrl: '', dateAdded: '2024-10-15', renewalDate: '2025-10-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Engagement', audience: 'Teachers,Students', gradeLevels: '6-8', website: 'https://kahoot.com', tutorialLink: 'https://support.kahoot.com' }
+          ],
+          byDepartment: {
+            'Math': [
+              { product: 'Desmos', division: 'Middle', department: 'Math', subject: 'Mathematics', licenseType: 'Individual', licenses: 50, enterprise: false, description: 'Interactive graphing calculator and math activities', logoUrl: '', dateAdded: '2024-07-01', renewalDate: '2025-07-01', ssoEnabled: false, mobileApp: 'Yes', category: 'Math', audience: 'Teachers,Students', gradeLevels: '6-8', website: 'https://www.desmos.com', tutorialLink: 'https://help.desmos.com' }
+            ]
+          }
+        },
+        highSchool: {
+          apps: [
+            { product: 'Turnitin', division: 'High', department: 'High School', subject: 'English', licenseType: 'School', licenses: 0, enterprise: false, description: 'Plagiarism detection and feedback tool for student writing', logoUrl: '', dateAdded: '2024-09-01', renewalDate: '2025-09-01', ssoEnabled: true, mobileApp: 'No', category: 'Academic Integrity', audience: 'Teachers,Students', gradeLevels: '9-12', website: 'https://www.turnitin.com', tutorialLink: 'https://help.turnitin.com' },
+            { product: 'Naviance', division: 'High', department: 'Counseling', subject: 'College & Career', licenseType: 'Individual', licenses: 200, enterprise: false, description: 'College and career readiness platform for high school students', logoUrl: '', dateAdded: '2024-06-01', renewalDate: '2025-06-01', ssoEnabled: true, mobileApp: 'Yes', category: 'Counseling', audience: 'Students,Parents', gradeLevels: '9-12', website: 'https://www.naviance.com', tutorialLink: 'https://www.powerschool.com/resources/support/' }
+          ],
+          enterpriseApps: [],
+          everyoneApps: [
+            { product: 'Turnitin', division: 'High', department: 'High School', subject: 'English', licenseType: 'School', licenses: 0, enterprise: false, description: 'Plagiarism detection and feedback tool for student writing', logoUrl: '', dateAdded: '2024-09-01', renewalDate: '2025-09-01', ssoEnabled: true, mobileApp: 'No', category: 'Academic Integrity', audience: 'Teachers,Students', gradeLevels: '9-12', website: 'https://www.turnitin.com', tutorialLink: 'https://help.turnitin.com' }
+          ],
+          byDepartment: {
+            'Counseling': [
+              { product: 'Naviance', division: 'High', department: 'Counseling', subject: 'College & Career', licenseType: 'Individual', licenses: 200, enterprise: false, description: 'College and career readiness platform for high school students', logoUrl: '', dateAdded: '2024-06-01', renewalDate: '2025-06-01', ssoEnabled: true, mobileApp: 'Yes', category: 'Counseling', audience: 'Students,Parents', gradeLevels: '9-12', website: 'https://www.naviance.com', tutorialLink: 'https://www.powerschool.com/resources/support/' }
+            ]
+          }
+        },
+        stats: {
+          totalApps: 11,
+          wholeSchoolCount: 4,
+          elementaryCount: 2,
+          middleSchoolCount: 2,
+          highSchoolCount: 2
+        }
+      };
     }
   </script>
 
