@@ -1251,6 +1251,64 @@
       box-shadow: 0 2px 6px rgba(30, 64, 175, 0.2);
     }
 
+    /* Flowchart Modal */
+    .flowchart-modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 1200px;
+      width: 95%;
+      max-height: 95vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: modalSlideIn 0.3s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .flowchart-modal-body {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+    }
+
+    .flowchart-modal-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .flowchart-download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--sas-blue), #2d4678);
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .flowchart-download-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(26, 45, 88, 0.3);
+    }
+
+    .flowchart-download-btn i {
+      width: 16px;
+      height: 16px;
+    }
+
     /* AI Chat Bubble */
     .ai-chat-bubble {
       position: fixed;
@@ -1912,7 +1970,14 @@
                 src="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/App%20Request%20Process%20for%20Teachers.png"
                 alt="App Request Process Flowchart"
                 class="app-request-image"
-                loading="lazy">
+                loading="lazy"
+                onclick="showFlowchartModal()"
+                style="cursor: pointer;"
+                title="Click to view full size">
+              <p style="text-align: center; margin-top: 8px; font-size: 14px; color: #6b7280;">
+                <i data-lucide="maximize-2" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                Click to enlarge
+              </p>
             </div>
           </div>
         </div>
@@ -1999,6 +2064,35 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- Flowchart Image Modal -->
+    <div id="flowchart-modal" class="modal-overlay" style="display: none;" onclick="closeFlowchartModal(event)">
+      <div class="flowchart-modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title">App Request Process</h2>
+          <div style="display: flex; gap: 12px;">
+            <a
+              href="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/App%20Request%20Process%20for%20Teachers.png"
+              download="App Request Process for Teachers.png"
+              class="flowchart-download-btn"
+              title="Download flowchart"
+              aria-label="Download flowchart image">
+              <i data-lucide="download"></i>
+              Download
+            </a>
+            <button class="modal-close" onclick="closeFlowchartModal()" title="Close" aria-label="Close modal">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+        <div class="flowchart-modal-body">
+          <img
+            src="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/App%20Request%20Process%20for%20Teachers.png"
+            alt="App Request Process Flowchart"
+            class="flowchart-modal-image">
+        </div>
+      </div>
     </div>
 
     <!-- Footer -->
@@ -2605,8 +2699,39 @@
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         closeModal();
+        closeFlowchartModal();
       }
     });
+
+    // Flowchart Modal Functions
+    function showFlowchartModal() {
+      const modal = document.getElementById('flowchart-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+
+        // Re-initialize Lucide icons for the modal
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }
+    }
+
+    function closeFlowchartModal(event) {
+      // If event is provided and target is not the overlay, return
+      if (event && !event.target.classList.contains('modal-overlay')) {
+        return;
+      }
+
+      const modal = document.getElementById('flowchart-modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+
+      // Restore body scroll
+      document.body.style.overflow = '';
+    }
 
     // --- AI FEATURES ---
 
