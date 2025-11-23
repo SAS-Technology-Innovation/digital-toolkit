@@ -2489,9 +2489,19 @@
           actionButtons.push(`<button class="app-action-btn details-btn" onclick="showAppDetails(event, ${JSON.stringify(app).replace(/"/g, '&quot;')})" title="View Details"><i data-lucide="info"></i>Details</button>`);
           const actionsHTML = actionButtons.length > 0 ? `<div class="app-actions">${actionButtons.join('')}</div>` : '';
 
-          // Logo/Icon display
-          const logoHTML = app.logoUrl ?
-            `<div class="app-logo"><img src="${app.logoUrl}" alt="${app.product} logo" onerror="this.parentElement.style.display='none'"></div>` : '';
+          // Logo/Icon display with automatic favicon fallback
+          const getFaviconUrl = (website) => {
+            try {
+              const domain = new URL(website).hostname;
+              return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+            } catch (e) {
+              return '';
+            }
+          };
+
+          const logoUrl = app.logoUrl || (app.website ? getFaviconUrl(app.website) : '');
+          const logoHTML = logoUrl ?
+            `<div class="app-logo"><img src="${logoUrl}" alt="${app.product} logo" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : '';
 
           // Check if app is new (added in last 30 days)
           const isNew = app.dateAdded && isWithinDays(app.dateAdded, 30);

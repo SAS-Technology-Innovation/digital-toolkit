@@ -683,6 +683,19 @@
     let slideInterval;
     let appData = null;
 
+    /**
+     * Helper: Get favicon URL from website domain
+     */
+    function getFaviconUrl(website) {
+      if (!website) return '';
+      try {
+        const domain = new URL(website).hostname;
+        return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+      } catch (e) {
+        return '';
+      }
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       lucide.createIcons();
@@ -864,13 +877,16 @@
 
       const displayApps = apps.slice(0, MAX_APPS_PER_SLIDE);
 
-      const appsHTML = displayApps.map(app => `
-        <div class="enterprise-app-card">
-          ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="enterprise-app-logo" onerror="this.style.display='none'">` : ''}
-          <div class="enterprise-app-name">${app.product}</div>
-          <div class="enterprise-app-desc">${app.description || 'Official SAS core tool for enhanced productivity and collaboration'}</div>
-        </div>
-      `).join('');
+      const appsHTML = displayApps.map(app => {
+        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+        return `
+          <div class="enterprise-app-card">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="enterprise-app-logo" onerror="this.style.display='none'">` : ''}
+            <div class="enterprise-app-name">${app.product}</div>
+            <div class="enterprise-app-desc">${app.description || 'Official SAS core tool for enhanced productivity and collaboration'}</div>
+          </div>
+        `;
+      }).join('');
 
       slide.innerHTML = `
         <div class="enterprise-header">
@@ -896,14 +912,17 @@
       const slide = document.createElement('div');
       slide.className = 'slide whats-new-slide';
 
-      const appsHTML = apps.map(app => `
-        <div class="new-app-card">
-          ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="new-app-logo" onerror="this.style.display='none'">` : ''}
-          <div class="new-app-name">${app.product}</div>
-          <div class="new-app-desc">${app.description || 'Recently added to our digital toolkit'}</div>
-          <div class="new-app-date">Added ${formatDate(app.dateAdded)}</div>
-        </div>
-      `).join('');
+      const appsHTML = apps.map(app => {
+        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+        return `
+          <div class="new-app-card">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="new-app-logo" onerror="this.style.display='none'">` : ''}
+            <div class="new-app-name">${app.product}</div>
+            <div class="new-app-desc">${app.description || 'Recently added to our digital toolkit'}</div>
+            <div class="new-app-date">Added ${formatDate(app.dateAdded)}</div>
+          </div>
+        `;
+      }).join('');
 
       slide.innerHTML = `
         <div class="whats-new-header">
@@ -945,10 +964,12 @@
       if (app.ssoEnabled) badges.push(`<div class="spotlight-badge"><i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> SSO</div>`);
       if (app.mobileApp && app.mobileApp.toLowerCase() !== 'no') badges.push(`<div class="spotlight-badge"><i data-lucide="smartphone" style="width: 16px; height: 16px;"></i> Mobile</div>`);
 
+      const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+
       slide.innerHTML = `
         <div class="spotlight-content">
           <div class="spotlight-visual">
-            ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="spotlight-logo" onerror="this.style.display='none'">` : `<i data-lucide="star" style="width: 300px; height: 300px;" class="spotlight-logo"></i>`}
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="spotlight-logo" onerror="this.style.display='none'">` : `<i data-lucide="star" style="width: 300px; height: 300px;" class="spotlight-logo"></i>`}
             <div class="spotlight-badges">
               ${badges.join('')}
             </div>
@@ -977,13 +998,16 @@
       const allApps = divisionData.apps || [];
       const displayApps = allApps.slice(0, MAX_APPS_PER_SLIDE);
 
-      const appsHTML = displayApps.map(app => `
-        <div class="division-app-card">
-          ${app.logoUrl ? `<img src="${app.logoUrl}" alt="${app.product}" class="division-app-logo" onerror="this.style.display='none'">` : ''}
-          <div class="division-app-name">${app.product}</div>
-          <div class="division-app-subject">${app.subject || app.category}</div>
-        </div>
-      `).join('');
+      const appsHTML = displayApps.map(app => {
+        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+        return `
+          <div class="division-app-card">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="division-app-logo" onerror="this.style.display='none'">` : ''}
+            <div class="division-app-name">${app.product}</div>
+            <div class="division-app-subject">${app.subject || app.category}</div>
+          </div>
+        `;
+      }).join('');
 
       slide.innerHTML = `
         <div class="division-header">
