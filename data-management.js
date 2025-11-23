@@ -33,15 +33,17 @@ function validateAllData() {
 
     const issues = [];
     // Support both old (capitalized) and new (lowercase) column names
-    const requiredFields = ['product_name', 'description', 'Division', 'Category', 'Website'];
-
-    // Check for department field (try both old and new names)
+    const divisionField = headers.indexOf('division') !== -1 ? 'division' : 'Division';
+    const categoryField = headers.indexOf('category') !== -1 ? 'category' : 'Category';
+    const websiteField = headers.indexOf('website') !== -1 ? 'website' : 'Website';
     const departmentField = headers.indexOf('department') !== -1 ? 'department' : 'Department';
-    requiredFields.push(departmentField);
+
+    const requiredFields = ['product_name', 'description', divisionField, categoryField, websiteField, departmentField];
 
     dataRows.forEach((row, index) => {
       const rowNum = index + 2;
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+      const activeIndex = headers.indexOf('active');
+      const isActive = activeIndex !== -1 && (row[activeIndex] === true || row[activeIndex].toString().toLowerCase() === 'true');
 
       if (!isActive) return;
 
@@ -106,7 +108,8 @@ function findMissingFields() {
 
     dataRows.forEach((row, index) => {
       const rowNum = index + 2;
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+      const activeIndex = headers.indexOf('active');
+      const isActive = activeIndex !== -1 && (row[activeIndex] === true || row[activeIndex].toString().toLowerCase() === 'true');
 
       if (!isActive) return;
 
@@ -115,10 +118,10 @@ function findMissingFields() {
       if (!row[headers.indexOf('description')] || row[headers.indexOf('description')].toString().trim() === '') {
         missingData.description.push(`${appName} (Row ${rowNum})`);
       }
-      if (!row[headers.indexOf('Category')] || row[headers.indexOf('Category')].toString().trim() === '') {
+      if (!row[headers.indexOf('category')] || row[headers.indexOf('category')].toString().trim() === '') {
         missingData.category.push(`${appName} (Row ${rowNum})`);
       }
-      if (!row[headers.indexOf('Website')] || row[headers.indexOf('Website')].toString().trim() === '') {
+      if (!row[headers.indexOf('website')] || row[headers.indexOf('website')].toString().trim() === '') {
         missingData.website.push(`${appName} (Row ${rowNum})`);
       }
       if (!row[headers.indexOf('audience')] || row[headers.indexOf('audience')].toString().trim() === '') {
@@ -235,8 +238,8 @@ function enrichMissingDescriptions() {
 
     const descriptionCol = headers.indexOf('description');
     const productCol = headers.indexOf('product_name');
-    const categoryCol = headers.indexOf('Category');
-    const websiteCol = headers.indexOf('Website');
+    const categoryCol = headers.indexOf('category');
+    const websiteCol = headers.indexOf('website');
     // Support both old (subjects_or_department) and new (subjects) column names
     const subjectCol = headers.indexOf('subjects') !== -1 ? headers.indexOf('subjects') : headers.indexOf('subjects_or_department');
 
@@ -246,7 +249,8 @@ function enrichMissingDescriptions() {
     dataRows.forEach((row, index) => {
 
       const rowNum = index + 2;
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+      const activeIndex = headers.indexOf('active');
+      const isActive = activeIndex !== -1 && (row[activeIndex] === true || row[activeIndex].toString().toLowerCase() === 'true');
 
       if (!isActive) return;
 
@@ -309,8 +313,8 @@ function enrichAllMissingData() {
 
     const colMap = {
       description: headers.indexOf('description'),
-      category: headers.indexOf('Category'),
-      website: headers.indexOf('Website'),
+      category: headers.indexOf('category'),
+      website: headers.indexOf('website'),
       audience: headers.indexOf('audience'),
       gradeLevels: headers.indexOf('grade_levels'),
       supportEmail: headers.indexOf('support_email'),
@@ -323,7 +327,8 @@ function enrichAllMissingData() {
 
     let appsNeedingEnrichment = 0;
     dataRows.forEach((row, index) => {
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+      const activeIndex = headers.indexOf('active');
+      const isActive = activeIndex !== -1 && (row[activeIndex] === true || row[activeIndex].toString().toLowerCase() === 'true');
       if (!isActive) return;
 
       const hasMissingData = !row[colMap.description] || !row[colMap.category] || !row[colMap.website] ||
@@ -344,7 +349,7 @@ function enrichAllMissingData() {
 
     // Support both old (subjects_or_department) and new (subjects) column names
     colMap.subject = headers.indexOf('subjects') !== -1 ? headers.indexOf('subjects') : headers.indexOf('subjects_or_department');
-    colMap.division = headers.indexOf('Division');
+    colMap.division = headers.indexOf('division');
 
     let enrichedCount = 0;
     let errorCount = 0;
@@ -352,7 +357,8 @@ function enrichAllMissingData() {
 
     dataRows.forEach((row, index) => {
       const rowNum = index + 2;
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+      const activeIndex = headers.indexOf('active');
+      const isActive = activeIndex !== -1 && (row[activeIndex] === true || row[activeIndex].toString().toLowerCase() === 'true');
 
       if (!isActive) return;
 
@@ -1273,7 +1279,7 @@ function processCSVData(csvText, updateMode) {
       // Remove apps not in CSV (set Active to FALSE)
       existingApps.forEach((existing, key) => {
         if (!csvApps.has(key)) {
-          const activeIndex = headers.indexOf('Active');
+          const activeIndex = headers.indexOf('active');
           if (activeIndex !== -1) {
             sheet.getRange(existing.rowIndex, activeIndex + 1).setValue(false);
             stats.removed++;
