@@ -5,7 +5,23 @@
 // --- CONFIGURATION ---
 // Configuration is managed via Script Properties.
 // In the Apps Script Editor, go to Project Settings (gear icon) > Script Properties.
-// Add properties for SPREADSHEET_ID and SHEET_NAME.
+// Add properties for SPREADSHEET_ID, SHEET_NAME, GEMINI_API_KEY, and CLAUDE_API_KEY.
+
+/**
+ * Creates a custom menu in Google Sheets for data management
+ */
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('🤖 Digital Toolkit Admin')
+    .addItem('📊 Validate Data', 'validateAllData')
+    .addItem('✨ Enrich Missing Descriptions', 'enrichMissingDescriptions')
+    .addItem('🔍 Find Missing Fields', 'findMissingFields')
+    .addItem('🔄 Refresh All Missing Data', 'enrichAllMissingData')
+    .addSeparator()
+    .addItem('🧪 Test Claude Connection', 'testClaude')
+    .addItem('🧪 Test Gemini Connection', 'testGemini')
+    .addToUi();
+}
 
 /**
  * Serves the HTML content of the web app.
@@ -606,5 +622,473 @@ function getDashboardData() {
     return JSON.stringify({
       error: 'Failed to read or process data: ' + error.message
     });
+  }
+}
+
+// ==========================================
+// DATA MANAGEMENT & ENRICHMENT FUNCTIONS
+// ==========================================
+
+/**
+ * Validates all data and reports issues
+ */
+function validateAllData() {
+  const ui = SpreadsheetApp.getUi();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+
+  if (!SPREADSHEET_ID || !SHEET_NAME) {
+    ui.alert('❌ Configuration Error', 'SPREADSHEET_ID and SHEET_NAME must be set in Script Properties.', ui.ButtonSet.OK);
+    return;
+  }
+
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    const dataRows = values.slice(1);
+
+    const issues = [];
+    const requiredFields = ['product_name', 'description', 'Division', 'Department', 'Category', 'Website'];
+
+    dataRows.forEach((row, index) => {
+      const rowNum = index + 2; // +2 because: 0-indexed + header row
+      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+
+      if (!isActive) return; // Skip inactive apps
+
+      const appName = row[headers.indexOf('product_name')] || `Row ${rowNum}`;
+
+      requiredFields.forEach(field => {
+        const colIndex = headers.indexOf(field);
+        if (colIndex === -1) {
+          issues.push(`❌ Column "${field}" not found in sheet`);
+        } else if (!row[colIndex] || row[colIndex].toString().trim() === '') {
+          issues.push(`⚠️ Row ${rowNum} (${appName}): Missing "${field}"`);
+        }
+      });
+    });
+
+    if (issues.length === 0) {
+      ui.alert('✅ Validation Complete', 'All active apps have required fields!', ui.ButtonSet.OK);
+    } else {
+      const message = `Found ${issues.length} issue(s):\n\n` + issues.slice(0, 20).join('\n') +
+                      (issues.length > 20 ? `\n\n... and ${issues.length - 20} more issues.` : '');
+      ui.alert('⚠️ Validation Issues Found', message, ui.ButtonSet.OK);
+      Logger.log('Validation Issues:\n' + issues.join('\n'));
+    }
+  } catch (error) {
+    ui.alert('❌ Error', 'Validation failed: ' + error.message, ui.ButtonSet.OK);
+    Logger.log('Validation error: ' + error.message);
+  }
+}
+
+/**
+ * Finds all rows with missing fields and displays report
+ */
+function findMissingFields() {
+  const ui = SpreadsheetApp.getUi();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+
+  if (!SPREADSHEET_ID || !SHEET_NAME) {
+    ui.alert('❌ Configuration Error', 'SPREADSHEET_ID and SHEET_NAME must be set in Script Properties.', ui.ButtonSet.OK);
+    return;
+  }
+
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    const dataRows = values.slice(1);
+
+    const missingData = {
+      description: [],
+      category: [],
+      audience: [],
+      gradeLevels: [],
+      logoUrl: []
+    };
+
+    dataRows.forEach((row, index) => {
+      const rowNum = index + 2;
+      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+
+      if (!isActive) return;
+
+      const appName = row[headers.indexOf('product_name')] || `Row ${rowNum}`;
+
+      if (!row[headers.indexOf('description')] || row[headers.indexOf('description')].toString().trim() === '') {
+        missingData.description.push(`${appName} (Row ${rowNum})`);
+      }
+      if (!row[headers.indexOf('Category')] || row[headers.indexOf('Category')].toString().trim() === '') {
+        missingData.category.push(`${appName} (Row ${rowNum})`);
+      }
+      if (!row[headers.indexOf('audience')] || row[headers.indexOf('audience')].toString().trim() === '') {
+        missingData.audience.push(`${appName} (Row ${rowNum})`);
+      }
+      if (!row[headers.indexOf('grade_levels')] || row[headers.indexOf('grade_levels')].toString().trim() === '') {
+        missingData.gradeLevels.push(`${appName} (Row ${rowNum})`);
+      }
+      if (!row[headers.indexOf('logo_url')] || row[headers.indexOf('logo_url')].toString().trim() === '') {
+        missingData.logoUrl.push(`${appName} (Row ${rowNum})`);
+      }
+    });
+
+    const report = [
+      `📊 Missing Data Report`,
+      ``,
+      `Missing Descriptions: ${missingData.description.length}`,
+      missingData.description.slice(0, 5).join('\n'),
+      missingData.description.length > 5 ? `... and ${missingData.description.length - 5} more` : '',
+      ``,
+      `Missing Categories: ${missingData.category.length}`,
+      missingData.category.slice(0, 5).join('\n'),
+      ``,
+      `Missing Audience: ${missingData.audience.length}`,
+      missingData.audience.slice(0, 5).join('\n'),
+      ``,
+      `Missing Grade Levels: ${missingData.gradeLevels.length}`,
+      missingData.gradeLevels.slice(0, 5).join('\n'),
+      ``,
+      `Missing Logos: ${missingData.logoUrl.length}`,
+      missingData.logoUrl.slice(0, 5).join('\n')
+    ].filter(line => line !== undefined).join('\n');
+
+    ui.alert('🔍 Missing Fields Report', report, ui.ButtonSet.OK);
+    Logger.log('Missing Fields Report:\n' + report);
+
+  } catch (error) {
+    ui.alert('❌ Error', 'Failed to analyze missing fields: ' + error.message, ui.ButtonSet.OK);
+    Logger.log('Missing fields analysis error: ' + error.message);
+  }
+}
+
+/**
+ * Enriches apps with missing descriptions using Claude AI
+ */
+function enrichMissingDescriptions() {
+  const ui = SpreadsheetApp.getUi();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
+
+  if (!CLAUDE_API_KEY) {
+    ui.alert('❌ Configuration Error', 'CLAUDE_API_KEY must be set in Script Properties for data enrichment.', ui.ButtonSet.OK);
+    return;
+  }
+
+  const response = ui.alert(
+    '✨ Enrich Missing Descriptions',
+    'This will use Claude AI to generate descriptions for apps that are missing them. This operation may take several minutes. Continue?',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (response !== ui.Button.YES) {
+    return;
+  }
+
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    const dataRows = values.slice(1);
+
+    const descriptionCol = headers.indexOf('description');
+    const productCol = headers.indexOf('product_name');
+    const categoryCol = headers.indexOf('Category');
+    const websiteCol = headers.indexOf('Website');
+    const subjectCol = headers.indexOf('subjects_or_department');
+
+    let enrichedCount = 0;
+    const maxToEnrich = 10; // Limit to prevent quota issues
+
+    dataRows.forEach((row, index) => {
+      if (enrichedCount >= maxToEnrich) return;
+
+      const rowNum = index + 2;
+      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+
+      if (!isActive) return;
+
+      const description = row[descriptionCol];
+      const productName = row[productCol];
+
+      if (!description || description.toString().trim() === '') {
+        const category = row[categoryCol] || 'Unknown';
+        const website = row[websiteCol] || '';
+        const subject = row[subjectCol] || '';
+
+        const generatedDesc = generateDescriptionWithClaude(productName, category, website, subject);
+
+        if (generatedDesc && generatedDesc !== 'ERROR') {
+          sheet.getRange(rowNum, descriptionCol + 1).setValue(generatedDesc);
+          enrichedCount++;
+          Logger.log(`Enriched description for ${productName} (Row ${rowNum})`);
+          SpreadsheetApp.flush(); // Save immediately
+        }
+      }
+    });
+
+    ui.alert('✅ Enrichment Complete', `Successfully generated descriptions for ${enrichedCount} app(s).`, ui.ButtonSet.OK);
+
+  } catch (error) {
+    ui.alert('❌ Error', 'Enrichment failed: ' + error.message, ui.ButtonSet.OK);
+    Logger.log('Enrichment error: ' + error.message);
+  }
+}
+
+/**
+ * Enriches ALL missing data (descriptions, categories, audience, grade levels) using Claude AI
+ */
+function enrichAllMissingData() {
+  const ui = SpreadsheetApp.getUi();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
+
+  if (!CLAUDE_API_KEY) {
+    ui.alert('❌ Configuration Error', 'CLAUDE_API_KEY must be set in Script Properties for data enrichment.', ui.ButtonSet.OK);
+    return;
+  }
+
+  const response = ui.alert(
+    '🔄 Enrich All Missing Data',
+    'This will use Claude AI to fill in ALL missing fields (descriptions, categories, audience, grade levels). This operation may take several minutes and use significant API quota. Continue?',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (response !== ui.Button.YES) {
+    return;
+  }
+
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    const dataRows = values.slice(1);
+
+    const colMap = {
+      description: headers.indexOf('description'),
+      category: headers.indexOf('Category'),
+      audience: headers.indexOf('audience'),
+      gradeLevels: headers.indexOf('grade_levels'),
+      product: headers.indexOf('product_name'),
+      website: headers.indexOf('Website'),
+      subject: headers.indexOf('subjects_or_department'),
+      division: headers.indexOf('Division')
+    };
+
+    let enrichedCount = 0;
+    const maxToEnrich = 15; // Limit to prevent quota issues
+
+    dataRows.forEach((row, index) => {
+      if (enrichedCount >= maxToEnrich) return;
+
+      const rowNum = index + 2;
+      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
+
+      if (!isActive) return;
+
+      const productName = row[colMap.product];
+      const hasMissingData = !row[colMap.description] || !row[colMap.category] || !row[colMap.audience] || !row[colMap.gradeLevels];
+
+      if (hasMissingData) {
+        const enrichedData = enrichAppDataWithClaude({
+          productName: productName,
+          website: row[colMap.website] || '',
+          subject: row[colMap.subject] || '',
+          division: row[colMap.division] || '',
+          currentDescription: row[colMap.description] || '',
+          currentCategory: row[colMap.category] || '',
+          currentAudience: row[colMap.audience] || '',
+          currentGradeLevels: row[colMap.gradeLevels] || ''
+        });
+
+        if (enrichedData && enrichedData !== 'ERROR') {
+          if (enrichedData.description && !row[colMap.description]) {
+            sheet.getRange(rowNum, colMap.description + 1).setValue(enrichedData.description);
+          }
+          if (enrichedData.category && !row[colMap.category]) {
+            sheet.getRange(rowNum, colMap.category + 1).setValue(enrichedData.category);
+          }
+          if (enrichedData.audience && !row[colMap.audience]) {
+            sheet.getRange(rowNum, colMap.audience + 1).setValue(enrichedData.audience);
+          }
+          if (enrichedData.gradeLevels && !row[colMap.gradeLevels]) {
+            sheet.getRange(rowNum, colMap.gradeLevels + 1).setValue(enrichedData.gradeLevels);
+          }
+
+          enrichedCount++;
+          Logger.log(`Enriched data for ${productName} (Row ${rowNum})`);
+          SpreadsheetApp.flush(); // Save immediately
+          Utilities.sleep(1000); // Rate limiting
+        }
+      }
+    });
+
+    ui.alert('✅ Enrichment Complete', `Successfully enriched ${enrichedCount} app(s) with missing data.`, ui.ButtonSet.OK);
+
+  } catch (error) {
+    ui.alert('❌ Error', 'Enrichment failed: ' + error.message, ui.ButtonSet.OK);
+    Logger.log('Full enrichment error: ' + error.message);
+  }
+}
+
+/**
+ * Helper: Generates description for an app using Claude AI
+ */
+function generateDescriptionWithClaude(productName, category, website, subject) {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
+
+  if (!CLAUDE_API_KEY) {
+    return 'ERROR';
+  }
+
+  const prompt = `Generate a concise, educational 1-2 sentence description for this app:
+
+App Name: ${productName}
+Category: ${category}
+Subject: ${subject}
+Website: ${website}
+
+Write a clear description suitable for teachers and staff at an international school. Focus on what the app does and who it's for. Do not include promotional language or marketing speak. Just the facts.
+
+Return ONLY the description text, nothing else.`;
+
+  const url = 'https://api.anthropic.com/v1/messages';
+  const payload = {
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 150,
+    messages: [{
+      role: 'user',
+      content: [{
+        type: 'text',
+        text: prompt
+      }]
+    }]
+  };
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-api-key': CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+
+    if (responseCode === 200) {
+      const result = JSON.parse(response.getContentText());
+      if (result.content && result.content.length > 0) {
+        return result.content[0].text.trim();
+      }
+    }
+
+    Logger.log('Claude API error for ' + productName + ': HTTP ' + responseCode);
+    return 'ERROR';
+
+  } catch (error) {
+    Logger.log('Error generating description for ' + productName + ': ' + error.message);
+    return 'ERROR';
+  }
+}
+
+/**
+ * Helper: Enriches app data with all missing fields using Claude AI
+ */
+function enrichAppDataWithClaude(appData) {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
+
+  if (!CLAUDE_API_KEY) {
+    return 'ERROR';
+  }
+
+  const prompt = `You are helping to enrich educational app data for Singapore American School. Analyze this app and fill in missing information:
+
+App Name: ${appData.productName}
+Website: ${appData.website}
+Subject: ${appData.subject}
+Division: ${appData.division}
+
+Current Data:
+- Description: ${appData.currentDescription || '[MISSING]'}
+- Category: ${appData.currentCategory || '[MISSING]'}
+- Audience: ${appData.currentAudience || '[MISSING]'}
+- Grade Levels: ${appData.currentGradeLevels || '[MISSING]'}
+
+Please provide the missing data in JSON format. Use these guidelines:
+- Description: 1-2 concise sentences about what the app does
+- Category: Choose ONE from: Learning Management, Content Creation, Assessment, Math Tools, Language Arts, Science, Design, Productivity, Communication, Research, Programming
+- Audience: Comma-separated from: Teachers, Students, Staff, Parents
+- Grade Levels: Use format like "K-5", "6-8", "9-12", or "K-12" based on the division
+
+Return ONLY valid JSON in this exact format:
+{
+  "description": "...",
+  "category": "...",
+  "audience": "...",
+  "gradeLevels": "..."
+}`;
+
+  const url = 'https://api.anthropic.com/v1/messages';
+  const payload = {
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 300,
+    messages: [{
+      role: 'user',
+      content: [{
+        type: 'text',
+        text: prompt
+      }]
+    }]
+  };
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-api-key': CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+
+    if (responseCode === 200) {
+      const result = JSON.parse(response.getContentText());
+      if (result.content && result.content.length > 0) {
+        const responseText = result.content[0].text.trim();
+
+        // Extract JSON from response (handle markdown code blocks)
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      }
+    }
+
+    Logger.log('Claude API error for ' + appData.productName + ': HTTP ' + responseCode);
+    return 'ERROR';
+
+  } catch (error) {
+    Logger.log('Error enriching data for ' + appData.productName + ': ' + error.message);
+    return 'ERROR';
   }
 }
