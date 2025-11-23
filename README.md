@@ -32,7 +32,7 @@ Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
 
 ### 🎨 Enhanced User Experience (Phase 3)
 - **App Logos & Branding**: Display app logos for quick visual recognition
-- **Grade Level Badges**: Quickly identify appropriate grade levels (individual grades from Pre-K through Grade 12)
+- **Grade Level Badges**: Quickly identify representative grade levels for each app
 - **"What's New" Section**: Automatically highlights apps added in the last 30 days
 - **NEW Badges**: Eye-catching animated badges for recently added apps
 - **App Detail Modal**: Click "Details" for comprehensive app information including:
@@ -119,7 +119,7 @@ Create a Google Sheet with the following 22 columns (see [expected-data-template
 | `active` | Boolean | TRUE/FALSE - only TRUE apps displayed | TRUE |
 | `product_name` | String | Application name | Google Classroom |
 | `division` | String | School divisions | SAS Elementary School, SAS Middle School, SAS High School, Whole School |
-| `grade_levels` | String | Individual grades (comma-separated) | Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5 |
+| `grade_levels` | String | Representative grade level (single value from dropdown) | Kindergarten, Grade 7, Grade 10 |
 | `department` | String | Department name | Mathematics, Technology, School Operations |
 | `subjects` | String | Subject area | Math, Science, Arts |
 | `enterprise` | Boolean | Official enterprise/core tool | TRUE/FALSE |

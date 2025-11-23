@@ -1401,31 +1401,33 @@ function inferGradeLevels(productName, division, department, subjects) {
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-    const prompt = `Based on the following information about an educational app, determine the appropriate grade levels.
+    const prompt = `Based on the following information about an educational app, determine the appropriate representative grade level.
 
 Product: ${productName}
 Division: ${division}
 Department: ${department}
 Subjects: ${subjects}
 
-Return ONLY a comma-separated list of applicable grades from this list (no explanation):
+IMPORTANT: Return ONLY ONE grade level from this list (no comma-separated values, just ONE value):
 Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
 
-Consider:
-1. Division field mapping:
-   - SAS Early Learning Center / SAS Elementary School = Pre-K through Grade 5
-   - SAS Middle School = Grade 6, Grade 7, Grade 8
-   - SAS High School = Grade 9, Grade 10, Grade 11, Grade 12
-2. Product name may indicate specific grade levels
-3. Subject matter complexity (simpler = lower grades, advanced = higher grades)
-4. Department focus
+Guidelines:
+1. If division indicates a single school level, return the middle/representative grade:
+   - SAS Elementary School → "Kindergarten"
+   - SAS Middle School → "Grade 7"
+   - SAS High School → "Grade 10"
+2. If product name indicates specific grade, use that
+3. If multiple divisions or unclear, return empty string ""
+4. If subject indicates specific level (e.g., Calculus = Grade 11 or 12, Basic Reading = Kindergarten), use that
 
 Examples:
-- Elementary school math app → "Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
-- High school only → "Grade 9, Grade 10, Grade 11, Grade 12"
-- All divisions → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12"
+- Elementary only → "Kindergarten"
+- Middle School only → "Grade 7"
+- High School only → "Grade 10"
+- Multiple divisions → ""
+- AP courses → "Grade 11" or "Grade 12"
 
-Return only the comma-separated grade list, nothing else.`;
+Return ONLY the single grade value or empty string, nothing else.`;
 
     const payload = {
       contents: [{
@@ -1450,14 +1452,20 @@ Return only the comma-separated grade list, nothing else.`;
       const result = JSON.parse(response.getContentText());
       const gradeLevel = result.candidates[0].content.parts[0].text.trim();
 
-      // Validate response contains valid grade levels
+      // Validate response is a valid single grade level
       const validGrades = ['Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
                           'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
                           'Grade 11', 'Grade 12'];
 
-      // Check if response contains at least one valid grade
-      if (validGrades.some(grade => gradeLevel.includes(grade))) {
-        return gradeLevel;
+      // Check if response is exactly one of the valid grades (no commas, just single value)
+      const trimmedGrade = gradeLevel.trim().replace(/['"]/g, '');
+      if (validGrades.includes(trimmedGrade)) {
+        return trimmedGrade;
+      }
+
+      // If empty string returned, that's also valid (means user should manually select)
+      if (trimmedGrade === '') {
+        return '';
       }
     }
 
@@ -1486,27 +1494,29 @@ function inferGradeLevelsRules(division) {
   const hasMiddle = divisionLower.includes('middle');
   const hasHigh = divisionLower.includes('high');
 
-  // Build grade list based on divisions
-  const grades = [];
+  // Return single representative grade value (required for Google Sheets data validation)
+  // Data validation only accepts single values from dropdown, not comma-separated lists
 
+  // If multiple divisions, return empty (user should manually select)
+  if ((hasElementary ? 1 : 0) + (hasMiddle ? 1 : 0) + (hasHigh ? 1 : 0) > 1) {
+    return '';
+  }
+
+  // Return representative grade for single division
   if (hasElementary) {
-    grades.push('Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5');
+    return 'Kindergarten'; // Representative grade for Elementary
   }
 
   if (hasMiddle) {
-    grades.push('Grade 6', 'Grade 7', 'Grade 8');
+    return 'Grade 7'; // Representative grade for Middle School
   }
 
   if (hasHigh) {
-    grades.push('Grade 9', 'Grade 10', 'Grade 11', 'Grade 12');
+    return 'Grade 10'; // Representative grade for High School
   }
 
-  // If no specific division found, default to all grades
-  if (grades.length === 0) {
-    return 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12';
-  }
-
-  return grades.join(', ');
+  // If no specific division found, return empty (user should manually select)
+  return '';
 }
 
 /**

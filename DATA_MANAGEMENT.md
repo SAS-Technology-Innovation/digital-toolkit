@@ -161,7 +161,7 @@ Please provide the missing data in JSON format:
 - Description: 1-2 concise sentences
 - Category: Choose from predefined list
 - Audience: Teachers, Students, Staff, Parents
-- Grade Levels: Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12 (individual grades, comma-separated)
+- Grade Levels: Single representative grade from dropdown (e.g., "Kindergarten" for Elementary, "Grade 7" for Middle School, "Grade 10" for High School)
 ```
 
 **Generated Response:**
@@ -243,9 +243,9 @@ The enrichment tools expect these column headers (all lowercase):
 - `description` - App description (1-2 sentences)
 - `category` - App category
 - `audience` - Target users
-- `grade_levels` - Individual grades (comma-separated): Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
+- `grade_levels` - Single representative grade from dropdown (e.g., "Kindergarten", "Grade 7", "Grade 10")
 
-**Note:** Column names changed from mixed-case to all lowercase. The `grade_levels` column is now in 4th position (after `division`, before `department`) and uses individual grade values instead of ranges.
+**Note:** Column names changed from mixed-case to all lowercase. The `grade_levels` column is now in 4th position (after `division`, before `department`) and uses single representative grade values (not comma-separated lists due to data validation constraints).
 
 ## ⚙️ Technical Details
 
