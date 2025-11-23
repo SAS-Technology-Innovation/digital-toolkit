@@ -319,8 +319,14 @@ The dashboard now includes intelligent natural language search powered by Google
 - **Content Moderation**: Filters harmful, inappropriate, or off-topic requests
 - **App Request Guidance**: Provides structured guidance when requested apps aren't available
 - **Dual API Support**: Works with both Gemini and Claude AI providers
+- **Automatic Logging & Analytics**: Tracks AI queries and data enrichment operations for audit trails and pattern analysis
 
 **Setup**: Add `GEMINI_API_KEY` or `CLAUDE_API_KEY` to Script Properties. See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.
+
+**Logging Features**:
+- **Update Logs**: Auto-tracks all data enrichment operations with before/after values
+- **AI Chat Analytics**: Logs user queries, categorizes by type, and identifies search patterns
+- **Pattern Analysis**: Built-in menu tool analyzes chat logs to discover missing apps users are searching for
 
 See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for Phase 5 plans.
 

@@ -371,13 +371,19 @@ When you open the Google Sheets containing your app data, a custom menu "🤖 Di
    - Uses intelligent prompts based on division, subject, website
    - Includes 1-second rate limiting between requests
 
-5. **🧪 Test Claude Connection** ([Code.js:1096-1116](Code.js#L1096-L1116))
+5. **📈 Analyze AI Chat Patterns** ([Code.js:1253-1331](Code.js#L1253-L1331))
+   - Analyzes user AI chat interactions to identify missing apps
+   - Reports query types, top keywords, and recent queries
+   - Helps discover gaps in app database based on search patterns
+   - Requires "AI Chat Analytics" sheet with logged queries
+
+6. **🧪 Test Claude Connection** ([Code.js:1119-1139](Code.js#L1119-L1139))
    - Validates `CLAUDE_API_KEY` configuration
    - Tests Claude API connectivity with sample description generation
    - Displays actual API response (first 200 characters)
    - User-friendly success/failure alerts
 
-6. **🧪 Test Gemini Connection** ([Code.js:1118-1140](Code.js#L1118-L1140))
+7. **🧪 Test Gemini Connection** ([Code.js:1157-1179](Code.js#L1157-L1179))
    - Validates `GEMINI_API_KEY` configuration
    - Tests Gemini API connectivity with simple prompt
    - Confirms API key validity and working status
@@ -420,6 +426,40 @@ When you open the Google Sheets containing your app data, a custom menu "🤖 Di
 - User-friendly error alerts in Google Sheets UI
 
 **For complete data management workflow and troubleshooting, see [DATA_MANAGEMENT.md](DATA_MANAGEMENT.md).**
+
+### Automatic Logging System
+
+The dashboard includes automatic logging for audit trails and analytics.
+
+**Update Logs Sheet** ([Code.js:1181-1220](Code.js#L1181-L1220)):
+- Auto-created when first enrichment operation runs
+- Tracks: Timestamp, Operation, App Name, Row, Field, Old Value, New Value
+- Provides complete audit trail of all data changes
+- Silent failure to prevent disrupting enrichment operations
+
+**AI Chat Analytics Sheet** ([Code.js:1222-1268](Code.js#L1222-L1268)):
+- Auto-created when first AI query is processed
+- Logs: Timestamp, User Query, Apps Recommended, Response Length, Query Type
+- Auto-categorizes queries: General, Recommendation Request, Grade-Specific, Subject-Specific
+- Enables pattern analysis to identify missing apps
+
+**App Name Extraction** ([Code.js:1144-1155](Code.js#L1144-L1155)):
+- Extracts app names from AI responses using markdown pattern matching
+- Identifies apps mentioned in bold (**App Name**)
+- Returns comma-separated list of up to 5 apps or count if more
+- Used for "Apps Recommended" field in analytics
+
+**Integration Points:**
+- `logDataUpdate()` called in `enrichMissingDescriptions()` at line 835
+- `logDataUpdate()` called in `enrichAllMissingData()` at lines 921, 925, 929, 933
+- `logAIQuery()` called in `queryGeminiAPI()` at line 196
+- `logAIQuery()` called in `queryClaudeAPI()` at line 270
+
+**Usage:**
+- Logging happens automatically - no user action required
+- View logs by opening "Update Logs" or "AI Chat Analytics" sheets
+- Run "Analyze AI Chat Patterns" from menu for insights
+- Use logs to track changes, identify trends, and discover missing apps
 
 ---
 

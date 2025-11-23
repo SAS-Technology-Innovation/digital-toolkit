@@ -18,6 +18,8 @@ function onOpen() {
     .addItem('🔍 Find Missing Fields', 'findMissingFields')
     .addItem('🔄 Refresh All Missing Data', 'enrichAllMissingData')
     .addSeparator()
+    .addItem('📈 Analyze AI Chat Patterns', 'analyzeAIChatPatterns')
+    .addSeparator()
     .addItem('🧪 Test Claude Connection', 'testClaude')
     .addItem('🧪 Test Gemini Connection', 'testGemini')
     .addToUi();
@@ -187,6 +189,12 @@ function queryGeminiAPI(systemPrompt, userPrompt, userQuery) {
   if (result.candidates && result.candidates.length > 0) {
     const aiResponse = result.candidates[0].content.parts[0].text;
 
+    // Extract app names from response for analytics
+    const appMentions = extractAppNames(aiResponse);
+
+    // Log the query for analytics
+    logAIQuery(userQuery, aiResponse, appMentions);
+
     return JSON.stringify({
       success: true,
       response: aiResponse,
@@ -254,6 +262,12 @@ function queryClaudeAPI(systemPrompt, userPrompt, userQuery) {
 
   if (result.content && result.content.length > 0) {
     const aiResponse = result.content[0].text;
+
+    // Extract app names from response for analytics
+    const appMentions = extractAppNames(aiResponse);
+
+    // Log the query for analytics
+    logAIQuery(userQuery, aiResponse, appMentions);
 
     return JSON.stringify({
       success: true,
@@ -828,6 +842,10 @@ function enrichMissingDescriptions() {
           sheet.getRange(rowNum, descriptionCol + 1).setValue(generatedDesc);
           enrichedCount++;
           Logger.log(`Enriched description for ${productName} (Row ${rowNum})`);
+
+          // Log the update
+          logDataUpdate('Enrich Description', productName, 'description', description, generatedDesc, rowNum);
+
           SpreadsheetApp.flush(); // Save immediately
         }
       }
@@ -912,15 +930,19 @@ function enrichAllMissingData() {
         if (enrichedData && enrichedData !== 'ERROR') {
           if (enrichedData.description && !row[colMap.description]) {
             sheet.getRange(rowNum, colMap.description + 1).setValue(enrichedData.description);
+            logDataUpdate('Enrich All Fields', productName, 'description', row[colMap.description], enrichedData.description, rowNum);
           }
           if (enrichedData.category && !row[colMap.category]) {
             sheet.getRange(rowNum, colMap.category + 1).setValue(enrichedData.category);
+            logDataUpdate('Enrich All Fields', productName, 'category', row[colMap.category], enrichedData.category, rowNum);
           }
           if (enrichedData.audience && !row[colMap.audience]) {
             sheet.getRange(rowNum, colMap.audience + 1).setValue(enrichedData.audience);
+            logDataUpdate('Enrich All Fields', productName, 'audience', row[colMap.audience], enrichedData.audience, rowNum);
           }
           if (enrichedData.gradeLevels && !row[colMap.gradeLevels]) {
             sheet.getRange(rowNum, colMap.gradeLevels + 1).setValue(enrichedData.gradeLevels);
+            logDataUpdate('Enrich All Fields', productName, 'grade_levels', row[colMap.gradeLevels], enrichedData.gradeLevels, rowNum);
           }
 
           enrichedCount++;
@@ -1116,6 +1138,23 @@ function testClaude() {
 }
 
 /**
+ * Extract app names from AI response for analytics
+ * Simple pattern matching for common app mentions
+ */
+function extractAppNames(aiResponse) {
+  // Look for app names in bold markdown (**App Name**) or quoted patterns
+  const boldMatches = aiResponse.match(/\*\*([^*]+)\*\*/g) || [];
+  const appNames = boldMatches
+    .map(match => match.replace(/\*\*/g, '').trim())
+    .filter(name => name.length > 0 && name.length < 50); // Filter out long non-app text
+
+  // Return comma-separated list or "Multiple apps" if many
+  if (appNames.length === 0) return 'None detected';
+  if (appNames.length > 5) return `${appNames.length} apps mentioned`;
+  return appNames.slice(0, 5).join(', ');
+}
+
+/**
  * Tests Gemini API connection
  */
 function testGemini() {
@@ -1136,5 +1175,177 @@ function testGemini() {
     ui.alert('✅ Gemini Connection Successful', 'API key is valid and working!', ui.ButtonSet.OK);
   } else {
     ui.alert('❌ Gemini Connection Failed', 'Check Apps Script logs for details: npm run logs', ui.ButtonSet.OK);
+  }
+}
+
+// ==========================================
+// LOGGING & ANALYTICS FUNCTIONS
+// ==========================================
+
+/**
+ * Logs data enrichment operations to a dedicated "Update Logs" sheet
+ */
+function logDataUpdate(operation, appName, field, oldValue, newValue, rowNum) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+
+    if (!SPREADSHEET_ID) return; // Silently fail if not configured
+
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let logSheet = spreadsheet.getSheetByName('Update Logs');
+
+    // Create sheet if it doesn't exist
+    if (!logSheet) {
+      logSheet = spreadsheet.insertSheet('Update Logs');
+      // Set headers
+      logSheet.getRange(1, 1, 1, 7).setValues([[
+        'Timestamp', 'Operation', 'App Name', 'Row', 'Field', 'Old Value', 'New Value'
+      ]]);
+      logSheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+      logSheet.setFrozenRows(1);
+    }
+
+    // Append log entry
+    logSheet.appendRow([
+      new Date(),
+      operation,
+      appName,
+      rowNum,
+      field,
+      oldValue || '[EMPTY]',
+      newValue
+    ]);
+
+  } catch (error) {
+    Logger.log('Error logging update: ' + error.message);
+    // Don't interrupt main operations if logging fails
+  }
+}
+
+/**
+ * Logs AI chat queries to "AI Chat Analytics" sheet
+ */
+function logAIQuery(userQuery, aiResponse, appsRecommended) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+
+    if (!SPREADSHEET_ID) return;
+
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let chatSheet = spreadsheet.getSheetByName('AI Chat Analytics');
+
+    // Create sheet if it doesn't exist
+    if (!chatSheet) {
+      chatSheet = spreadsheet.insertSheet('AI Chat Analytics');
+      // Set headers
+      chatSheet.getRange(1, 1, 1, 5).setValues([[
+        'Timestamp', 'User Query', 'Apps Recommended', 'Response Length', 'Query Type'
+      ]]);
+      chatSheet.getRange(1, 1, 1, 5).setFontWeight('bold');
+      chatSheet.setFrozenRows(1);
+    }
+
+    // Determine query type
+    let queryType = 'General';
+    if (userQuery.toLowerCase().includes('recommend') || userQuery.toLowerCase().includes('suggest')) {
+      queryType = 'Recommendation Request';
+    } else if (userQuery.toLowerCase().includes('grade') || userQuery.toLowerCase().includes('student')) {
+      queryType = 'Grade-Specific';
+    } else if (userQuery.toLowerCase().includes('subject') || userQuery.toLowerCase().includes('math') || userQuery.toLowerCase().includes('science')) {
+      queryType = 'Subject-Specific';
+    }
+
+    // Append log entry
+    chatSheet.appendRow([
+      new Date(),
+      userQuery,
+      appsRecommended || 'N/A',
+      aiResponse.length,
+      queryType
+    ]);
+
+  } catch (error) {
+    Logger.log('Error logging AI query: ' + error.message);
+  }
+}
+
+/**
+ * Analyzes AI chat logs to identify missing app patterns
+ */
+function analyzeAIChatPatterns() {
+  const ui = SpreadsheetApp.getUi();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+
+  if (!SPREADSHEET_ID) {
+    ui.alert('❌ Configuration Error', 'SPREADSHEET_ID must be set in Script Properties.', ui.ButtonSet.OK);
+    return;
+  }
+
+  try {
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const chatSheet = spreadsheet.getSheetByName('AI Chat Analytics');
+
+    if (!chatSheet) {
+      ui.alert('📊 No Data Yet', 'No AI chat logs found. Chat logs will appear after users interact with the AI assistant.', ui.ButtonSet.OK);
+      return;
+    }
+
+    const values = chatSheet.getDataRange().getValues();
+    const dataRows = values.slice(1);
+
+    if (dataRows.length === 0) {
+      ui.alert('📊 No Data Yet', 'No AI chat queries logged yet.', ui.ButtonSet.OK);
+      return;
+    }
+
+    // Analyze patterns
+    const queryTypes = {};
+    const commonKeywords = {};
+    const recentQueries = dataRows.slice(-10).reverse(); // Last 10 queries
+
+    dataRows.forEach(row => {
+      const query = row[1] || '';
+      const queryType = row[4] || 'General';
+
+      // Count query types
+      queryTypes[queryType] = (queryTypes[queryType] || 0) + 1;
+
+      // Extract keywords (simple word frequency)
+      const words = query.toLowerCase().split(/\s+/).filter(word => word.length > 4);
+      words.forEach(word => {
+        commonKeywords[word] = (commonKeywords[word] || 0) + 1;
+      });
+    });
+
+    // Build report
+    const topKeywords = Object.entries(commonKeywords)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([word, count]) => `${word} (${count})`);
+
+    const report = `📊 AI Chat Analytics Report
+
+Total Queries: ${dataRows.length}
+
+Query Types:
+${Object.entries(queryTypes).map(([type, count]) => `- ${type}: ${count}`).join('\n')}
+
+Top Keywords:
+${topKeywords.join(', ')}
+
+Recent Queries (Last 10):
+${recentQueries.map((row, i) => `${i + 1}. ${row[1].substring(0, 60)}${row[1].length > 60 ? '...' : ''}`).join('\n')}
+
+💡 Tip: Look for repeated keywords that don't match existing apps - these may indicate missing tools users are searching for.`;
+
+    ui.alert('📊 AI Chat Analytics', report, ui.ButtonSet.OK);
+    Logger.log('AI Chat Analytics:\n' + report);
+
+  } catch (error) {
+    ui.alert('❌ Error', 'Failed to analyze chat patterns: ' + error.message, ui.ButtonSet.OK);
+    Logger.log('Analytics error: ' + error.message);
   }
 }
