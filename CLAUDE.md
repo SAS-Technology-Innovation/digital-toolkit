@@ -346,53 +346,59 @@ When you open the Google Sheets containing your app data, a custom menu "🤖 Di
 
 **Menu Functions** (requires `CLAUDE_API_KEY` for AI features):
 
-1. **📊 Validate Data**
+1. **📊 Validate Data** ([Code.js:635-685](Code.js#L635-L685))
    - Checks all active apps for required fields
    - Reports missing: product_name, description, Division, Department, Category, Website
    - Shows up to 20 issues with row numbers
-   - [Code.js:592-642](Code.js#L592-L642)
+   - Logs full validation report to Apps Script Logger
 
-2. **🔍 Find Missing Fields**
+2. **🔍 Find Missing Fields** ([Code.js:690-767](Code.js#L690-L767))
    - Generates comprehensive report of missing data
    - Tracks: descriptions, categories, audience, grade levels, logos
    - Shows first 5 apps missing each field type
-   - [Code.js:647-724](Code.js#L647-L724)
+   - Reports total counts for each missing field type
 
-3. **✨ Enrich Missing Descriptions**
+3. **✨ Enrich Missing Descriptions** ([Code.js:772-842](Code.js#L772-L842))
    - Uses Claude AI to generate descriptions for apps missing them
    - Processes up to 10 apps per run (rate limiting)
    - Generates 1-2 sentence educational descriptions
-   - Automatically saves to sheet
-   - [Code.js:729-799](Code.js#L729-L799)
+   - Automatically saves to sheet with immediate flushing
 
-4. **🔄 Refresh All Missing Data**
+4. **🔄 Refresh All Missing Data** ([Code.js:847-940](Code.js#L847-L940))
    - Comprehensive data enrichment for ALL missing fields
    - Fills in: descriptions, categories, audience, grade levels
    - Processes up to 15 apps per run (quota protection)
    - Uses intelligent prompts based on division, subject, website
    - Includes 1-second rate limiting between requests
-   - [Code.js:804-897](Code.js#L804-L897)
 
-5. **🧪 Test Claude/Gemini Connection**
-   - Validates API key configuration
-   - Tests API connectivity
-   - Returns sample response
-   - Useful for troubleshooting
+5. **🧪 Test Claude Connection** ([Code.js:1096-1116](Code.js#L1096-L1116))
+   - Validates `CLAUDE_API_KEY` configuration
+   - Tests Claude API connectivity with sample description generation
+   - Displays actual API response (first 200 characters)
+   - User-friendly success/failure alerts
+
+6. **🧪 Test Gemini Connection** ([Code.js:1118-1140](Code.js#L1118-L1140))
+   - Validates `GEMINI_API_KEY` configuration
+   - Tests Gemini API connectivity with simple prompt
+   - Confirms API key validity and working status
+   - Clear error messages with troubleshooting guidance
 
 ### Data Enrichment Process
 
 **How Claude AI Enrichment Works:**
 
-1. **Description Generation** ([Code.js:902-963](Code.js#L902-L963)):
+1. **Description Generation** ([Code.js:945-1006](Code.js#L945-L1006)):
    - Analyzes: app name, category, subject, website
    - Generates factual, non-promotional 1-2 sentence descriptions
    - Tailored for international school educators
+   - Uses Claude Sonnet 4.5 model with 150 max tokens
 
-2. **Full Data Enrichment** ([Code.js:968-1051](Code.js#L968-L1051)):
+2. **Full Data Enrichment** ([Code.js:1011-1094](Code.js#L1011-L1094)):
    - Returns structured JSON with all missing fields
    - Category selection from predefined list (Learning Management, Content Creation, etc.)
    - Audience from: Teachers, Students, Staff, Parents
    - Grade levels based on division context (K-5, 6-8, 9-12, K-12)
+   - Uses Claude Sonnet 4.5 model with 300 max tokens for richer data
 
 **Best Practices:**
 - Run "Find Missing Fields" first to identify scope
