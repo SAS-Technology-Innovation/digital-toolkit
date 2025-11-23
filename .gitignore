@@ -37,3 +37,15 @@ yarn-error.log*
 tmp/
 temp/
 *.tmp
+
+# Sensitive data CSV files (keep template only)
+# These contain real school/subscription data - DO NOT COMMIT
+EdTech_Impact.csv
+SAS Digital Toolkit*.csv
+*MASTER*.csv
+merged-import-data.csv
+active-apps-sync.csv
+fixed-import-data.csv
+updated-metadata.csv
+*-import-data.csv
+*-sync.csv

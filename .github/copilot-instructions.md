@@ -74,17 +74,31 @@ google.script.run
 
 ### Data Structure Standards
 
-**Expected Google Sheets Columns:**
-- `Active`: Boolean (TRUE/FALSE) - only TRUE apps are processed
-- `Product`: String - application name
-- `Division`: String - school divisions (Elementary, Middle, High, combinations)
-- `Department`: String - actual department name (not division names)
-- `Subject`: String - subject area for tagging
-- `License Type`: String - license type (Site, Individual, Enterprise, etc.)
-- `Licenses`: Number - number of licenses
-- `Category`: String - application category for tagging
-- `Website`: String - application URL
-- `Spend`: Number/String - cost information
+**Expected Google Sheets Columns (all lowercase):**
+- `active`: Boolean (TRUE/FALSE) - only TRUE apps are processed
+- `product_name`: String - application name
+- `division`: String - school divisions (SAS Elementary School, SAS Middle School, SAS High School, Whole School)
+- `grade_levels`: String - individual grades (Pre-K, Kindergarten, Grade 1, Grade 2, etc.)
+- `department`: String - actual department name (not division names)
+- `subjects`: String - subject area for tagging
+- `enterprise`: Boolean - official enterprise/core tool checkbox
+- `budget`: String - budget source (Office Of Learning, IT Operations, etc.)
+- `audience`: String - comma-separated (Teachers, Students, Parents, Staff)
+- `license_type`: String - license type (Site Licence, Inidividual, Enterprise, School)
+- `licence_count`: Number/String - number of licenses
+- `value`: Number - annual cost
+- `date_added`: Date - when app was added
+- `renewal_date`: Date - subscription renewal
+- `category`: String - application category
+- `website`: String - application URL
+- `description`: String - brief app description (1-2 sentences)
+- `support_email`: String - support contact
+- `tutorial_link`: String - training/help URL
+- `mobile_app`: String - mobile availability (Yes/No/iOS/Android)
+- `sso_enabled`: Boolean - SSO available
+- `logo_url`: String - app logo image URL
+
+**Note:** Column names changed from mixed-case to all lowercase. The `grade_levels` column now uses individual grades instead of ranges (e.g., "Pre-K, Kindergarten, Grade 1" not "K-5").
 
 **Backend Output Structure:**
 ```javascript
@@ -321,8 +335,8 @@ const values = sheet.getDataRange().getValues(); // Single API call
 **Data Processing Pattern:**
 ```javascript
 // Apps Script reads from specific Google Sheets structure
-const headers = values.shift(); // First row contains column headers
-// Expected headers: Active, Product, Division, Department, Subject, Budget, License Type, Licenses, Spend, Category, Website
+const headers = values.shift(); // First row contains column headers (all lowercase)
+// Expected headers: active, product_name, division, grade_levels, department, subjects, enterprise, budget, audience, license_type, licence_count, value, date_added, renewal_date, category, website, description, support_email, tutorial_link, mobile_app, sso_enabled, logo_url
 ```
 
 **Division Categorization Logic:**

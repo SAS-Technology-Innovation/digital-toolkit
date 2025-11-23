@@ -32,7 +32,12 @@ function validateAllData() {
     const dataRows = values.slice(1);
 
     const issues = [];
-    const requiredFields = ['product_name', 'description', 'Division', 'Department', 'Category', 'Website'];
+    // Support both old (capitalized) and new (lowercase) column names
+    const requiredFields = ['product_name', 'description', 'Division', 'Category', 'Website'];
+
+    // Check for department field (try both old and new names)
+    const departmentField = headers.indexOf('department') !== -1 ? 'department' : 'Department';
+    requiredFields.push(departmentField);
 
     dataRows.forEach((row, index) => {
       const rowNum = index + 2;
@@ -232,7 +237,8 @@ function enrichMissingDescriptions() {
     const productCol = headers.indexOf('product_name');
     const categoryCol = headers.indexOf('Category');
     const websiteCol = headers.indexOf('Website');
-    const subjectCol = headers.indexOf('subjects_or_department');
+    // Support both old (subjects_or_department) and new (subjects) column names
+    const subjectCol = headers.indexOf('subjects') !== -1 ? headers.indexOf('subjects') : headers.indexOf('subjects_or_department');
 
     let enrichedCount = 0;
     let errorCount = 0;
@@ -336,7 +342,8 @@ function enrichAllMissingData() {
 
     if (response !== ui.Button.YES) return;
 
-    colMap.subject = headers.indexOf('subjects_or_department');
+    // Support both old (subjects_or_department) and new (subjects) column names
+    colMap.subject = headers.indexOf('subjects') !== -1 ? headers.indexOf('subjects') : headers.indexOf('subjects_or_department');
     colMap.division = headers.indexOf('Division');
 
     let enrichedCount = 0;
@@ -940,11 +947,11 @@ function mapEdTechImpactRow(csvRow, csvHeaders) {
 
   // Set defaults for missing required fields
   if (!mapped['Active']) mapped['Active'] = 'TRUE';
-  if (!mapped['Enterprise']) mapped['Enterprise'] = 'FALSE';
+  if (!mapped['enterprise']) mapped['enterprise'] = 'FALSE';  // Using lowercase to match Google Sheet
 
-  // Department: Default to School-wide since EdTech Impact doesn't track usage department
+  // department: Default to School-wide since EdTech Impact doesn't track usage department
   // (Budget field is who pays, not who uses the app)
-  if (!mapped['Department']) mapped['Department'] = 'School-wide';
+  if (!mapped['department']) mapped['department'] = 'School-wide';  // Using lowercase to match Google Sheet
 
   if (!mapped['License Type']) {
     // Infer license type from Licences count
@@ -1348,9 +1355,13 @@ function parseCSVLine(line) {
 
 /**
  * Validates CSV headers against expected sheet headers
+ * Supports both old (capitalized) and new (lowercase) column names
  */
 function validateCSVHeaders(csvHeaders, sheetHeaders) {
-  const requiredColumns = ['product_name', 'Active', 'Division', 'Department'];
+  const requiredColumns = ['product_name', 'Active', 'Division'];
+  // Support both old (Department) and new (department) column names
+  const departmentColumn = csvHeaders.indexOf('department') !== -1 ? 'department' : 'Department';
+  requiredColumns.push(departmentColumn);
   const missing = [];
 
   requiredColumns.forEach(col => {
@@ -1370,6 +1381,129 @@ function validateCSVHeaders(csvHeaders, sheetHeaders) {
 }
 
 /**
+ * Infers grade levels from product information using AI
+ * Uses Gemini API if GEMINI_API_KEY is set, otherwise falls back to rule-based inference
+ */
+function inferGradeLevels(productName, division, department, subjects) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+
+  if (!apiKey) {
+    // Fallback to rule-based inference
+    return inferGradeLevelsRules(division);
+  }
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const prompt = `Based on the following information about an educational app, determine the appropriate grade levels.
+
+Product: ${productName}
+Division: ${division}
+Department: ${department}
+Subjects: ${subjects}
+
+Return ONLY a comma-separated list of applicable grades from this list (no explanation):
+Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
+
+Consider:
+1. Division field mapping:
+   - SAS Early Learning Center / SAS Elementary School = Pre-K through Grade 5
+   - SAS Middle School = Grade 6, Grade 7, Grade 8
+   - SAS High School = Grade 9, Grade 10, Grade 11, Grade 12
+2. Product name may indicate specific grade levels
+3. Subject matter complexity (simpler = lower grades, advanced = higher grades)
+4. Department focus
+
+Examples:
+- Elementary school math app → "Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+- High school only → "Grade 9, Grade 10, Grade 11, Grade 12"
+- All divisions → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12"
+
+Return only the comma-separated grade list, nothing else.`;
+
+    const payload = {
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 100
+      }
+    };
+
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+
+    if (response.getResponseCode() === 200) {
+      const result = JSON.parse(response.getContentText());
+      const gradeLevel = result.candidates[0].content.parts[0].text.trim();
+
+      // Validate response contains valid grade levels
+      const validGrades = ['Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
+                          'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
+                          'Grade 11', 'Grade 12'];
+
+      // Check if response contains at least one valid grade
+      if (validGrades.some(grade => gradeLevel.includes(grade))) {
+        return gradeLevel;
+      }
+    }
+
+    // Fallback if API fails or returns invalid
+    return inferGradeLevelsRules(division);
+
+  } catch (e) {
+    Logger.log(`Grade level inference error: ${e.message}`);
+    // Fallback on any error
+    return inferGradeLevelsRules(division);
+  }
+}
+
+/**
+ * Rule-based grade level inference from division
+ */
+function inferGradeLevelsRules(division) {
+  if (!division || division.toString().trim() === '') {
+    return '';
+  }
+
+  const divisionLower = division.toString().toLowerCase();
+
+  // Check for specific divisions
+  const hasElementary = divisionLower.includes('elementary') || divisionLower.includes('early learning');
+  const hasMiddle = divisionLower.includes('middle');
+  const hasHigh = divisionLower.includes('high');
+
+  // Build grade list based on divisions
+  const grades = [];
+
+  if (hasElementary) {
+    grades.push('Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5');
+  }
+
+  if (hasMiddle) {
+    grades.push('Grade 6', 'Grade 7', 'Grade 8');
+  }
+
+  if (hasHigh) {
+    grades.push('Grade 9', 'Grade 10', 'Grade 11', 'Grade 12');
+  }
+
+  // If no specific division found, default to all grades
+  if (grades.length === 0) {
+    return 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12';
+  }
+
+  return grades.join(', ');
+}
+
+/**
  * Adds a new app row to the sheet
  * Note: For NEW apps, all CSV data is populated including protected fields (Department, subjects, Enterprise)
  * Protected field logic only applies to EXISTING apps to preserve manual edits
@@ -1385,6 +1519,22 @@ function addAppRow(sheet, sheetHeaders, csvHeaders, rowIndex, csvRow) {
     }
   });
 
+  // Infer grade levels if not provided in CSV
+  const gradeLevelsIndex = sheetHeaders.indexOf('grade_levels');
+  if (gradeLevelsIndex !== -1 && (!newRow[gradeLevelsIndex] || newRow[gradeLevelsIndex] === '')) {
+    const productNameIndex = sheetHeaders.indexOf('product_name');
+    const divisionIndex = sheetHeaders.indexOf('Division');
+    const departmentIndex = sheetHeaders.indexOf('department') !== -1 ? sheetHeaders.indexOf('department') : sheetHeaders.indexOf('Department');
+    const subjectsIndex = sheetHeaders.indexOf('subjects') !== -1 ? sheetHeaders.indexOf('subjects') : sheetHeaders.indexOf('subjects_or_department');
+
+    const productName = newRow[productNameIndex] || '';
+    const division = newRow[divisionIndex] || '';
+    const department = departmentIndex !== -1 ? newRow[departmentIndex] : '';
+    const subjects = subjectsIndex !== -1 ? newRow[subjectsIndex] : '';
+
+    newRow[gradeLevelsIndex] = inferGradeLevels(productName, division, department, subjects);
+  }
+
   // Write row
   sheet.getRange(rowIndex, 1, 1, newRow.length).setValues([newRow]);
   SpreadsheetApp.flush();
@@ -1398,7 +1548,12 @@ function updateAppRow(sheet, sheetHeaders, csvHeaders, rowIndex, csvRow, existin
 
   // Protected fields - NEVER overwrite if existing value is present
   // These are manually populated fields that should be preserved
-  const PROTECTED_FIELDS = ['Department', 'subjects_or_department', 'subjects', 'Enterprise'];
+  // Includes both old (capitalized) and new (lowercase) column names for backwards compatibility
+  const PROTECTED_FIELDS = [
+    'Department', 'department',              // Both cases
+    'subjects_or_department', 'subjects',    // Both old and new names
+    'Enterprise', 'enterprise'               // Both cases
+  ];
 
   csvHeaders.forEach((csvHeader, csvIndex) => {
     const sheetIndex = sheetHeaders.indexOf(csvHeader);
@@ -1424,6 +1579,26 @@ function updateAppRow(sheet, sheetHeaders, csvHeaders, rowIndex, csvRow, existin
     }
   });
 
+  // Infer grade levels if not present in existing row
+  const gradeLevelsIndex = sheetHeaders.indexOf('grade_levels');
+  if (gradeLevelsIndex !== -1 && (!existingRow[gradeLevelsIndex] || existingRow[gradeLevelsIndex] === '')) {
+    const productNameIndex = sheetHeaders.indexOf('product_name');
+    const divisionIndex = sheetHeaders.indexOf('Division');
+    const departmentIndex = sheetHeaders.indexOf('department') !== -1 ? sheetHeaders.indexOf('department') : sheetHeaders.indexOf('Department');
+    const subjectsIndex = sheetHeaders.indexOf('subjects') !== -1 ? sheetHeaders.indexOf('subjects') : sheetHeaders.indexOf('subjects_or_department');
+
+    const productName = existingRow[productNameIndex] || '';
+    const division = existingRow[divisionIndex] || '';
+    const department = departmentIndex !== -1 ? existingRow[departmentIndex] : '';
+    const subjects = subjectsIndex !== -1 ? existingRow[subjectsIndex] : '';
+
+    const inferredGradeLevel = inferGradeLevels(productName, division, department, subjects);
+    if (inferredGradeLevel && inferredGradeLevel !== '') {
+      sheet.getRange(rowIndex, gradeLevelsIndex + 1).setValue(inferredGradeLevel);
+      changesCount++;
+    }
+  }
+
   if (changesCount > 0) {
     SpreadsheetApp.flush();
   }
@@ -1439,7 +1614,12 @@ function fillMissingFields(sheet, sheetHeaders, csvHeaders, rowIndex, csvRow, ex
 
   // Protected fields - NEVER overwrite if existing value is present
   // These are manually populated fields that should be preserved
-  const PROTECTED_FIELDS = ['Department', 'subjects_or_department', 'subjects', 'Enterprise'];
+  // Includes both old (capitalized) and new (lowercase) column names for backwards compatibility
+  const PROTECTED_FIELDS = [
+    'Department', 'department',              // Both cases
+    'subjects_or_department', 'subjects',    // Both old and new names
+    'Enterprise', 'enterprise'               // Both cases
+  ];
 
   csvHeaders.forEach((csvHeader, csvIndex) => {
     const sheetIndex = sheetHeaders.indexOf(csvHeader);
