@@ -61,6 +61,13 @@ Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
 - **Meta Badges**: SSO availability and mobile app indicators
 - **Department Icons**: Auto-assigned icons based on department keywords
 
+### 📝 App Request Process
+- **Guided Workflow**: Step-by-step process for requesting new applications
+- **Visual Flowchart**: Interactive process diagram displayed alongside instructions
+- **Required Questions**: Six structured questions to ensure thorough requests
+- **Consultation Guidance**: Clear steps for working with department leads and PLC coaches
+- **AI Integration**: AI assistant provides app request guidance when requested apps aren't available
+
 ### 📱 Responsive Design
 - Mobile-first responsive layout
 - Touch-friendly interface
@@ -165,12 +172,19 @@ npm run open      # Open Apps Script editor
 digital-toolkit/
 ├── Code.js                 # Apps Script backend
 ├── index.html             # Frontend dashboard
+├── signage.html           # Digital signage display
 ├── appsscript.json       # Apps Script configuration
 ├── package.json          # npm scripts
-├── .clasp.json          # clasp configuration
-└── .github/
-    └── workflows/
-        └── deploy.yml    # Auto-deployment
+├── .clasp.json          # clasp configuration (local only)
+├── assets/                # Static assets
+│   └── App Request Process for Teachers.png
+├── .github/
+│   └── workflows/
+│       └── deploy.yml    # Auto-deployment
+├── CLAUDE.md             # Developer documentation
+├── AI_FEATURES.md        # AI integration guide
+├── SIGNAGE.md            # Signage display guide
+└── UPCOMING_FEATURES.md  # Future roadmap
 ```
 
 ### Business Logic
@@ -293,9 +307,22 @@ This project follows a phased development approach:
 
 - **✅ Phase 1 & 2**: Enterprise apps section, search functionality, audience tags
 - **✅ Phase 3**: Enhanced cards with logos, grade badges, "What's New" section, detail modal
-- **🔮 Phase 4**: User favorites, ratings/reviews, analytics, dark mode, SSO integration
+- **✅ Phase 4 (Partial)**: AI-powered search with Gemini/Claude integration, content moderation, app request guidance
+- **🔮 Phase 5**: User favorites, ratings/reviews, usage analytics, dark mode, Google Workspace SSO
 
-See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for detailed Phase 4 plans.
+### Phase 4: AI-Powered Features (Implemented)
+
+The dashboard now includes intelligent natural language search powered by Google's Gemini API or Anthropic's Claude API:
+
+- **Smart App Recommendations**: Ask questions like "What can I use for collaborative writing with 8th graders?"
+- **AI Safety Guardrails**: Closed system ensures AI only recommends apps from your database
+- **Content Moderation**: Filters harmful, inappropriate, or off-topic requests
+- **App Request Guidance**: Provides structured guidance when requested apps aren't available
+- **Dual API Support**: Works with both Gemini and Claude AI providers
+
+**Setup**: Add `GEMINI_API_KEY` or `CLAUDE_API_KEY` to Script Properties. See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.
+
+See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for Phase 5 plans.
 
 ## 🤝 Contributing
 

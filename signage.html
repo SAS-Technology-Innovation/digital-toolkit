@@ -27,8 +27,8 @@
 
     body {
       font-family: 'DM Sans', Arial, sans-serif;
-      background: white;
-      color: var(--sas-blue);
+      background: linear-gradient(135deg, var(--sas-blue) 0%, #0f1a35 100%);
+      color: white;
       overflow: hidden;
       height: 100vh;
       width: 100vw;
@@ -63,8 +63,7 @@
 
     /* Welcome Slide */
     .welcome-slide {
-      background: white;
-      border: 4px solid var(--sas-yellow);
+      background: linear-gradient(135deg, var(--sas-blue) 0%, #2a4178 50%, var(--sas-red) 100%);
       text-align: center;
     }
 
@@ -72,7 +71,6 @@
       font-size: 8rem;
       margin-bottom: 40px;
       animation: pulse 2s ease-in-out infinite;
-      color: var(--sas-blue);
     }
 
     @keyframes pulse {
@@ -85,7 +83,7 @@
       font-size: 6rem;
       letter-spacing: 4px;
       margin-bottom: 20px;
-      color: var(--sas-blue);
+      text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
     }
 
     .welcome-slide .subtitle {
@@ -98,15 +96,14 @@
     .welcome-slide .tagline {
       font-size: 1.8rem;
       font-weight: 400;
-      color: #333;
+      opacity: 0.9;
       max-width: 900px;
       line-height: 1.5;
     }
 
     /* Stats Slide */
     .stats-slide {
-      background: var(--sas-gray);
-      border: 4px solid var(--sas-yellow);
+      background: linear-gradient(135deg, #0f1a35 0%, var(--sas-blue) 100%);
     }
 
     .stats-grid {
@@ -118,23 +115,23 @@
     }
 
     .stat-card {
-      background: white;
-      border: 3px solid var(--sas-blue);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.2);
       border-radius: 24px;
       padding: 50px;
       text-align: center;
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      transition: transform 0.3s ease;
     }
 
     .stat-card:hover {
       transform: translateY(-5px);
-      border-color: var(--sas-yellow);
     }
 
     .stat-number {
       font-family: 'Bebas Neue', Arial, sans-serif;
       font-size: 7rem;
-      color: var(--sas-blue);
+      color: var(--sas-yellow);
       line-height: 1;
       margin-bottom: 20px;
     }
@@ -142,7 +139,7 @@
     .stat-label {
       font-size: 2rem;
       font-weight: 600;
-      color: #333;
+      opacity: 0.9;
     }
 
     .stats-title {
@@ -151,13 +148,11 @@
       letter-spacing: 3px;
       margin-bottom: 60px;
       text-align: center;
-      color: var(--sas-blue);
     }
 
     /* Enterprise Apps Slide */
     .enterprise-slide {
-      background: white;
-      border: 4px solid var(--sas-yellow);
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     }
 
     .enterprise-header {
@@ -169,21 +164,21 @@
       display: inline-flex;
       align-items: center;
       gap: 15px;
-      background: var(--sas-blue);
-      color: white;
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+      color: #1a1a1a;
       padding: 15px 40px;
       border-radius: 50px;
-      border: 3px solid var(--sas-yellow);
       font-size: 1.5rem;
       font-weight: 800;
       margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(255,215,0,0.3);
     }
 
     .enterprise-title {
       font-family: 'Bebas Neue', Arial, sans-serif;
       font-size: 5rem;
       letter-spacing: 3px;
-      color: var(--sas-blue);
+      color: #ffd700;
     }
 
     .enterprise-grid {
@@ -195,20 +190,32 @@
     }
 
     .enterprise-app-card {
-      background: white;
-      border: 3px solid var(--sas-blue);
+      background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(255,237,78,0.1) 100%);
+      border: 3px solid #ffd700;
       border-radius: 20px;
       padding: 40px;
       text-align: center;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-    .enterprise-app-card:hover {
-      border-color: var(--sas-yellow);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    .enterprise-app-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+      border-radius: 20px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .enterprise-app-card:hover::before {
+      opacity: 1;
     }
 
     .enterprise-app-logo {
@@ -216,25 +223,26 @@
       height: 100px;
       object-fit: contain;
       margin-bottom: 20px;
+      filter: drop-shadow(0 5px 15px rgba(255,215,0,0.3));
     }
 
     .enterprise-app-name {
       font-size: 2.2rem;
       font-weight: 800;
-      color: var(--sas-blue);
+      color: #ffd700;
       margin-bottom: 15px;
     }
 
     .enterprise-app-desc {
       font-size: 1.3rem;
+      opacity: 0.9;
       line-height: 1.4;
-      color: #333;
+      color: white;
     }
 
     /* What's New Slide */
     .whats-new-slide {
-      background: white;
-      border: 4px solid var(--sas-red);
+      background: linear-gradient(135deg, var(--sas-red) 0%, #800e1f 100%);
     }
 
     .whats-new-header {
@@ -246,21 +254,26 @@
       display: inline-flex;
       align-items: center;
       gap: 15px;
-      background: var(--sas-red);
+      background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
       color: white;
       padding: 15px 40px;
       border-radius: 50px;
-      border: 3px solid var(--sas-yellow);
       font-size: 1.5rem;
       font-weight: 800;
       margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(255,68,68,0.4);
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 10px 30px rgba(255,68,68,0.4); }
+      50% { box-shadow: 0 15px 40px rgba(255,68,68,0.6); }
     }
 
     .whats-new-title {
       font-family: 'Bebas Neue', Arial, sans-serif;
       font-size: 5rem;
       letter-spacing: 3px;
-      color: var(--sas-blue);
     }
 
     .new-apps-grid {
@@ -272,14 +285,14 @@
     }
 
     .new-app-card {
-      background: white;
-      border: 3px solid var(--sas-red);
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.3);
       border-radius: 20px;
       padding: 40px;
       text-align: center;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
     .new-app-card::after {
@@ -287,12 +300,13 @@
       position: absolute;
       top: 20px;
       right: 20px;
-      background: var(--sas-yellow);
-      color: var(--sas-blue);
+      background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+      color: white;
       padding: 8px 20px;
       border-radius: 20px;
       font-weight: 800;
       font-size: 0.9rem;
+      box-shadow: 0 5px 15px rgba(255,68,68,0.4);
     }
 
     .new-app-logo {
@@ -300,33 +314,31 @@
       height: 100px;
       object-fit: contain;
       margin-bottom: 20px;
+      filter: drop-shadow(0 5px 15px rgba(255,255,255,0.3));
     }
 
     .new-app-name {
       font-size: 2.2rem;
       font-weight: 800;
       margin-bottom: 15px;
-      color: var(--sas-blue);
     }
 
     .new-app-desc {
       font-size: 1.3rem;
+      opacity: 0.9;
       line-height: 1.4;
       margin-bottom: 15px;
-      color: #333;
     }
 
     .new-app-date {
       font-size: 1.1rem;
+      opacity: 0.7;
       font-style: italic;
-      color: #666;
     }
 
     /* App Spotlight Slide */
     .spotlight-slide {
-      background: var(--sas-blue);
-      color: white;
-      border: 4px solid var(--sas-yellow);
+      background: linear-gradient(135deg, var(--sas-blue) 0%, var(--sas-red) 100%);
     }
 
     .spotlight-content {
@@ -347,6 +359,7 @@
       height: 300px;
       object-fit: contain;
       margin-bottom: 30px;
+      filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
       animation: float 3s ease-in-out infinite;
     }
 
@@ -366,9 +379,8 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: white;
-      color: var(--sas-blue);
-      border: 2px solid var(--sas-yellow);
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
       padding: 10px 25px;
       border-radius: 30px;
       font-size: 1.1rem;
@@ -424,21 +436,15 @@
 
     /* Division Apps Slide */
     .division-slide {
-      background: white;
-      color: var(--sas-blue);
-      border: 4px solid var(--elementary);
+      background: linear-gradient(135deg, var(--elementary) 0%, #1a6b94 100%);
     }
 
     .division-slide.middle {
-      background: white;
-      color: var(--sas-blue);
-      border: 4px solid var(--middle-school);
+      background: linear-gradient(135deg, var(--middle-school) 0%, #70111f 100%);
     }
 
     .division-slide.high {
-      background: white;
-      color: var(--sas-blue);
-      border: 4px solid var(--high-school);
+      background: linear-gradient(135deg, var(--high-school) 0%, #0f1a35 100%);
     }
 
     .division-header {
@@ -451,12 +457,11 @@
       font-size: 5rem;
       letter-spacing: 3px;
       margin-bottom: 20px;
-      color: var(--sas-blue);
     }
 
     .division-subtitle {
       font-size: 2rem;
-      color: #333;
+      opacity: 0.9;
     }
 
     .division-apps-grid {
@@ -468,17 +473,17 @@
     }
 
     .division-app-card {
-      background: var(--sas-gray);
-      border: 3px solid var(--sas-blue);
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.3);
       border-radius: 16px;
       padding: 30px;
       text-align: center;
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      transition: transform 0.3s ease;
     }
 
     .division-app-card:hover {
       transform: translateY(-5px);
-      border-color: var(--sas-yellow);
     }
 
     .division-app-logo {
@@ -492,11 +497,11 @@
       font-size: 1.8rem;
       font-weight: 800;
       margin-bottom: 10px;
-      color: var(--sas-blue);
     }
 
     .division-app-subject {
       font-size: 1.2rem;
+      opacity: 0.8;
       color: var(--sas-yellow);
     }
 
@@ -517,14 +522,12 @@
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      background: var(--sas-gray);
-      border: 2px solid var(--sas-blue);
+      background: rgba(255,255,255,0.3);
       transition: all 0.3s ease;
     }
 
     .progress-dot.active {
       background: var(--sas-yellow);
-      border-color: var(--sas-yellow);
       width: 40px;
       border-radius: 6px;
     }
@@ -542,8 +545,8 @@
     .loading-spinner {
       width: 60px;
       height: 60px;
-      border: 6px solid var(--sas-gray);
-      border-top-color: var(--sas-blue);
+      border: 6px solid rgba(255,255,255,0.3);
+      border-top-color: var(--sas-yellow);
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 30px;
@@ -556,7 +559,6 @@
     .loading-text {
       font-size: 2rem;
       font-weight: 600;
-      color: var(--sas-blue);
     }
 
     /* Error State */
@@ -580,13 +582,12 @@
       font-family: 'Bebas Neue', Arial, sans-serif;
       font-size: 4rem;
       margin-bottom: 20px;
-      color: var(--sas-blue);
     }
 
     .error-message {
       font-size: 1.5rem;
+      opacity: 0.9;
       max-width: 700px;
-      color: #333;
     }
 
     /* Auto-refresh indicator */
@@ -597,12 +598,12 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: white;
-      border: 2px solid var(--sas-yellow);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
       padding: 10px 20px;
       border-radius: 30px;
       font-size: 0.9rem;
-      color: var(--sas-blue);
+      opacity: 0.7;
       z-index: 30;
     }
 
@@ -672,11 +673,10 @@
 
   <script>
     // Configuration
-    const SLIDE_DURATION = 8000; // 8 seconds per slide (faster)
+    const SLIDE_DURATION = 8000; // 8 seconds per slide
     const REFRESH_INTERVAL = 300000; // Refresh data every 5 minutes
     const NEW_APP_THRESHOLD_DAYS = 30; // Apps added in last 30 days are "new"
     const MAX_APPS_PER_SLIDE = 6; // Maximum apps to show per slide
-    const PRIORITY_APPS = ['Toddle', 'PowerSchool', 'Gemini', 'Flint']; // Priority apps to spotlight
 
     let currentSlideIndex = 0;
     let slides = [];
@@ -1074,37 +1074,17 @@
      * Get featured apps for spotlight
      */
     function getFeaturedApps(count) {
-      // Collect all apps from all divisions
+      // Prioritize: Enterprise apps > Apps with logos > Apps with descriptions
       const enterpriseApps = appData.wholeSchool.enterpriseApps || [];
       const everyoneApps = appData.wholeSchool.everyoneApps || [];
-      const elementaryApps = appData.elementary.apps || [];
-      const middleApps = appData.middleSchool.apps || [];
-      const highApps = appData.highSchool.apps || [];
 
-      const allApps = [...enterpriseApps, ...everyoneApps, ...elementaryApps, ...middleApps, ...highApps];
-
-      // Remove duplicates by product name
-      const uniqueApps = Array.from(new Map(allApps.map(app => [app.product, app])).values());
-
-      // Prioritize: Priority apps > Enterprise apps > Apps with descriptions
-      const featured = uniqueApps
+      const featured = [...enterpriseApps, ...everyoneApps]
         .filter(app => app.description && app.description.length > 10)
         .sort((a, b) => {
-          // First priority: PRIORITY_APPS list
-          const aPriority = PRIORITY_APPS.some(name => a.product.toLowerCase().includes(name.toLowerCase()));
-          const bPriority = PRIORITY_APPS.some(name => b.product.toLowerCase().includes(name.toLowerCase()));
-          if (aPriority && !bPriority) return -1;
-          if (!aPriority && bPriority) return 1;
-
-          // Second priority: Enterprise apps
-          if (a.enterprise && !b.enterprise) return -1;
-          if (!a.enterprise && b.enterprise) return 1;
-
-          // Third priority: apps with logos
+          // Prioritize apps with logos
           if (a.logoUrl && !b.logoUrl) return -1;
           if (!a.logoUrl && b.logoUrl) return 1;
-
-          // Finally by description length
+          // Then by description length
           return (b.description?.length || 0) - (a.description?.length || 0);
         })
         .slice(0, count);
@@ -1151,46 +1131,36 @@
       return {
         wholeSchool: {
           apps: [
-            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Google_Workspace_Logo.svg', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
-            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Instructure_Logo.png', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' },
-            { product: 'PowerSchool', division: 'Whole School', department: 'IT', subject: 'Administration', licenseType: 'School', enterprise: true, description: 'Student information system for grades, attendance, and records', logoUrl: 'https://www.powerschool.com/wp-content/themes/powerschool/assets/images/logo.svg', dateAdded: '2024-01-10', ssoEnabled: true, mobileApp: 'Yes', category: 'SIS', audience: 'Staff,Teachers,Students,Parents' }
+            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: '', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' }
           ],
           enterpriseApps: [
-            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Google_Workspace_Logo.svg', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
-            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Instructure_Logo.png', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' },
-            { product: 'PowerSchool', division: 'Whole School', department: 'IT', subject: 'Administration', licenseType: 'School', enterprise: true, description: 'Student information system for grades, attendance, and records', logoUrl: 'https://www.powerschool.com/wp-content/themes/powerschool/assets/images/logo.svg', dateAdded: '2024-01-10', ssoEnabled: true, mobileApp: 'Yes', category: 'SIS', audience: 'Staff,Teachers,Students,Parents' }
+            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: '', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' }
           ],
-          everyoneApps: [
-            { product: 'Toddle', division: 'Whole School', department: 'Curriculum', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Collaborative planning and portfolio platform for PYP/MYP programs', logoUrl: 'https://assets-global.website-files.com/5f85653f79eb0160c5ca8ffb/606c5f6d1e87fcf5c5e2d0f5_toddle-logo.svg', dateAdded: new Date().toISOString(), ssoEnabled: true, mobileApp: 'Yes', category: 'Curriculum', audience: 'Teachers,Students,Parents', gradeLevels: 'K-12' }
-          ]
+          everyoneApps: []
         },
         elementary: {
           apps: [
-            { product: 'Seesaw', division: 'Elementary', department: 'Elementary', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Digital portfolio and parent communication', logoUrl: 'https://web.seesaw.me/static/images/seesaw-logo.svg', dateAdded: new Date().toISOString(), ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students,Parents', gradeLevels: 'K-5' },
-            { product: 'Epic!', division: 'Elementary', department: 'Elementary', subject: 'Reading', licenseType: 'School', enterprise: false, description: 'Digital library with thousands of books for young readers', logoUrl: 'https://www.getepic.com/app/assets/epic-logo.svg', dateAdded: '2024-09-20', ssoEnabled: true, mobileApp: 'Yes', category: 'Literacy', audience: 'Teachers,Students', gradeLevels: 'K-5' },
-            { product: 'Prodigy Math', division: 'Elementary', department: 'Elementary', subject: 'Math', licenseType: 'School', enterprise: false, description: 'Game-based math learning platform aligned with curriculum', logoUrl: 'https://www.prodigygame.com/main-en/assets/images/prodigy-logo.svg', dateAdded: '2024-08-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Math', audience: 'Teachers,Students', gradeLevels: 'K-5' }
+            { product: 'Seesaw', division: 'Elementary', department: 'Elementary', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Digital portfolio and parent communication', logoUrl: '', dateAdded: new Date().toISOString(), ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students,Parents', gradeLevels: 'K-5' }
           ]
         },
         middleSchool: {
           apps: [
-            { product: 'Kahoot!', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Game-based learning platform', logoUrl: 'https://assets-cdn.kahoot.it/controller/v2/assets/kahoot-logo.svg', dateAdded: '2024-10-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Engagement', audience: 'Teachers,Students', gradeLevels: '6-8' },
-            { product: 'Flipgrid', division: 'Middle', department: 'Middle School', subject: 'Communication', licenseType: 'School', enterprise: false, description: 'Video discussion platform for student voice and collaboration', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Flipgrid_logo.png', dateAdded: '2024-07-10', ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students', gradeLevels: '6-8' },
-            { product: 'Nearpod', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Interactive lesson platform with real-time assessment', logoUrl: 'https://nearpod.com/wp-content/themes/nearpod/img/logo.svg', dateAdded: '2024-06-05', ssoEnabled: true, mobileApp: 'Yes', category: 'Instruction', audience: 'Teachers,Students', gradeLevels: '6-8' }
+            { product: 'Kahoot!', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Game-based learning platform', logoUrl: '', dateAdded: '2024-10-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Engagement', audience: 'Teachers,Students', gradeLevels: '6-8' }
           ]
         },
         highSchool: {
           apps: [
-            { product: 'Turnitin', division: 'High', department: 'High School', subject: 'English', licenseType: 'School', enterprise: false, description: 'Plagiarism detection and feedback tool', logoUrl: 'https://www.turnitin.com/static/images/logo.svg', dateAdded: '2024-09-01', ssoEnabled: true, mobileApp: 'No', category: 'Academic Integrity', audience: 'Teachers,Students', gradeLevels: '9-12' },
-            { product: 'Desmos', division: 'High', department: 'Math', subject: 'Math', licenseType: 'Free', enterprise: false, description: 'Advanced graphing calculator and math activities', logoUrl: 'https://www.desmos.com/assets/img/desmos-logo.svg', dateAdded: '2024-05-20', ssoEnabled: false, mobileApp: 'Yes', category: 'Math', audience: 'Teachers,Students', gradeLevels: '9-12' },
-            { product: 'Notability', division: 'High', department: 'High School', subject: 'Productivity', licenseType: 'Individual', enterprise: false, description: 'Note-taking app with handwriting, typing, and audio recording', logoUrl: 'https://notability.com/assets/images/notability-logo.svg', dateAdded: '2024-04-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Productivity', audience: 'Students', gradeLevels: '9-12' }
+            { product: 'Turnitin', division: 'High', department: 'High School', subject: 'English', licenseType: 'School', enterprise: false, description: 'Plagiarism detection and feedback tool', logoUrl: '', dateAdded: '2024-09-01', ssoEnabled: true, mobileApp: 'No', category: 'Academic Integrity', audience: 'Teachers,Students', gradeLevels: '9-12' }
           ]
         },
         stats: {
-          totalApps: 14,
-          wholeSchoolCount: 4,
-          elementaryCount: 3,
-          middleSchoolCount: 3,
-          highSchoolCount: 3
+          totalApps: 5,
+          wholeSchoolCount: 2,
+          elementaryCount: 1,
+          middleSchoolCount: 1,
+          highSchoolCount: 1
         }
       };
     }
