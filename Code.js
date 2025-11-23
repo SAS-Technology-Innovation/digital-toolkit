@@ -1092,3 +1092,49 @@ Return ONLY valid JSON in this exact format:
     return 'ERROR';
   }
 }
+
+/**
+ * Tests Claude API connection
+ */
+function testClaude() {
+  const ui = SpreadsheetApp.getUi();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
+
+  if (!CLAUDE_API_KEY) {
+    ui.alert('❌ Configuration Error', 'CLAUDE_API_KEY is not set in Script Properties.', ui.ButtonSet.OK);
+    return;
+  }
+
+  const testResult = generateDescriptionWithClaude('Google Classroom', 'Learning Management', 'https://classroom.google.com', 'Education');
+
+  if (testResult && testResult !== 'ERROR') {
+    ui.alert('✅ Claude Connection Successful', 'API key is valid and working!\n\nSample response: ' + testResult.substring(0, 200) + '...', ui.ButtonSet.OK);
+  } else {
+    ui.alert('❌ Claude Connection Failed', 'Check Apps Script logs for details: npm run logs', ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * Tests Gemini API connection
+ */
+function testGemini() {
+  const ui = SpreadsheetApp.getUi();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
+
+  if (!GEMINI_API_KEY) {
+    ui.alert('❌ Configuration Error', 'GEMINI_API_KEY is not set in Script Properties.', ui.ButtonSet.OK);
+    return;
+  }
+
+  // Simple test prompt
+  const testPrompt = 'Respond with "API connection successful" if you receive this message.';
+  const testResult = queryGeminiAPI('You are a test assistant.', testPrompt, 'test');
+
+  if (testResult && !testResult.includes('error') && !testResult.includes('ERROR')) {
+    ui.alert('✅ Gemini Connection Successful', 'API key is valid and working!', ui.ButtonSet.OK);
+  } else {
+    ui.alert('❌ Gemini Connection Failed', 'Check Apps Script logs for details: npm run logs', ui.ButtonSet.OK);
+  }
+}
