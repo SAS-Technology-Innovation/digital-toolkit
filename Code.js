@@ -33,7 +33,7 @@ function onOpen() {
  * Use ?page=signage to display the digital signage slideshow
  */
 function doGet(e) {
-  const page = e.parameter.page || 'index';
+  const page = (e && e.parameter && e.parameter.page) || 'index';
 
   if (page === 'signage') {
     return HtmlService.createTemplateFromFile('signage').evaluate()
