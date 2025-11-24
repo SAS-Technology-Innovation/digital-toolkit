@@ -410,8 +410,19 @@ function enrichAllMissingData() {
             logDataUpdate('Enrich All Fields', productName, 'audience', row[colMap.audience], enrichedData.audience, rowNum);
           }
           if (enrichedData.gradeLevels && !row[colMap.gradeLevels]) {
-            sheet.getRange(rowNum, colMap.gradeLevels + 1).setValue(enrichedData.gradeLevels);
-            logDataUpdate('Enrich All Fields', productName, 'grade_levels', row[colMap.gradeLevels], enrichedData.gradeLevels, rowNum);
+            // Validate grade level against allowed dropdown values
+            const validGrades = ['Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
+                                'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
+                                'Grade 11', 'Grade 12'];
+            const sanitizedGrade = enrichedData.gradeLevels.trim().replace(/['"]/g, '');
+
+            if (validGrades.includes(sanitizedGrade)) {
+              sheet.getRange(rowNum, colMap.gradeLevels + 1).setValue(sanitizedGrade);
+              logDataUpdate('Enrich All Fields', productName, 'grade_levels', row[colMap.gradeLevels], sanitizedGrade, rowNum);
+            } else if (sanitizedGrade !== '') {
+              // Invalid grade value - log warning and skip
+              Logger.log(`Warning: Invalid grade level "${enrichedData.gradeLevels}" for ${productName} (Row ${rowNum}). Skipping.`);
+            }
           }
           if (enrichedData.supportEmail && !row[colMap.supportEmail]) {
             sheet.getRange(rowNum, colMap.supportEmail + 1).setValue(enrichedData.supportEmail);
@@ -1610,8 +1621,18 @@ function updateAppRow(sheet, sheetHeaders, csvHeaders, rowIndex, csvRow, existin
 
     const inferredGradeLevel = inferGradeLevels(productName, division, department, subjects);
     if (inferredGradeLevel && inferredGradeLevel !== '') {
-      sheet.getRange(rowIndex, gradeLevelsIndex + 1).setValue(inferredGradeLevel);
-      changesCount++;
+      // Validate grade level before setting
+      const validGrades = ['Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
+                          'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
+                          'Grade 11', 'Grade 12'];
+      const sanitizedGrade = inferredGradeLevel.trim().replace(/['"]/g, '');
+
+      if (validGrades.includes(sanitizedGrade)) {
+        sheet.getRange(rowIndex, gradeLevelsIndex + 1).setValue(sanitizedGrade);
+        changesCount++;
+      } else {
+        Logger.log(`Warning: Invalid inferred grade level "${inferredGradeLevel}" for ${productName}. Skipping.`);
+      }
     }
   }
 
