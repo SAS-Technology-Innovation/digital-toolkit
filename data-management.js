@@ -1535,12 +1535,44 @@ Return ONLY the comma-separated list of individual grades, nothing else.`;
 function convertGradeRangeToIndividual(rangeString) {
   if (!rangeString) return '';
 
+  // Handle comma-separated ranges (e.g., "3-5, 6-8")
+  if (rangeString.includes(',')) {
+    const parts = rangeString.split(',').map(p => p.trim());
+    const converted = parts.map(part => convertGradeRangeToIndividual(part));
+    // Flatten and deduplicate
+    const allGrades = converted.join(', ').split(', ').map(g => g.trim());
+    const uniqueGrades = [...new Set(allGrades)];
+    return uniqueGrades.join(', ');
+  }
+
   const cleaned = rangeString.trim().toUpperCase();
 
   // Handle common range patterns - aligned with SAS division structure
   const rangePatterns = {
-    // Elementary-specific (Grade 1-5 only, NOT including Pre-K/K)
+    // Individual grades (already correct)
+    'GRADE 1': 'Grade 1',
+    'GRADE 2': 'Grade 2',
+    'GRADE 3': 'Grade 3',
+    'GRADE 4': 'Grade 4',
+    'GRADE 5': 'Grade 5',
+    'GRADE 6': 'Grade 6',
+    'GRADE 7': 'Grade 7',
+    'GRADE 8': 'Grade 8',
+    'GRADE 9': 'Grade 9',
+    'GRADE 10': 'Grade 10',
+    'GRADE 11': 'Grade 11',
+    'GRADE 12': 'Grade 12',
+
+    // Specific grade ranges
+    '1-2': 'Grade 1, Grade 2',
+    '1-3': 'Grade 1, Grade 2, Grade 3',
+    '1-4': 'Grade 1, Grade 2, Grade 3, Grade 4',
     '1-5': 'Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
+    '2-5': 'Grade 2, Grade 3, Grade 4, Grade 5',
+    '3-5': 'Grade 3, Grade 4, Grade 5',
+    '3-8': 'Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8',
+    '3-12': 'Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
+    '4-5': 'Grade 4, Grade 5',
 
     // Early Learning (Pre-K and K only)
     'PREK-K': 'Pre-K, Kindergarten',
@@ -1548,17 +1580,24 @@ function convertGradeRangeToIndividual(rangeString) {
 
     // Middle School (Grade 6-8 only)
     '6-8': 'Grade 6, Grade 7, Grade 8',
+    '6-12': 'Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
+    '7-8': 'Grade 7, Grade 8',
+    '7-12': 'Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
 
     // High School (Grade 9-12 only)
     '9-12': 'Grade 9, Grade 10, Grade 11, Grade 12',
+    '9-10': 'Grade 9, Grade 10',
+    '10-12': 'Grade 10, Grade 11, Grade 12',
+    '11-12': 'Grade 11, Grade 12',
 
     // Combined ranges (for legacy data)
     'K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5', // Early Learning + Elementary
-    '6-12': 'Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12', // Middle + High
     'K-8': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8',
     'K-12': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
     'PREK-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
-    'PRE-K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5'
+    'PRE-K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
+    'PREK-12': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
+    'PRE-K-12': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12'
   };
 
   return rangePatterns[cleaned] || rangeString;
