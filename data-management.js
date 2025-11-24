@@ -1449,14 +1449,20 @@ Valid individual grades (use EXACTLY these values):
 Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
 
 Division mapping (return ALL grades in the range as individual values):
-- SAS Elementary School → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
-- SAS Middle School → "Grade 6, Grade 7, Grade 8"
-- SAS High School → "Grade 9, Grade 10, Grade 11, Grade 12"
+- SAS Early Learning Center → "Pre-K, Kindergarten" (Pre-K and Kindergarten ONLY)
+- SAS Elementary School → "Grade 1, Grade 2, Grade 3, Grade 4, Grade 5" (Grade 1-5 ONLY, NOT Pre-K/K)
+- SAS Middle School → "Grade 6, Grade 7, Grade 8" (Grade 6-8 ONLY, no grades below 6)
+- SAS High School → "Grade 9, Grade 10, Grade 11, Grade 12" (Grade 9-12 ONLY, no grades below 9)
 - Whole School → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12"
 - SAS Central → "" (empty string - staff-only division, no grade levels)
 
-If product name or subject indicates specific grades, list ONLY those specific grades.
+IMPORTANT:
+- Elementary = Grade 1-5 ONLY (NOT Pre-K/Kindergarten)
+- Early Learning = Pre-K and Kindergarten ONLY
+- Middle School = NO grades below Grade 6
+- High School = NO grades below Grade 9
 If division is "SAS Central", return an empty string (no grade levels for staff-only apps).
+If product name or subject indicates specific grades, list ONLY those specific grades.
 
 WRONG EXAMPLES (DO NOT USE):
 - "K-5" ❌
@@ -1531,14 +1537,26 @@ function convertGradeRangeToIndividual(rangeString) {
 
   const cleaned = rangeString.trim().toUpperCase();
 
-  // Handle common range patterns
+  // Handle common range patterns - aligned with SAS division structure
   const rangePatterns = {
-    'K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
+    // Elementary-specific (Grade 1-5 only, NOT including Pre-K/K)
+    '1-5': 'Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
+
+    // Early Learning (Pre-K and K only)
+    'PREK-K': 'Pre-K, Kindergarten',
+    'PRE-K-K': 'Pre-K, Kindergarten',
+
+    // Middle School (Grade 6-8 only)
+    '6-8': 'Grade 6, Grade 7, Grade 8',
+
+    // High School (Grade 9-12 only)
+    '9-12': 'Grade 9, Grade 10, Grade 11, Grade 12',
+
+    // Combined ranges (for legacy data)
+    'K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5', // Early Learning + Elementary
+    '6-12': 'Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12', // Middle + High
     'K-8': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8',
     'K-12': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
-    '6-8': 'Grade 6, Grade 7, Grade 8',
-    '6-12': 'Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
-    '9-12': 'Grade 9, Grade 10, Grade 11, Grade 12',
     'PREK-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
     'PRE-K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5'
   };
@@ -1556,28 +1574,38 @@ function inferGradeLevelsRules(division) {
 
   const divisionLower = division.toString().toLowerCase();
 
-  // SAS Central is staff-only division - no grade levels
-  if (divisionLower.includes('sas central') || divisionLower.includes('central')) {
-    return '';
-  }
-
   // Check for specific divisions
-  const hasElementary = divisionLower.includes('elementary') || divisionLower.includes('early learning');
+  const hasEarlyLearning = divisionLower.includes('early learning');
+  const hasElementary = divisionLower.includes('elementary');
   const hasMiddle = divisionLower.includes('middle');
   const hasHigh = divisionLower.includes('high');
+  const hasCentral = divisionLower.includes('sas central') || divisionLower.includes('central');
+
+  // SAS Central is staff-only - only skip grade levels if it's the ONLY division
+  if (hasCentral && !hasEarlyLearning && !hasElementary && !hasMiddle && !hasHigh) {
+    return '';
+  }
 
   // Build comma-separated list of ALL applicable individual grades
   const grades = [];
 
+  if (hasEarlyLearning) {
+    // SAS Early Learning Center: Pre-K and Kindergarten only
+    grades.push('Pre-K', 'Kindergarten');
+  }
+
   if (hasElementary) {
-    grades.push('Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5');
+    // SAS Elementary School: Grade 1-5 only (NOT Pre-K/Kindergarten)
+    grades.push('Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5');
   }
 
   if (hasMiddle) {
+    // SAS Middle School: Grade 6-8 only
     grades.push('Grade 6', 'Grade 7', 'Grade 8');
   }
 
   if (hasHigh) {
+    // SAS High School: Grade 9-12 only
     grades.push('Grade 9', 'Grade 10', 'Grade 11', 'Grade 12');
   }
 
