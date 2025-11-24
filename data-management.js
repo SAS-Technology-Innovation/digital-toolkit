@@ -339,9 +339,14 @@ function enrichAllMissingData() {
       if (hasMissingData) appsNeedingEnrichment++;
     });
 
+    // Performance optimization: Batch processing limit
+    const MAX_BATCH_SIZE = 20; // Process max 20 apps at a time for better performance
+    const batchSize = Math.min(appsNeedingEnrichment, MAX_BATCH_SIZE);
+    const estimatedTime = Math.ceil(batchSize * 2 / 60); // Reduced from 3 to 2 minutes per app
+
     const response = ui.alert(
       '🔄 Enrich All Missing Data',
-      `Found ${appsNeedingEnrichment} app(s) with missing data.\n\nThis will use Claude AI to fill in ALL missing fields.\n\nProcessing ${appsNeedingEnrichment} apps will take approximately ${Math.ceil(appsNeedingEnrichment * 3 / 60)} minutes.\n\nContinue?`,
+      `Found ${appsNeedingEnrichment} app(s) with missing data.\n\n⚡ Will process ${batchSize} apps this run (max batch size: ${MAX_BATCH_SIZE}).\n\nEstimated time: ~${estimatedTime} minute(s).\n\n💡 Tip: Run multiple times to process all apps in batches.\n\nContinue?`,
       ui.ButtonSet.YES_NO
     );
 
@@ -354,6 +359,7 @@ function enrichAllMissingData() {
     let enrichedCount = 0;
     let errorCount = 0;
     let processedCount = 0;
+    let skippedCount = 0;
 
     dataRows.forEach((row, index) => {
       const rowNum = index + 2;
@@ -370,10 +376,16 @@ function enrichAllMissingData() {
                              !row[colMap.logoUrl];
 
       if (hasMissingData) {
+        // Stop processing if we've reached the batch limit
+        if (enrichedCount >= MAX_BATCH_SIZE) {
+          skippedCount++;
+          return;
+        }
+
         processedCount++;
 
-        if (processedCount % 10 === 0) {
-          Logger.log(`Progress: ${processedCount}/${appsNeedingEnrichment} apps processed (${enrichedCount} enriched, ${errorCount} errors)`);
+        if (processedCount % 5 === 0) {
+          Logger.log(`Progress: ${processedCount}/${batchSize} apps processed (${enrichedCount} enriched, ${errorCount} errors)`);
         }
 
         const enrichedData = enrichAppDataWithClaude({
@@ -464,12 +476,15 @@ function enrichAllMissingData() {
           Logger.log(`❌ Failed to enrich ${productName} (Row ${rowNum}) - Error: ${errorType} - ${errorDetails}`);
         }
 
-        Utilities.sleep(1500);
+        // Reduced delay for better performance (500ms instead of 1500ms)
+        Utilities.sleep(500);
       }
     });
 
-    const message = `Successfully enriched ${enrichedCount} app(s) with missing data.` +
-                    (errorCount > 0 ? `\n\n⚠️ ${errorCount} app(s) failed to enrich.` : '');
+    const remainingApps = appsNeedingEnrichment - enrichedCount;
+    const message = `✅ Successfully enriched ${enrichedCount} app(s) with missing data.` +
+                    (errorCount > 0 ? `\n\n⚠️ ${errorCount} app(s) failed to enrich.` : '') +
+                    (remainingApps > 0 ? `\n\n📊 ${remainingApps} app(s) still need enrichment. Run again to continue.` : '\n\n🎉 All apps processed!');
     ui.alert('✅ Enrichment Complete', message, ui.ButtonSet.OK);
 
   } catch (error) {
@@ -598,7 +613,7 @@ Return ONLY valid JSON in this exact format:
 
   const url = 'https://api.anthropic.com/v1/messages';
   const payload = {
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-3-5-haiku-20241022', // Using Haiku for faster, cheaper responses
     max_tokens: 600,
     messages: [{
       role: 'user',
@@ -1438,8 +1453,10 @@ Division mapping (return ALL grades in the range as individual values):
 - SAS Middle School → "Grade 6, Grade 7, Grade 8"
 - SAS High School → "Grade 9, Grade 10, Grade 11, Grade 12"
 - Whole School → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12"
+- SAS Central → "" (empty string - staff-only division, no grade levels)
 
 If product name or subject indicates specific grades, list ONLY those specific grades.
+If division is "SAS Central", return an empty string (no grade levels for staff-only apps).
 
 WRONG EXAMPLES (DO NOT USE):
 - "K-5" ❌
@@ -1538,6 +1555,11 @@ function inferGradeLevelsRules(division) {
   }
 
   const divisionLower = division.toString().toLowerCase();
+
+  // SAS Central is staff-only division - no grade levels
+  if (divisionLower.includes('sas central') || divisionLower.includes('central')) {
+    return '';
+  }
 
   // Check for specific divisions
   const hasElementary = divisionLower.includes('elementary') || divisionLower.includes('early learning');
