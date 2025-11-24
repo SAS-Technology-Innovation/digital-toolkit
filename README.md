@@ -119,7 +119,7 @@ Create a Google Sheet with the following 22 columns (see [expected-data-template
 | `active` | Boolean | TRUE/FALSE - only TRUE apps displayed | TRUE |
 | `product_name` | String | Application name | Google Classroom |
 | `division` | String | School divisions | SAS Elementary School, SAS Middle School, SAS High School, Whole School |
-| `grade_levels` | String | Representative grade level (single value from dropdown) | Kindergarten, Grade 7, Grade 10 |
+| `grade_levels` | String | Comma-separated individual grades (multi-select dropdown) | Pre-K, Kindergarten, Grade 1, Grade 2 |
 | `department` | String | Department name | Mathematics, Technology, School Operations |
 | `subjects` | String | Subject area | Math, Science, Arts |
 | `enterprise` | Boolean | Official enterprise/core tool | TRUE/FALSE |

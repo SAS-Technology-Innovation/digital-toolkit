@@ -108,7 +108,7 @@ if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
 1. `active`: Boolean (TRUE/FALSE) - only TRUE apps processed
 2. `product_name`: String - app name
 3. `division`: String - "SAS Elementary School", "SAS Middle School", "SAS High School", "Whole School", or combinations
-4. `grade_levels`: String - single representative grade from dropdown: "Pre-K", "Kindergarten", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"
+4. `grade_levels`: String - comma-separated individual grades from multi-select dropdown: "Pre-K, Kindergarten, Grade 1, Grade 2" (valid values: Pre-K, Kindergarten, Grade 1-12)
 5. `department`: String - department name (filters out division names)
 6. `subjects`: String - subject tags/categorization
 7. `enterprise`: Boolean (TRUE/FALSE) - **Enterprise checkbox (core SAS tools)**
@@ -131,9 +131,10 @@ if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
 **Important Notes:**
 - All column names are **lowercase** (changed from mixed case)
 - `grade_levels` is in **4th position** (after division, before department)
-- Grade levels format changed from ranges (e.g., "K-5") to **single representative grade** (e.g., "Kindergarten" for Elementary, "Grade 7" for Middle School, "Grade 10" for High School)
+- Grade levels format changed from ranges (e.g., "K-5") to **comma-separated individual grades** (e.g., "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5" for Elementary apps)
 - Grade levels are **automatically inferred** during CSV import using Gemini API or rule-based logic from the division field
-- Data validation restricts `grade_levels` to single dropdown values only (not comma-separated lists)
+- Data validation supports **multi-select dropdown** with comma-separated individual grade values
+- Valid individual grades: Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
 - `license_type` uses intentional typo "Inidividual" and British spelling "Site Licence" to match existing Google Sheets data validation
 - `budget` field uses specific capitalization "Office Of Learning" (capital O in "Of") for validation compatibility
 

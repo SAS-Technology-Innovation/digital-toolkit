@@ -243,9 +243,9 @@ The enrichment tools expect these column headers (all lowercase):
 - `description` - App description (1-2 sentences)
 - `category` - App category
 - `audience` - Target users
-- `grade_levels` - Single representative grade from dropdown (e.g., "Kindergarten", "Grade 7", "Grade 10")
+- `grade_levels` - Comma-separated individual grades (e.g., "Pre-K, Kindergarten, Grade 1, Grade 2" or "Grade 6, Grade 7, Grade 8")
 
-**Note:** Column names changed from mixed-case to all lowercase. The `grade_levels` column is now in 4th position (after `division`, before `department`) and uses single representative grade values (not comma-separated lists due to data validation constraints).
+**Note:** Column names changed from mixed-case to all lowercase. The `grade_levels` column is now in 4th position (after `division`, before `department`) and uses comma-separated individual grade values (multi-select dropdown). AI inference returns ALL applicable individual grades based on division and subject matter.
 
 ## ⚙️ Technical Details
 

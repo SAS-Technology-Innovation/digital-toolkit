@@ -410,18 +410,27 @@ function enrichAllMissingData() {
             logDataUpdate('Enrich All Fields', productName, 'audience', row[colMap.audience], enrichedData.audience, rowNum);
           }
           if (enrichedData.gradeLevels && !row[colMap.gradeLevels]) {
-            // Validate grade level against allowed dropdown values
+            // Validate grade levels against allowed dropdown values (supports comma-separated list)
             const validGrades = ['Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
                                 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
                                 'Grade 11', 'Grade 12'];
-            const sanitizedGrade = enrichedData.gradeLevels.trim().replace(/['"]/g, '');
 
-            if (validGrades.includes(sanitizedGrade)) {
-              sheet.getRange(rowNum, colMap.gradeLevels + 1).setValue(sanitizedGrade);
-              logDataUpdate('Enrich All Fields', productName, 'grade_levels', row[colMap.gradeLevels], sanitizedGrade, rowNum);
-            } else if (sanitizedGrade !== '') {
-              // Invalid grade value - log warning and skip
-              Logger.log(`Warning: Invalid grade level "${enrichedData.gradeLevels}" for ${productName} (Row ${rowNum}). Skipping.`);
+            // Convert range notation to individual grades if AI returned a range
+            let gradeLevelsToValidate = convertGradeRangeToIndividual(enrichedData.gradeLevels);
+            gradeLevelsToValidate = gradeLevelsToValidate.trim().replace(/['"]/g, '');
+
+            // Split comma-separated values and validate each individual grade
+            const gradeList = gradeLevelsToValidate.split(',').map(g => g.trim());
+            const invalidGrades = gradeList.filter(g => g !== '' && !validGrades.includes(g));
+
+            if (invalidGrades.length === 0 && gradeList.length > 0 && gradeList[0] !== '') {
+              // All grades are valid - join and set value
+              const validatedGrades = gradeList.join(', ');
+              sheet.getRange(rowNum, colMap.gradeLevels + 1).setValue(validatedGrades);
+              logDataUpdate('Enrich All Fields', productName, 'grade_levels', row[colMap.gradeLevels], validatedGrades, rowNum);
+            } else if (invalidGrades.length > 0) {
+              // Some invalid grades found - log warning and skip
+              Logger.log(`Warning: Invalid grade levels "${invalidGrades.join(', ')}" for ${productName} (Row ${rowNum}). Original value: "${enrichedData.gradeLevels}". Skipping.`);
             }
           }
           if (enrichedData.supportEmail && !row[colMap.supportEmail]) {
@@ -1412,33 +1421,39 @@ function inferGradeLevels(productName, division, department, subjects) {
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-    const prompt = `Based on the following information about an educational app, determine the appropriate representative grade level.
+    const prompt = `Based on the following information about an educational app, determine ALL applicable grade levels.
 
 Product: ${productName}
 Division: ${division}
 Department: ${department}
 Subjects: ${subjects}
 
-IMPORTANT: Return ONLY ONE grade level from this list (no comma-separated values, just ONE value):
+CRITICAL: Return a comma-separated list of individual grades. DO NOT use ranges like "K-5" or "6-12".
+
+Valid individual grades (use EXACTLY these values):
 Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
 
-Guidelines:
-1. If division indicates a single school level, return the middle/representative grade:
-   - SAS Elementary School → "Kindergarten"
-   - SAS Middle School → "Grade 7"
-   - SAS High School → "Grade 10"
-2. If product name indicates specific grade, use that
-3. If multiple divisions or unclear, return empty string ""
-4. If subject indicates specific level (e.g., Calculus = Grade 11 or 12, Basic Reading = Kindergarten), use that
+Division mapping (return ALL grades in the range as individual values):
+- SAS Elementary School → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+- SAS Middle School → "Grade 6, Grade 7, Grade 8"
+- SAS High School → "Grade 9, Grade 10, Grade 11, Grade 12"
+- Whole School → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12"
 
-Examples:
-- Elementary only → "Kindergarten"
-- Middle School only → "Grade 7"
-- High School only → "Grade 10"
-- Multiple divisions → ""
-- AP courses → "Grade 11" or "Grade 12"
+If product name or subject indicates specific grades, list ONLY those specific grades.
 
-Return ONLY the single grade value or empty string, nothing else.`;
+WRONG EXAMPLES (DO NOT USE):
+- "K-5" ❌
+- "6-12" ❌
+- "9-12" ❌
+- "Grades 1-3" ❌
+
+CORRECT EXAMPLES:
+- "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5" ✓
+- "Grade 6, Grade 7, Grade 8" ✓
+- "Grade 9, Grade 10, Grade 11, Grade 12" ✓
+- "Grade 1, Grade 2" ✓
+
+Return ONLY the comma-separated list of individual grades, nothing else.`;
 
     const payload = {
       contents: [{
@@ -1491,6 +1506,30 @@ Return ONLY the single grade value or empty string, nothing else.`;
 }
 
 /**
+ * Converts grade range notation to comma-separated individual grades
+ * e.g., "K-5" → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+ */
+function convertGradeRangeToIndividual(rangeString) {
+  if (!rangeString) return '';
+
+  const cleaned = rangeString.trim().toUpperCase();
+
+  // Handle common range patterns
+  const rangePatterns = {
+    'K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
+    'K-8': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8',
+    'K-12': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
+    '6-8': 'Grade 6, Grade 7, Grade 8',
+    '6-12': 'Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12',
+    '9-12': 'Grade 9, Grade 10, Grade 11, Grade 12',
+    'PREK-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5',
+    'PRE-K-5': 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5'
+  };
+
+  return rangePatterns[cleaned] || rangeString;
+}
+
+/**
  * Rule-based grade level inference from division
  */
 function inferGradeLevelsRules(division) {
@@ -1505,29 +1544,27 @@ function inferGradeLevelsRules(division) {
   const hasMiddle = divisionLower.includes('middle');
   const hasHigh = divisionLower.includes('high');
 
-  // Return single representative grade value (required for Google Sheets data validation)
-  // Data validation only accepts single values from dropdown, not comma-separated lists
+  // Build comma-separated list of ALL applicable individual grades
+  const grades = [];
 
-  // If multiple divisions, return empty (user should manually select)
-  if ((hasElementary ? 1 : 0) + (hasMiddle ? 1 : 0) + (hasHigh ? 1 : 0) > 1) {
-    return '';
-  }
-
-  // Return representative grade for single division
   if (hasElementary) {
-    return 'Kindergarten'; // Representative grade for Elementary
+    grades.push('Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5');
   }
 
   if (hasMiddle) {
-    return 'Grade 7'; // Representative grade for Middle School
+    grades.push('Grade 6', 'Grade 7', 'Grade 8');
   }
 
   if (hasHigh) {
-    return 'Grade 10'; // Representative grade for High School
+    grades.push('Grade 9', 'Grade 10', 'Grade 11', 'Grade 12');
   }
 
-  // If no specific division found, return empty (user should manually select)
-  return '';
+  // If no specific division found, return all grades
+  if (grades.length === 0) {
+    return 'Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12';
+  }
+
+  return grades.join(', ');
 }
 
 /**
@@ -1621,14 +1658,23 @@ function updateAppRow(sheet, sheetHeaders, csvHeaders, rowIndex, csvRow, existin
 
     const inferredGradeLevel = inferGradeLevels(productName, division, department, subjects);
     if (inferredGradeLevel && inferredGradeLevel !== '') {
-      // Validate grade level before setting
+      // Validate grade levels before setting (supports comma-separated list)
       const validGrades = ['Pre-K', 'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
                           'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
                           'Grade 11', 'Grade 12'];
-      const sanitizedGrade = inferredGradeLevel.trim().replace(/['"]/g, '');
 
-      if (validGrades.includes(sanitizedGrade)) {
-        sheet.getRange(rowIndex, gradeLevelsIndex + 1).setValue(sanitizedGrade);
+      // Convert range notation to individual grades if returned as a range
+      let gradeLevelsToValidate = convertGradeRangeToIndividual(inferredGradeLevel);
+      gradeLevelsToValidate = gradeLevelsToValidate.trim().replace(/['"]/g, '');
+
+      // Split comma-separated values and validate each individual grade
+      const gradeList = gradeLevelsToValidate.split(',').map(g => g.trim());
+      const invalidGrades = gradeList.filter(g => g !== '' && !validGrades.includes(g));
+
+      if (invalidGrades.length === 0 && gradeList.length > 0 && gradeList[0] !== '') {
+        // All grades are valid - join and set value
+        const validatedGrades = gradeList.join(', ');
+        sheet.getRange(rowIndex, gradeLevelsIndex + 1).setValue(validatedGrades);
         changesCount++;
       } else {
         Logger.log(`Warning: Invalid inferred grade level "${inferredGradeLevel}" for ${productName}. Skipping.`);
