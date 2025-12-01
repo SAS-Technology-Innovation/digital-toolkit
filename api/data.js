@@ -35,16 +35,36 @@ export default async function handler(req, res) {
     // Build the Apps Script API URL
     const apiUrl = `${APPS_SCRIPT_URL}?api=data&key=${encodeURIComponent(FRONTEND_KEY)}`;
 
+    console.log('Fetching from Apps Script:', apiUrl.replace(FRONTEND_KEY, 'REDACTED'));
+
     // Fetch data from Apps Script
+    // Apps Script web apps redirect, so we need to follow redirects
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json'
-      }
+      },
+      redirect: 'follow'
     });
 
-    // Handle redirect (Apps Script returns 302 for web apps)
-    const data = await response.json();
+    // Get response text first to debug
+    const responseText = await response.text();
+    console.log('Response status:', response.status);
+    console.log('Response text (first 500 chars):', responseText.substring(0, 500));
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse response as JSON:', parseError.message);
+      console.error('Response was:', responseText.substring(0, 1000));
+      return res.status(500).json({
+        error: 'Invalid response from Apps Script',
+        message: 'Response was not valid JSON. Check that FRONTEND_KEY matches in both Vercel and Apps Script.',
+        debug: responseText.substring(0, 200)
+      });
+    }
 
     if (data.error) {
       console.error('Apps Script error:', data);

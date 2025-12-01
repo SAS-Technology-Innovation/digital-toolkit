@@ -111,11 +111,26 @@ function transformSignageHtml() {
 
   let content = fs.readFileSync(path.join(ROOT_DIR, 'signage.html'), 'utf8');
 
-  // Replace the loadData function for signage
-  // The signage version is similar but uses handleDataLoaded instead of renderDashboard
-  const oldLoadDataSignage = /function loadData\(\) \{[\s\S]*?if \(typeof google !== 'undefined'[\s\S]*?setTimeout\(\(\) => handleDataLoaded\(JSON\.stringify\(getMockData\(\)\)\), 1000\);[\s\S]*?\}/;
+  // Replace the loadData function for signage using exact string match
+  const oldLoadDataSignage = `function loadData() {
+      console.log('Loading dashboard data...');
+
+      // Check if running in Google Apps Script environment
+      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
+        google.script.run
+          .withSuccessHandler(handleDataLoaded)
+          .withFailureHandler(handleError)
+          .getDashboardData();
+      } else {
+        // Local testing with mock data
+        console.log('Running in local test mode with mock data');
+        setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
+      }
+    }`;
 
   const newLoadDataSignage = `function loadData() {
+      console.log('Loading dashboard data...');
+
       // Vercel deployment: Fetch from API endpoint
       fetch('/api/data')
         .then(response => {

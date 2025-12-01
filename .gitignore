@@ -55,3 +55,4 @@ fixed-import-data.csv
 updated-metadata.csv
 *-import-data.csv
 *-sync.csv
+.env*.local
