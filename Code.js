@@ -18,6 +18,9 @@ function onOpen() {
     .addItem('🔍 Find Missing Fields', 'findMissingFields')
     .addItem('🔄 Refresh All Missing Data', 'enrichAllMissingData')
     .addSeparator()
+    .addItem('📤 Upload CSV Data', 'showCSVUploadDialog')
+    .addItem('📥 Export to CSV', 'downloadCSV')
+    .addSeparator()
     .addItem('📈 Analyze AI Chat Patterns', 'analyzeAIChatPatterns')
     .addSeparator()
     .addItem('🧪 Test Claude Connection', 'testClaude')
@@ -28,10 +31,21 @@ function onOpen() {
 /**
  * Serves the HTML content of the web app.
  * Use ?page=signage to display the digital signage slideshow
+ * Use ?api=data&key=FRONTEND_KEY to get JSON data for external frontends (e.g., Vercel)
+ * Use ?api=ai&key=FRONTEND_KEY&query=...&provider=... for AI queries
  */
 function doGet(e) {
-  const page = e.parameter.page || 'index';
+  const params = (e && e.parameter) || {};
+  const page = params.page || 'index';
+  const apiEndpoint = params.api;
+  const frontendKey = params.key;
 
+  // --- API Endpoints for External Frontends (Vercel) ---
+  if (apiEndpoint) {
+    return handleApiRequest(apiEndpoint, frontendKey, params);
+  }
+
+  // --- HTML Page Serving ---
   if (page === 'signage') {
     return HtmlService.createTemplateFromFile('signage').evaluate()
       .setTitle('SAS Digital Toolkit - Signage')
@@ -42,6 +56,77 @@ function doGet(e) {
   return HtmlService.createTemplateFromFile('index').evaluate()
     .setTitle('SAS Apps Dashboard')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * Handles API requests from external frontends (e.g., Vercel)
+ * Validates FRONTEND_KEY before returning data
+ */
+function handleApiRequest(endpoint, providedKey, params) {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const FRONTEND_KEY = scriptProperties.getProperty('FRONTEND_KEY');
+
+  // Create JSON response helper
+  const jsonResponse = (data, statusCode = 200) => {
+    const output = ContentService.createTextOutput(JSON.stringify(data));
+    output.setMimeType(ContentService.MimeType.JSON);
+    return output;
+  };
+
+  // Validate FRONTEND_KEY is configured
+  if (!FRONTEND_KEY) {
+    Logger.log('API Error: FRONTEND_KEY not configured in Script Properties');
+    return jsonResponse({
+      error: 'API not configured',
+      message: 'FRONTEND_KEY must be set in Script Properties'
+    }, 500);
+  }
+
+  // Validate the provided key matches
+  if (!providedKey || providedKey !== FRONTEND_KEY) {
+    Logger.log('API Error: Invalid or missing FRONTEND_KEY');
+    return jsonResponse({
+      error: 'Unauthorized',
+      message: 'Invalid or missing API key'
+    }, 401);
+  }
+
+  // Handle different API endpoints
+  switch (endpoint) {
+    case 'data':
+      // Return dashboard data
+      const dashboardData = getDashboardData();
+      return jsonResponse(JSON.parse(dashboardData));
+
+    case 'ai':
+      // Handle AI query
+      const query = params.query;
+      const provider = params.provider || 'gemini';
+      const appsData = params.appsData;
+
+      if (!query) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'Query parameter is required for AI endpoint'
+        }, 400);
+      }
+
+      if (!appsData) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'appsData parameter is required for AI endpoint'
+        }, 400);
+      }
+
+      const aiResult = queryAI(query, appsData, provider);
+      return jsonResponse(JSON.parse(aiResult));
+
+    default:
+      return jsonResponse({
+        error: 'Not Found',
+        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai`
+      }, 404);
+  }
 }
 
 /**
@@ -487,23 +572,33 @@ function getDashboardData() {
       });
       return app;
     }).filter(app => {
-      // Only process active apps
-      return app.Active === true || app.Active.toString().toLowerCase() === 'true';
+      // Only process active apps (support both old and new column names)
+      const activeValue = app.active !== undefined ? app.active : app.Active;
+      return activeValue === true || activeValue.toString().toLowerCase() === 'true';
     }).map(app => {
       // Create a clean appData object for the dashboard
+      // Handle pricing: convert 0 to "Free"
+      let spendValue = app.value || 'N/A';
+      const numericValue = parseFloat(app.value);
+      if (!isNaN(numericValue) && numericValue === 0) {
+        spendValue = 'Free';
+      }
+
+      // Support both old (capitalized) and new (lowercase) column names
       return {
         product: app.product_name || 'N/A',
-        division: app.Division || 'N/A',
-        department: app.Department || 'N/A',
-        subject: app.subjects_or_department || 'N/A',
+        division: app.division || app.Division || 'N/A',
+        department: app.department || app.Department || 'N/A',
+        subject: app.subjects || app.subjects_or_department || 'N/A',
         budget: app.budget || 'N/A',
-        licenseType: app['License Type'] || 'N/A',
+        licenseType: app.license_type || app['License Type'] || 'N/A',
         licenses: parseInt(app.licence_count) || 0,
-        category: app.Category || 'N/A',
-        website: app.Website || '#',
-        spend: app.value || 'N/A',
+        category: app.category || app.Category || 'N/A',
+        website: app.website || app.Website || '#',
+        spend: spendValue,
         // New fields for enhanced dashboard
-        enterprise: app.Enterprise === true || app.Enterprise.toString().toLowerCase() === 'true',
+        enterprise: (app.enterprise !== undefined ? app.enterprise : app.Enterprise) === true ||
+                   (app.enterprise !== undefined ? app.enterprise : app.Enterprise).toString().toLowerCase() === 'true',
         description: app.description || '',
         audience: app.audience || '',
         gradeLevels: app.grade_levels || '',
@@ -639,713 +734,10 @@ function getDashboardData() {
   }
 }
 
-// ==========================================
-// DATA MANAGEMENT & ENRICHMENT FUNCTIONS
-// ==========================================
-
-/**
- * Validates all data and reports issues
- */
-function validateAllData() {
-  const ui = SpreadsheetApp.getUi();
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
-
-  if (!SPREADSHEET_ID || !SHEET_NAME) {
-    ui.alert('❌ Configuration Error', 'SPREADSHEET_ID and SHEET_NAME must be set in Script Properties.', ui.ButtonSet.OK);
-    return;
-  }
-
-  try {
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    const values = sheet.getDataRange().getValues();
-    const headers = values[0];
-    const dataRows = values.slice(1);
-
-    const issues = [];
-    const requiredFields = ['product_name', 'description', 'Division', 'Department', 'Category', 'Website'];
-
-    dataRows.forEach((row, index) => {
-      const rowNum = index + 2; // +2 because: 0-indexed + header row
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
-
-      if (!isActive) return; // Skip inactive apps
-
-      const appName = row[headers.indexOf('product_name')] || `Row ${rowNum}`;
-
-      requiredFields.forEach(field => {
-        const colIndex = headers.indexOf(field);
-        if (colIndex === -1) {
-          issues.push(`❌ Column "${field}" not found in sheet`);
-        } else if (!row[colIndex] || row[colIndex].toString().trim() === '') {
-          issues.push(`⚠️ Row ${rowNum} (${appName}): Missing "${field}"`);
-        }
-      });
-    });
-
-    if (issues.length === 0) {
-      ui.alert('✅ Validation Complete', 'All active apps have required fields!', ui.ButtonSet.OK);
-    } else {
-      const message = `Found ${issues.length} issue(s):\n\n` + issues.slice(0, 20).join('\n') +
-                      (issues.length > 20 ? `\n\n... and ${issues.length - 20} more issues.` : '');
-      ui.alert('⚠️ Validation Issues Found', message, ui.ButtonSet.OK);
-      Logger.log('Validation Issues:\n' + issues.join('\n'));
-    }
-  } catch (error) {
-    ui.alert('❌ Error', 'Validation failed: ' + error.message, ui.ButtonSet.OK);
-    Logger.log('Validation error: ' + error.message);
-  }
-}
-
-/**
- * Finds all rows with missing fields and displays report
- */
-function findMissingFields() {
-  const ui = SpreadsheetApp.getUi();
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
-
-  if (!SPREADSHEET_ID || !SHEET_NAME) {
-    ui.alert('❌ Configuration Error', 'SPREADSHEET_ID and SHEET_NAME must be set in Script Properties.', ui.ButtonSet.OK);
-    return;
-  }
-
-  try {
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    const values = sheet.getDataRange().getValues();
-    const headers = values[0];
-    const dataRows = values.slice(1);
-
-    const missingData = {
-      description: [],
-      category: [],
-      audience: [],
-      gradeLevels: [],
-      logoUrl: []
-    };
-
-    dataRows.forEach((row, index) => {
-      const rowNum = index + 2;
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
-
-      if (!isActive) return;
-
-      const appName = row[headers.indexOf('product_name')] || `Row ${rowNum}`;
-
-      if (!row[headers.indexOf('description')] || row[headers.indexOf('description')].toString().trim() === '') {
-        missingData.description.push(`${appName} (Row ${rowNum})`);
-      }
-      if (!row[headers.indexOf('Category')] || row[headers.indexOf('Category')].toString().trim() === '') {
-        missingData.category.push(`${appName} (Row ${rowNum})`);
-      }
-      if (!row[headers.indexOf('audience')] || row[headers.indexOf('audience')].toString().trim() === '') {
-        missingData.audience.push(`${appName} (Row ${rowNum})`);
-      }
-      if (!row[headers.indexOf('grade_levels')] || row[headers.indexOf('grade_levels')].toString().trim() === '') {
-        missingData.gradeLevels.push(`${appName} (Row ${rowNum})`);
-      }
-      if (!row[headers.indexOf('logo_url')] || row[headers.indexOf('logo_url')].toString().trim() === '') {
-        missingData.logoUrl.push(`${appName} (Row ${rowNum})`);
-      }
-    });
-
-    const report = [
-      `📊 Missing Data Report`,
-      ``,
-      `Missing Descriptions: ${missingData.description.length}`,
-      missingData.description.slice(0, 5).join('\n'),
-      missingData.description.length > 5 ? `... and ${missingData.description.length - 5} more` : '',
-      ``,
-      `Missing Categories: ${missingData.category.length}`,
-      missingData.category.slice(0, 5).join('\n'),
-      ``,
-      `Missing Audience: ${missingData.audience.length}`,
-      missingData.audience.slice(0, 5).join('\n'),
-      ``,
-      `Missing Grade Levels: ${missingData.gradeLevels.length}`,
-      missingData.gradeLevels.slice(0, 5).join('\n'),
-      ``,
-      `Missing Logos: ${missingData.logoUrl.length}`,
-      missingData.logoUrl.slice(0, 5).join('\n')
-    ].filter(line => line !== undefined).join('\n');
-
-    ui.alert('🔍 Missing Fields Report', report, ui.ButtonSet.OK);
-    Logger.log('Missing Fields Report:\n' + report);
-
-  } catch (error) {
-    ui.alert('❌ Error', 'Failed to analyze missing fields: ' + error.message, ui.ButtonSet.OK);
-    Logger.log('Missing fields analysis error: ' + error.message);
-  }
-}
-
-/**
- * Enriches apps with missing descriptions using Claude AI
- */
-function enrichMissingDescriptions() {
-  const ui = SpreadsheetApp.getUi();
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
-  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
-
-  if (!CLAUDE_API_KEY) {
-    ui.alert('❌ Configuration Error', 'CLAUDE_API_KEY must be set in Script Properties for data enrichment.', ui.ButtonSet.OK);
-    return;
-  }
-
-  const response = ui.alert(
-    '✨ Enrich Missing Descriptions',
-    'This will use Claude AI to generate descriptions for apps that are missing them. This operation may take several minutes. Continue?',
-    ui.ButtonSet.YES_NO
-  );
-
-  if (response !== ui.Button.YES) {
-    return;
-  }
-
-  try {
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    const values = sheet.getDataRange().getValues();
-    const headers = values[0];
-    const dataRows = values.slice(1);
-
-    const descriptionCol = headers.indexOf('description');
-    const productCol = headers.indexOf('product_name');
-    const categoryCol = headers.indexOf('Category');
-    const websiteCol = headers.indexOf('Website');
-    const subjectCol = headers.indexOf('subjects_or_department');
-
-    let enrichedCount = 0;
-    const maxToEnrich = 10; // Limit to prevent quota issues
-
-    dataRows.forEach((row, index) => {
-      if (enrichedCount >= maxToEnrich) return;
-
-      const rowNum = index + 2;
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
-
-      if (!isActive) return;
-
-      const description = row[descriptionCol];
-      const productName = row[productCol];
-
-      if (!description || description.toString().trim() === '') {
-        const category = row[categoryCol] || 'Unknown';
-        const website = row[websiteCol] || '';
-        const subject = row[subjectCol] || '';
-
-        const generatedDesc = generateDescriptionWithClaude(productName, category, website, subject);
-
-        if (generatedDesc && generatedDesc !== 'ERROR') {
-          sheet.getRange(rowNum, descriptionCol + 1).setValue(generatedDesc);
-          enrichedCount++;
-          Logger.log(`Enriched description for ${productName} (Row ${rowNum})`);
-
-          // Log the update
-          logDataUpdate('Enrich Description', productName, 'description', description, generatedDesc, rowNum);
-
-          SpreadsheetApp.flush(); // Save immediately
-        }
-      }
-    });
-
-    ui.alert('✅ Enrichment Complete', `Successfully generated descriptions for ${enrichedCount} app(s).`, ui.ButtonSet.OK);
-
-  } catch (error) {
-    ui.alert('❌ Error', 'Enrichment failed: ' + error.message, ui.ButtonSet.OK);
-    Logger.log('Enrichment error: ' + error.message);
-  }
-}
-
-/**
- * Enriches ALL missing data (descriptions, categories, audience, grade levels) using Claude AI
- */
-function enrichAllMissingData() {
-  const ui = SpreadsheetApp.getUi();
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-  const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
-  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
-
-  if (!CLAUDE_API_KEY) {
-    ui.alert('❌ Configuration Error', 'CLAUDE_API_KEY must be set in Script Properties for data enrichment.', ui.ButtonSet.OK);
-    return;
-  }
-
-  const response = ui.alert(
-    '🔄 Enrich All Missing Data',
-    'This will use Claude AI to fill in ALL missing fields (descriptions, categories, audience, grade levels). This operation may take several minutes and use significant API quota. Continue?',
-    ui.ButtonSet.YES_NO
-  );
-
-  if (response !== ui.Button.YES) {
-    return;
-  }
-
-  try {
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    const values = sheet.getDataRange().getValues();
-    const headers = values[0];
-    const dataRows = values.slice(1);
-
-    const colMap = {
-      description: headers.indexOf('description'),
-      category: headers.indexOf('Category'),
-      audience: headers.indexOf('audience'),
-      gradeLevels: headers.indexOf('grade_levels'),
-      product: headers.indexOf('product_name'),
-      website: headers.indexOf('Website'),
-      subject: headers.indexOf('subjects_or_department'),
-      division: headers.indexOf('Division')
-    };
-
-    let enrichedCount = 0;
-    const maxToEnrich = 15; // Limit to prevent quota issues
-
-    dataRows.forEach((row, index) => {
-      if (enrichedCount >= maxToEnrich) return;
-
-      const rowNum = index + 2;
-      const isActive = row[headers.indexOf('Active')] === true || row[headers.indexOf('Active')].toString().toLowerCase() === 'true';
-
-      if (!isActive) return;
-
-      const productName = row[colMap.product];
-      const hasMissingData = !row[colMap.description] || !row[colMap.category] || !row[colMap.audience] || !row[colMap.gradeLevels];
-
-      if (hasMissingData) {
-        const enrichedData = enrichAppDataWithClaude({
-          productName: productName,
-          website: row[colMap.website] || '',
-          subject: row[colMap.subject] || '',
-          division: row[colMap.division] || '',
-          currentDescription: row[colMap.description] || '',
-          currentCategory: row[colMap.category] || '',
-          currentAudience: row[colMap.audience] || '',
-          currentGradeLevels: row[colMap.gradeLevels] || ''
-        });
-
-        if (enrichedData && enrichedData !== 'ERROR') {
-          if (enrichedData.description && !row[colMap.description]) {
-            sheet.getRange(rowNum, colMap.description + 1).setValue(enrichedData.description);
-            logDataUpdate('Enrich All Fields', productName, 'description', row[colMap.description], enrichedData.description, rowNum);
-          }
-          if (enrichedData.category && !row[colMap.category]) {
-            sheet.getRange(rowNum, colMap.category + 1).setValue(enrichedData.category);
-            logDataUpdate('Enrich All Fields', productName, 'category', row[colMap.category], enrichedData.category, rowNum);
-          }
-          if (enrichedData.audience && !row[colMap.audience]) {
-            sheet.getRange(rowNum, colMap.audience + 1).setValue(enrichedData.audience);
-            logDataUpdate('Enrich All Fields', productName, 'audience', row[colMap.audience], enrichedData.audience, rowNum);
-          }
-          if (enrichedData.gradeLevels && !row[colMap.gradeLevels]) {
-            sheet.getRange(rowNum, colMap.gradeLevels + 1).setValue(enrichedData.gradeLevels);
-            logDataUpdate('Enrich All Fields', productName, 'grade_levels', row[colMap.gradeLevels], enrichedData.gradeLevels, rowNum);
-          }
-
-          enrichedCount++;
-          Logger.log(`Enriched data for ${productName} (Row ${rowNum})`);
-          SpreadsheetApp.flush(); // Save immediately
-          Utilities.sleep(1000); // Rate limiting
-        }
-      }
-    });
-
-    ui.alert('✅ Enrichment Complete', `Successfully enriched ${enrichedCount} app(s) with missing data.`, ui.ButtonSet.OK);
-
-  } catch (error) {
-    ui.alert('❌ Error', 'Enrichment failed: ' + error.message, ui.ButtonSet.OK);
-    Logger.log('Full enrichment error: ' + error.message);
-  }
-}
-
-/**
- * Helper: Generates description for an app using Claude AI
- */
-function generateDescriptionWithClaude(productName, category, website, subject) {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
-
-  if (!CLAUDE_API_KEY) {
-    return 'ERROR';
-  }
-
-  const prompt = `Generate a concise, educational 1-2 sentence description for this app:
-
-App Name: ${productName}
-Category: ${category}
-Subject: ${subject}
-Website: ${website}
-
-Write a clear description suitable for teachers and staff at an international school. Focus on what the app does and who it's for. Do not include promotional language or marketing speak. Just the facts.
-
-Return ONLY the description text, nothing else.`;
-
-  const url = 'https://api.anthropic.com/v1/messages';
-  const payload = {
-    model: 'claude-sonnet-4-5-20250929',
-    max_tokens: 150,
-    messages: [{
-      role: 'user',
-      content: [{
-        type: 'text',
-        text: prompt
-      }]
-    }]
-  };
-
-  const options = {
-    method: 'post',
-    contentType: 'application/json',
-    headers: {
-      'x-api-key': CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  };
-
-  try {
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-
-    if (responseCode === 200) {
-      const result = JSON.parse(response.getContentText());
-      if (result.content && result.content.length > 0) {
-        return result.content[0].text.trim();
-      }
-    }
-
-    Logger.log('Claude API error for ' + productName + ': HTTP ' + responseCode);
-    return 'ERROR';
-
-  } catch (error) {
-    Logger.log('Error generating description for ' + productName + ': ' + error.message);
-    return 'ERROR';
-  }
-}
-
-/**
- * Helper: Enriches app data with all missing fields using Claude AI
- */
-function enrichAppDataWithClaude(appData) {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
-
-  if (!CLAUDE_API_KEY) {
-    return 'ERROR';
-  }
-
-  const prompt = `You are helping to enrich educational app data for Singapore American School. Analyze this app and fill in missing information:
-
-App Name: ${appData.productName}
-Website: ${appData.website}
-Subject: ${appData.subject}
-Division: ${appData.division}
-
-Current Data:
-- Description: ${appData.currentDescription || '[MISSING]'}
-- Category: ${appData.currentCategory || '[MISSING]'}
-- Audience: ${appData.currentAudience || '[MISSING]'}
-- Grade Levels: ${appData.currentGradeLevels || '[MISSING]'}
-
-Please provide the missing data in JSON format. Use these guidelines:
-- Description: 1-2 concise sentences about what the app does
-- Category: Choose ONE from: Learning Management, Content Creation, Assessment, Math Tools, Language Arts, Science, Design, Productivity, Communication, Research, Programming
-- Audience: Comma-separated from: Teachers, Students, Staff, Parents
-- Grade Levels: Use format like "K-5", "6-8", "9-12", or "K-12" based on the division
-
-Return ONLY valid JSON in this exact format:
-{
-  "description": "...",
-  "category": "...",
-  "audience": "...",
-  "gradeLevels": "..."
-}`;
-
-  const url = 'https://api.anthropic.com/v1/messages';
-  const payload = {
-    model: 'claude-sonnet-4-5-20250929',
-    max_tokens: 300,
-    messages: [{
-      role: 'user',
-      content: [{
-        type: 'text',
-        text: prompt
-      }]
-    }]
-  };
-
-  const options = {
-    method: 'post',
-    contentType: 'application/json',
-    headers: {
-      'x-api-key': CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  };
-
-  try {
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-
-    if (responseCode === 200) {
-      const result = JSON.parse(response.getContentText());
-      if (result.content && result.content.length > 0) {
-        const responseText = result.content[0].text.trim();
-
-        // Extract JSON from response (handle markdown code blocks)
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
-        }
-      }
-    }
-
-    Logger.log('Claude API error for ' + appData.productName + ': HTTP ' + responseCode);
-    return 'ERROR';
-
-  } catch (error) {
-    Logger.log('Error enriching data for ' + appData.productName + ': ' + error.message);
-    return 'ERROR';
-  }
-}
-
-/**
- * Tests Claude API connection
- */
-function testClaude() {
-  const ui = SpreadsheetApp.getUi();
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const CLAUDE_API_KEY = scriptProperties.getProperty('CLAUDE_API_KEY');
-
-  if (!CLAUDE_API_KEY) {
-    ui.alert('❌ Configuration Error', 'CLAUDE_API_KEY is not set in Script Properties.', ui.ButtonSet.OK);
-    return;
-  }
-
-  const testResult = generateDescriptionWithClaude('Google Classroom', 'Learning Management', 'https://classroom.google.com', 'Education');
-
-  if (testResult && testResult !== 'ERROR') {
-    ui.alert('✅ Claude Connection Successful', 'API key is valid and working!\n\nSample response: ' + testResult.substring(0, 200) + '...', ui.ButtonSet.OK);
-  } else {
-    ui.alert('❌ Claude Connection Failed', 'Check Apps Script logs for details: npm run logs', ui.ButtonSet.OK);
-  }
-}
-
-/**
- * Extract app names from AI response for analytics
- * Simple pattern matching for common app mentions
- */
-function extractAppNames(aiResponse) {
-  // Look for app names in bold markdown (**App Name**) or quoted patterns
-  const boldMatches = aiResponse.match(/\*\*([^*]+)\*\*/g) || [];
-  const appNames = boldMatches
-    .map(match => match.replace(/\*\*/g, '').trim())
-    .filter(name => name.length > 0 && name.length < 50); // Filter out long non-app text
-
-  // Return comma-separated list or "Multiple apps" if many
-  if (appNames.length === 0) return 'None detected';
-  if (appNames.length > 5) return `${appNames.length} apps mentioned`;
-  return appNames.slice(0, 5).join(', ');
-}
-
-/**
- * Tests Gemini API connection
- */
-function testGemini() {
-  const ui = SpreadsheetApp.getUi();
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
-
-  if (!GEMINI_API_KEY) {
-    ui.alert('❌ Configuration Error', 'GEMINI_API_KEY is not set in Script Properties.', ui.ButtonSet.OK);
-    return;
-  }
-
-  // Simple test prompt
-  const testPrompt = 'Respond with "API connection successful" if you receive this message.';
-  const testResult = queryGeminiAPI('You are a test assistant.', testPrompt, 'test');
-
-  if (testResult && !testResult.includes('error') && !testResult.includes('ERROR')) {
-    ui.alert('✅ Gemini Connection Successful', 'API key is valid and working!', ui.ButtonSet.OK);
-  } else {
-    ui.alert('❌ Gemini Connection Failed', 'Check Apps Script logs for details: npm run logs', ui.ButtonSet.OK);
-  }
-}
 
 // ==========================================
-// LOGGING & ANALYTICS FUNCTIONS
+// DATA MANAGEMENT FUNCTIONS
+// All data management, enrichment, validation, and CSV operations
+// have been moved to data-management.js for better organization.
 // ==========================================
 
-/**
- * Logs data enrichment operations to a dedicated "Update Logs" sheet
- */
-function logDataUpdate(operation, appName, field, oldValue, newValue, rowNum) {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-
-    if (!SPREADSHEET_ID) return; // Silently fail if not configured
-
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let logSheet = spreadsheet.getSheetByName('Update Logs');
-
-    // Create sheet if it doesn't exist
-    if (!logSheet) {
-      logSheet = spreadsheet.insertSheet('Update Logs');
-      // Set headers
-      logSheet.getRange(1, 1, 1, 7).setValues([[
-        'Timestamp', 'Operation', 'App Name', 'Row', 'Field', 'Old Value', 'New Value'
-      ]]);
-      logSheet.getRange(1, 1, 1, 7).setFontWeight('bold');
-      logSheet.setFrozenRows(1);
-    }
-
-    // Append log entry
-    logSheet.appendRow([
-      new Date(),
-      operation,
-      appName,
-      rowNum,
-      field,
-      oldValue || '[EMPTY]',
-      newValue
-    ]);
-
-  } catch (error) {
-    Logger.log('Error logging update: ' + error.message);
-    // Don't interrupt main operations if logging fails
-  }
-}
-
-/**
- * Logs AI chat queries to "AI Chat Analytics" sheet
- */
-function logAIQuery(userQuery, aiResponse, appsRecommended) {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-
-    if (!SPREADSHEET_ID) return;
-
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let chatSheet = spreadsheet.getSheetByName('AI Chat Analytics');
-
-    // Create sheet if it doesn't exist
-    if (!chatSheet) {
-      chatSheet = spreadsheet.insertSheet('AI Chat Analytics');
-      // Set headers
-      chatSheet.getRange(1, 1, 1, 5).setValues([[
-        'Timestamp', 'User Query', 'Apps Recommended', 'Response Length', 'Query Type'
-      ]]);
-      chatSheet.getRange(1, 1, 1, 5).setFontWeight('bold');
-      chatSheet.setFrozenRows(1);
-    }
-
-    // Determine query type
-    let queryType = 'General';
-    if (userQuery.toLowerCase().includes('recommend') || userQuery.toLowerCase().includes('suggest')) {
-      queryType = 'Recommendation Request';
-    } else if (userQuery.toLowerCase().includes('grade') || userQuery.toLowerCase().includes('student')) {
-      queryType = 'Grade-Specific';
-    } else if (userQuery.toLowerCase().includes('subject') || userQuery.toLowerCase().includes('math') || userQuery.toLowerCase().includes('science')) {
-      queryType = 'Subject-Specific';
-    }
-
-    // Append log entry
-    chatSheet.appendRow([
-      new Date(),
-      userQuery,
-      appsRecommended || 'N/A',
-      aiResponse.length,
-      queryType
-    ]);
-
-  } catch (error) {
-    Logger.log('Error logging AI query: ' + error.message);
-  }
-}
-
-/**
- * Analyzes AI chat logs to identify missing app patterns
- */
-function analyzeAIChatPatterns() {
-  const ui = SpreadsheetApp.getUi();
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-
-  if (!SPREADSHEET_ID) {
-    ui.alert('❌ Configuration Error', 'SPREADSHEET_ID must be set in Script Properties.', ui.ButtonSet.OK);
-    return;
-  }
-
-  try {
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const chatSheet = spreadsheet.getSheetByName('AI Chat Analytics');
-
-    if (!chatSheet) {
-      ui.alert('📊 No Data Yet', 'No AI chat logs found. Chat logs will appear after users interact with the AI assistant.', ui.ButtonSet.OK);
-      return;
-    }
-
-    const values = chatSheet.getDataRange().getValues();
-    const dataRows = values.slice(1);
-
-    if (dataRows.length === 0) {
-      ui.alert('📊 No Data Yet', 'No AI chat queries logged yet.', ui.ButtonSet.OK);
-      return;
-    }
-
-    // Analyze patterns
-    const queryTypes = {};
-    const commonKeywords = {};
-    const recentQueries = dataRows.slice(-10).reverse(); // Last 10 queries
-
-    dataRows.forEach(row => {
-      const query = row[1] || '';
-      const queryType = row[4] || 'General';
-
-      // Count query types
-      queryTypes[queryType] = (queryTypes[queryType] || 0) + 1;
-
-      // Extract keywords (simple word frequency)
-      const words = query.toLowerCase().split(/\s+/).filter(word => word.length > 4);
-      words.forEach(word => {
-        commonKeywords[word] = (commonKeywords[word] || 0) + 1;
-      });
-    });
-
-    // Build report
-    const topKeywords = Object.entries(commonKeywords)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([word, count]) => `${word} (${count})`);
-
-    const report = `📊 AI Chat Analytics Report
-
-Total Queries: ${dataRows.length}
-
-Query Types:
-${Object.entries(queryTypes).map(([type, count]) => `- ${type}: ${count}`).join('\n')}
-
-Top Keywords:
-${topKeywords.join(', ')}
-
-Recent Queries (Last 10):
-${recentQueries.map((row, i) => `${i + 1}. ${row[1].substring(0, 60)}${row[1].length > 60 ? '...' : ''}`).join('\n')}
-
-💡 Tip: Look for repeated keywords that don't match existing apps - these may indicate missing tools users are searching for.`;
-
-    ui.alert('📊 AI Chat Analytics', report, ui.ButtonSet.OK);
-    Logger.log('AI Chat Analytics:\n' + report);
-
-  } catch (error) {
-    ui.alert('❌ Error', 'Failed to analyze chat patterns: ' + error.message, ui.ButtonSet.OK);
-    Logger.log('Analytics error: ' + error.message);
-  }
-}

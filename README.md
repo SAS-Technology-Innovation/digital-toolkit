@@ -32,7 +32,7 @@ Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
 
 ### 🎨 Enhanced User Experience (Phase 3)
 - **App Logos & Branding**: Display app logos for quick visual recognition
-- **Grade Level Badges**: Quickly identify appropriate grade levels (K-5, 6-8, 9-12, etc.)
+- **Grade Level Badges**: Quickly identify representative grade levels for each app
 - **"What's New" Section**: Automatically highlights apps added in the last 30 days
 - **NEW Badges**: Eye-catching animated badges for recently added apps
 - **App Detail Modal**: Click "Details" for comprehensive app information including:
@@ -116,24 +116,24 @@ Create a Google Sheet with the following 22 columns (see [expected-data-template
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
-| `Active` | Boolean | TRUE/FALSE - only TRUE apps displayed | TRUE |
+| `active` | Boolean | TRUE/FALSE - only TRUE apps displayed | TRUE |
 | `product_name` | String | Application name | Google Classroom |
-| `Division` | String | School divisions | Elementary, Middle, High, Whole School |
-| `Department` | String | Department name | Mathematics, Technology, School Operations |
-| `subjects_or_department` | String | Subject area | Math, Science, Arts |
-| `Enterprise` | Boolean | Official enterprise/core tool | TRUE/FALSE |
-| `budget` | Number | Budget allocation | 5000 |
-| `audience` | String | Comma-separated audience | Teachers,Students,Parents |
-| `License Type` | String | License model | Site, Individual, Enterprise, School |
-| `licence_count` | Number | Number of licenses | 500 or "Unlimited" |
+| `division` | String | School divisions | SAS Elementary School, SAS Middle School, SAS High School, Whole School |
+| `grade_levels` | String | Comma-separated individual grades (multi-select dropdown) | Pre-K, Kindergarten, Grade 1, Grade 2 |
+| `department` | String | Department name | Mathematics, Technology, School Operations |
+| `subjects` | String | Subject area | Math, Science, Arts |
+| `enterprise` | Boolean | Official enterprise/core tool | TRUE/FALSE |
+| `budget` | String | Budget source | Office Of Learning, IT Operations |
+| `audience` | String | Comma-separated audience | Teachers, Students, Parents |
+| `license_type` | String | License model | Site Licence, Inidividual, Enterprise, School |
+| `licence_count` | Number/String | Number of licenses | 500 or Unlimited |
 | `value` | Number | Annual cost | 2500 |
 | `date_added` | Date | When app was added | 2024-01-15 |
 | `renewal_date` | Date | Subscription renewal | 2025-12-31 |
-| `Category` | String | App category | Learning Management, Design, Math Tools |
-| `Website` | String | App URL | https://classroom.google.com |
-| `description` | String | Brief description | Classroom management and assignment distribution |
-| `grade_levels` | String | Target grades | K-5, 6-8, 9-12, K-12 |
-| `support_email` | String | Support contact | support@school.edu |
+| `category` | String | App category | Learning Management, Design, Math Tools |
+| `website` | String | App URL | https://classroom.google.com |
+| `description` | String | Brief description (1-2 sentences) | Classroom management and assignment distribution platform |
+| `support_email` | String | Support contact | support@sas.edu.sg |
 | `tutorial_link` | String | Training URL | https://help.example.com |
 | `mobile_app` | String | Mobile availability | Yes, No, iOS/Android |
 | `sso_enabled` | Boolean | SSO available | TRUE/FALSE |

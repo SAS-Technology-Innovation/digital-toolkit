@@ -104,29 +104,43 @@ if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
 ```
 
 ### Expected Google Sheets Structure
-**Required columns in exact order** (case-sensitive):
-1. `Active`: Boolean (TRUE/FALSE) - only TRUE apps processed
+**Required columns in exact order** (all lowercase):
+1. `active`: Boolean (TRUE/FALSE) - only TRUE apps processed
 2. `product_name`: String - app name
-3. `Division`: String - "Elementary", "Middle", "High", "Whole School", or combinations
-4. `Department`: String - department name (filters out division names)
-5. `subjects_or_department`: String - for tagging/categorization
-6. `Enterprise`: Boolean (TRUE/FALSE) - **Enterprise checkbox (core SAS tools)**
-7. `budget`: Number/String - budget information
-8. `audience`: String - comma-separated: "Staff,Teachers,Students,Parents"
-9. `License Type`: String - "Site", "Individual", "Enterprise", "School", etc.
-10. `licence_count`: Number - number of licenses
-11. `value`: Number/String - cost/spend information
-12. `date_added`: Date - when app was added
-13. `renewal_date`: Date - subscription renewal date
-14. `Category`: String - for tagging
-15. `Website`: String - app URL
-16. `description`: String - 1-2 sentence app description
-17. `grade_levels`: String - "K-5", "6-8", "9-12", "K-12", etc.
+3. `division`: String - "SAS Elementary School", "SAS Middle School", "SAS High School", "Whole School", or combinations
+4. `grade_levels`: String - comma-separated individual grades from multi-select dropdown: "Pre-K, Kindergarten, Grade 1, Grade 2" (valid values: Pre-K, Kindergarten, Grade 1-12)
+5. `department`: String - department name (filters out division names)
+6. `subjects`: String - subject tags/categorization
+7. `enterprise`: Boolean (TRUE/FALSE) - **Enterprise checkbox (core SAS tools)**
+8. `budget`: String - "Office Of Learning", "IT Operations", "Communications", "Business Office" (exact capitalization for validation)
+9. `audience`: String - comma-separated: "Staff, Teachers, Students, Parents"
+10. `license_type`: String - "Site Licence" (British), "Inidividual" (typo intentional for validation), "Division License", "Free"
+11. `licence_count`: Number - number of licenses
+12. `value`: Number/String - cost/spend information
+13. `date_added`: Date - when app was added (YYYY-MM-DD)
+14. `renewal_date`: Date - subscription renewal date (YYYY-MM-DD)
+15. `category`: String - for tagging
+16. `website`: String - app URL
+17. `description`: String - 1-2 sentence app description
 18. `support_email`: String - support contact email
 19. `tutorial_link`: String - training/help URL
 20. `mobile_app`: String - "Yes", "No", or "iOS/Android"
 21. `sso_enabled`: Boolean (TRUE/FALSE) - single sign-on available
 22. `logo_url`: String - app logo/icon URL
+
+**Important Notes:**
+- All column names are **lowercase** (changed from mixed case)
+- `grade_levels` is in **4th position** (after division, before department)
+- Grade levels format changed from ranges (e.g., "K-5") to **comma-separated individual grades** (e.g., "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5" for Elementary apps)
+- Grade levels are **automatically inferred** during CSV import using Gemini API or rule-based logic from the division field
+- Data validation supports **multi-select dropdown** with comma-separated individual grade values
+- Valid individual grades: Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
+- `license_type` uses intentional typo "Inidividual" and British spelling "Site Licence" to match existing Google Sheets data validation
+- `budget` field uses specific capitalization "Office Of Learning" (capital O in "Of") for validation compatibility
+
+**Backwards Compatibility:**
+- Code.js supports both old (capitalized) and new (lowercase) column names for smooth migration
+- data-management.js CSV import handles both formats automatically
 
 **See [expected-data-template.csv](expected-data-template.csv) for example data.**
 
@@ -154,6 +168,45 @@ npm run pull      # Pull latest from cloud
 - **Frontend only**: Open `index.html` locally (uses mock data)
 - **Full integration**: Deploy to Apps Script and test with real Google Sheets
 
+### Python Development Scripts
+
+**⚠️ These scripts are for LOCAL DEVELOPMENT ONLY - not used in production.**
+
+Production data management happens through the Google Sheets interface via Apps Script.
+
+#### merge-csvs.py
+**Purpose**: Merge EdTech Impact subscription data with existing Google Sheet data
+
+**Workflow**:
+1. Download fresh `EdTech_Impact.csv` from EdTech Impact platform
+2. Export current Google Sheet as CSV (e.g., `SAS Digital Toolkit (MASTER) - Apps.csv`)
+3. Run: `python3 merge-csvs.py`
+4. Imports `merged-import-data.csv` into Google Sheets
+5. **Delete all CSV files** (contain sensitive data - see `.gitignore`)
+
+**What it does**:
+- Syncs `active` status (TRUE if in EdTech Impact, FALSE if not)
+- Updates subscription fields: `licence_count`, `renewal_date`, `division`, `license_type`
+- **Preserves protected fields**: `department`, `subjects`, `enterprise` (never overwrites)
+- **Infers missing grade_levels** using rule-based logic from division field
+- Normalizes data validation fields (`budget`, `license_type`) to match Google Sheets validation
+
+**Grade Level Inference**:
+- Uses division field to determine applicable grades
+- Elementary → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+- Middle School → "Grade 6, Grade 7, Grade 8"
+- High School → "Grade 9, Grade 10, Grade 11, Grade 12"
+- Multiple divisions → combined grade list
+- Only fills in **empty** grade_levels (preserves existing values)
+
+**Output**: `merged-import-data.csv` with all lowercase column headers
+
+#### Other Utility Scripts
+- `sync-active-apps.py` - Simple active status sync (deprecated - use merge-csvs.py)
+- `fix-license-types.py` - Utility to fix license type validation mismatches
+
+**Important**: Always delete temporary CSV files after import - they contain sensitive school data and are excluded via `.gitignore`.
+
 ## 🔧 Configuration
 
 ### Script Properties Setup
@@ -174,6 +227,24 @@ Auto-deploys on push to `main`. Requires three repository secrets:
 3. **`APPS_SCRIPT_DEPLOYMENT_ID`**: Find in Deploy → Manage deployments → Copy deployment ID
 
 **Note**: `.clasp.json` is NOT in repo. Created locally via `npx @google/clasp clone` or dynamically in GitHub Actions.
+
+### Vercel Deployment (Alternative Frontend)
+
+The dashboard can also be deployed to Vercel for faster loading and CDN distribution. See **[VERCEL.md](VERCEL.md)** for complete setup instructions.
+
+**Quick Setup:**
+
+1. Set `FRONTEND_KEY` in Apps Script Properties
+2. Deploy Apps Script: `npm run push && npm run deploy`
+3. Deploy to Vercel with environment variables:
+   - `FRONTEND_KEY`: Same key as Apps Script
+   - `APPS_SCRIPT_URL`: Your Apps Script web app URL
+
+**Architecture:**
+
+- Vercel serves static HTML + serverless API functions
+- API functions proxy requests to Apps Script with `FRONTEND_KEY` authentication
+- Apps Script remains the single source of truth for data
 
 ## ⚠️ Common Issues
 
@@ -340,6 +411,45 @@ User Query → queryAI(query, appsData, provider) → Gemini/Claude API
 ---
 
 ## 🔧 Data Management & Quality Control
+
+### CSV/XLSX Import from EdTech Impact
+
+**Primary Data Source:** EdTech Impact platform exports
+
+The Digital Toolkit supports **automatic import and transformation** of app data from EdTech Impact CSV/XLSX exports.
+
+**Quick Workflow:**
+1. Export CSV/XLSX from EdTech Impact platform
+2. Go to **🤖 Digital Toolkit Admin → 📤 Upload CSV Data**
+3. Select update mode (Add & Update recommended)
+4. Upload file - system auto-detects EdTech Impact format
+5. Review statistics and verify import
+
+**Expected EdTech Impact Export Format:**
+```
+Product, Cancel by, Renews on, Price, Budget, Notes, Licences, Length, Source, Schools, Decision, Status
+```
+
+**Key Transformations:**
+- `Schools` → `Division` ("SAS Elementary School, SAS Middle School" → "Elementary, Middle")
+- `Price` → `value` (`[object Object]` → 0 = Free)
+- `Budget` → `Department` (IT Operations, Office of Learning, etc.)
+- `Status` → `Active` (boolean → TRUE/FALSE)
+- `Licences` → Infers `License Type` (>100 = Site, 1-100 = Individual, 0 = Unlimited)
+
+**Auto-Populated Fields:**
+- `Enterprise`: FALSE (default)
+- `audience`: "Teachers, Staff"
+- `grade_levels`: Inferred from division using Gemini API or rule-based logic
+  - Elementary: "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+  - Middle School: "Grade 6, Grade 7, Grade 8"
+  - High School: "Grade 9, Grade 10, Grade 11, Grade 12"
+  - Multiple divisions: combined grade list
+- `category`: "Apps" (default)
+
+**See [EDTECH_IMPACT_IMPORT.md](EDTECH_IMPACT_IMPORT.md) for complete import guide.**
+
+**See [XLSX_IMPORT.md](XLSX_IMPORT.md) for technical XLSX/CSV processing details.**
 
 ### Google Sheets Admin Menu
 When you open the Google Sheets containing your app data, a custom menu "🤖 Digital Toolkit Admin" appears with data management tools.

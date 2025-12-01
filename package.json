@@ -11,6 +11,8 @@
     "logs": "npx @google/clasp logs",
     "pull": "npx @google/clasp pull",
     "create": "npx @google/clasp create --title 'SAS Digital Toolkit Dashboard' --type standalone",
+    "build": "node scripts/build-vercel.js",
+    "vercel:dev": "npm run build && npx vercel dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
