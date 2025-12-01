@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "buildCommand": "node scripts/build-vercel.js",
+  "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/signage",
+      "destination": "/signage.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=300, stale-while-revalidate=60"
+        }
+      ]
+    }
+  ]
+}

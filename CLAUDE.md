@@ -228,6 +228,24 @@ Auto-deploys on push to `main`. Requires three repository secrets:
 
 **Note**: `.clasp.json` is NOT in repo. Created locally via `npx @google/clasp clone` or dynamically in GitHub Actions.
 
+### Vercel Deployment (Alternative Frontend)
+
+The dashboard can also be deployed to Vercel for faster loading and CDN distribution. See **[VERCEL.md](VERCEL.md)** for complete setup instructions.
+
+**Quick Setup:**
+
+1. Set `FRONTEND_KEY` in Apps Script Properties
+2. Deploy Apps Script: `npm run push && npm run deploy`
+3. Deploy to Vercel with environment variables:
+   - `FRONTEND_KEY`: Same key as Apps Script
+   - `APPS_SCRIPT_URL`: Your Apps Script web app URL
+
+**Architecture:**
+
+- Vercel serves static HTML + serverless API functions
+- API functions proxy requests to Apps Script with `FRONTEND_KEY` authentication
+- Apps Script remains the single source of truth for data
+
 ## ⚠️ Common Issues
 
 ### Configuration Errors

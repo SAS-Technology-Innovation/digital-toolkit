@@ -31,10 +31,21 @@ function onOpen() {
 /**
  * Serves the HTML content of the web app.
  * Use ?page=signage to display the digital signage slideshow
+ * Use ?api=data&key=FRONTEND_KEY to get JSON data for external frontends (e.g., Vercel)
+ * Use ?api=ai&key=FRONTEND_KEY&query=...&provider=... for AI queries
  */
 function doGet(e) {
-  const page = (e && e.parameter && e.parameter.page) || 'index';
+  const params = (e && e.parameter) || {};
+  const page = params.page || 'index';
+  const apiEndpoint = params.api;
+  const frontendKey = params.key;
 
+  // --- API Endpoints for External Frontends (Vercel) ---
+  if (apiEndpoint) {
+    return handleApiRequest(apiEndpoint, frontendKey, params);
+  }
+
+  // --- HTML Page Serving ---
   if (page === 'signage') {
     return HtmlService.createTemplateFromFile('signage').evaluate()
       .setTitle('SAS Digital Toolkit - Signage')
@@ -45,6 +56,77 @@ function doGet(e) {
   return HtmlService.createTemplateFromFile('index').evaluate()
     .setTitle('SAS Apps Dashboard')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * Handles API requests from external frontends (e.g., Vercel)
+ * Validates FRONTEND_KEY before returning data
+ */
+function handleApiRequest(endpoint, providedKey, params) {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const FRONTEND_KEY = scriptProperties.getProperty('FRONTEND_KEY');
+
+  // Create JSON response helper
+  const jsonResponse = (data, statusCode = 200) => {
+    const output = ContentService.createTextOutput(JSON.stringify(data));
+    output.setMimeType(ContentService.MimeType.JSON);
+    return output;
+  };
+
+  // Validate FRONTEND_KEY is configured
+  if (!FRONTEND_KEY) {
+    Logger.log('API Error: FRONTEND_KEY not configured in Script Properties');
+    return jsonResponse({
+      error: 'API not configured',
+      message: 'FRONTEND_KEY must be set in Script Properties'
+    }, 500);
+  }
+
+  // Validate the provided key matches
+  if (!providedKey || providedKey !== FRONTEND_KEY) {
+    Logger.log('API Error: Invalid or missing FRONTEND_KEY');
+    return jsonResponse({
+      error: 'Unauthorized',
+      message: 'Invalid or missing API key'
+    }, 401);
+  }
+
+  // Handle different API endpoints
+  switch (endpoint) {
+    case 'data':
+      // Return dashboard data
+      const dashboardData = getDashboardData();
+      return jsonResponse(JSON.parse(dashboardData));
+
+    case 'ai':
+      // Handle AI query
+      const query = params.query;
+      const provider = params.provider || 'gemini';
+      const appsData = params.appsData;
+
+      if (!query) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'Query parameter is required for AI endpoint'
+        }, 400);
+      }
+
+      if (!appsData) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'appsData parameter is required for AI endpoint'
+        }, 400);
+      }
+
+      const aiResult = queryAI(query, appsData, provider);
+      return jsonResponse(JSON.parse(aiResult));
+
+    default:
+      return jsonResponse({
+        error: 'Not Found',
+        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai`
+      }, 404);
+  }
 }
 
 /**
