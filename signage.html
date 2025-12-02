@@ -1,3 +1,47 @@
+<!--
+/**
+ * SAS Digital Toolkit - Digital Signage Display
+ *
+ * A full-screen, auto-advancing slideshow designed for display on digital signage
+ * boards throughout Singapore American School. Features animated transitions,
+ * dynamic data from the app database, and SAS brand styling.
+ *
+ * @fileoverview Digital signage slideshow for the SAS Digital Toolkit.
+ * Accessed via: ?page=signage parameter in doGet() (Code.js)
+ *
+ * Slide Types:
+ * - Welcome Slide: SAS branding and introduction
+ * - Stats Overview: Key metrics with animated stat cards
+ * - Enterprise Apps: Premium gold-styled core tools showcase
+ * - What's New: Recently added apps (last 30 days) with red theme
+ * - App Spotlights: Featured apps with detailed information
+ * - Division Apps: Elementary, Middle, and High School app showcases
+ *
+ * Configuration (in <script> section):
+ * - SLIDE_DURATION: Duration per slide in ms (default: 12000 = 12 seconds)
+ * - REFRESH_INTERVAL: Data refresh interval in ms (default: 300000 = 5 minutes)
+ * - NEW_APP_THRESHOLD_DAYS: Days to consider app "new" (default: 30)
+ * - MAX_APPS_PER_SLIDE: Maximum apps per slide (default: 6)
+ *
+ * External Dependencies:
+ * - Google Fonts: Bebas Neue (headings), DM Sans (body)
+ * - Lucide Icons: Icon library for UI elements
+ *
+ * Backend Integration:
+ * - getDashboardData(): Fetches app data from Google Sheets
+ *
+ * Use Cases:
+ * - Main entrance displays
+ * - Library/Media Center screens
+ * - Teacher lounges and division offices
+ * - Cafeteria/common area displays
+ *
+ * @author SAS Technology Innovation Team
+ * @see {@link branding.md} for SAS brand guidelines
+ * @see {@link SIGNAGE.md} for complete setup and customization guide
+ * @see {@link Code.js#doGet} for URL routing
+ */
+-->
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,18 +49,42 @@
   <title>SAS Digital Toolkit - Signage</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- SAS Brand Fonts: Bebas Neue for headings, DM Sans for body text -->
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Icon library for UI elements -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
-    /* SAS Brand Colors */
+    /**
+     * SAS Brand Colors
+     * @see branding.md for complete color specifications
+     *
+     * Primary Colors:
+     * - SAS Red (#a0192a): Secondary brand color, Middle School division
+     * - SAS Blue (#1a2d58): Primary brand color, High School division
+     * - Eagle Yellow (#fabc00): Accent color, Enterprise apps highlight
+     * - Light Gray (#d8dadb): Neutral/background color
+     *
+     * Division Colors:
+     * - Elementary (#228ec2): Light blue
+     * - Middle School (#a0192a): SAS Red
+     * - High School (#1a2d58): SAS Blue/Navy
+     */
     :root {
+      /* Primary Colors */
       --sas-red: #a0192a;
       --sas-blue: #1a2d58;
       --sas-yellow: #fabc00;
       --sas-gray: #d8dadb;
+
+      /* Division Colors */
       --elementary: #228ec2;
       --middle-school: #a0192a;
       --high-school: #1a2d58;
+
+      /* Semantic Colors */
+      --primary: var(--sas-blue);
+      --secondary: var(--sas-red);
+      --accent: var(--sas-yellow);
     }
 
     * {
@@ -434,41 +502,191 @@
       font-weight: 800;
     }
 
-    /* Division Apps Slide */
+    /* Category Showcase Slide */
+    .category-slide {
+      background: linear-gradient(135deg, #0f1a35 0%, var(--sas-blue) 100%);
+    }
+
+    .category-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .category-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100px;
+      height: 100px;
+      background: var(--category-color, var(--sas-blue));
+      border-radius: 50%;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .category-title {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 4rem;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+
+    .category-count {
+      font-size: 1.5rem;
+      opacity: 0.8;
+      color: var(--sas-yellow);
+    }
+
+    .category-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      max-width: 1400px;
+      width: 100%;
+      align-items: start;
+    }
+
+    .category-why-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .why-card, .how-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 30px;
+      border-left: 4px solid var(--sas-yellow);
+    }
+
+    .why-label, .how-label {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 1.5rem;
+      color: var(--sas-yellow);
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    .why-text, .how-text {
+      font-size: 1.4rem;
+      line-height: 1.5;
+      opacity: 0.95;
+    }
+
+    .category-apps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .category-app-card {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .category-app-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .category-app-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    /* Division Apps Slide - Redesigned */
     .division-slide {
       background: linear-gradient(135deg, var(--elementary) 0%, #1a6b94 100%);
     }
 
-    .division-slide.middle {
+    .division-slide.middleSchool {
       background: linear-gradient(135deg, var(--middle-school) 0%, #70111f 100%);
     }
 
-    .division-slide.high {
+    .division-slide.highSchool {
       background: linear-gradient(135deg, var(--high-school) 0%, #0f1a35 100%);
     }
 
     .division-header {
       text-align: center;
-      margin-bottom: 60px;
+      margin-bottom: 30px;
+    }
+
+    .division-grades {
+      font-size: 1.3rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      opacity: 0.8;
+      margin-bottom: 10px;
     }
 
     .division-title {
       font-family: 'Bebas Neue', Arial, sans-serif;
       font-size: 5rem;
       letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+
+    .division-tagline {
+      font-size: 2rem;
+      color: var(--sas-yellow);
+      font-weight: 600;
+    }
+
+    .division-content {
+      text-align: center;
+      margin-bottom: 30px;
+      max-width: 900px;
+    }
+
+    .division-description {
+      font-size: 1.5rem;
+      opacity: 0.9;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .division-categories {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
       margin-bottom: 20px;
     }
 
-    .division-subtitle {
-      font-size: 2rem;
+    .division-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.2);
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .division-stats {
+      font-size: 1.3rem;
       opacity: 0.9;
+    }
+
+    .division-stat strong {
+      font-size: 1.8rem;
+      color: var(--sas-yellow);
     }
 
     .division-apps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 25px;
-      max-width: 1400px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      max-width: 1200px;
       width: 100%;
     }
 
@@ -476,33 +694,103 @@
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(10px);
       border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 16px;
-      padding: 30px;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .division-app-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .division-app-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    /* Features Slide */
+    .features-slide {
+      background: linear-gradient(135deg, var(--sas-blue) 0%, #2a4178 50%, var(--sas-red) 100%);
+    }
+
+    .features-title {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 4rem;
+      letter-spacing: 3px;
+      margin-bottom: 50px;
+      text-align: center;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 30px;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .feature-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 40px 30px;
       text-align: center;
       transition: transform 0.3s ease;
     }
 
-    .division-app-card:hover {
+    .feature-card:hover {
       transform: translateY(-5px);
     }
 
-    .division-app-logo {
-      width: 80px;
-      height: 80px;
-      object-fit: contain;
-      margin-bottom: 15px;
+    .feature-card i {
+      color: var(--sas-yellow);
+      margin-bottom: 20px;
     }
 
-    .division-app-name {
-      font-size: 1.8rem;
-      font-weight: 800;
+    .feature-number {
+      font-family: 'Bebas Neue', Arial, sans-serif;
+      font-size: 4rem;
+      color: var(--sas-yellow);
+      line-height: 1;
       margin-bottom: 10px;
     }
 
-    .division-app-subject {
-      font-size: 1.2rem;
-      opacity: 0.8;
-      color: var(--sas-yellow);
+    .feature-label {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    .feature-desc {
+      font-size: 1.1rem;
+      opacity: 0.85;
+      line-height: 1.4;
+    }
+
+    /* Stats slide enhancement */
+    .stat-detail {
+      font-size: 1.1rem;
+      opacity: 0.7;
+      margin-top: 10px;
+    }
+
+    /* Enterprise slide enhancement */
+    .enterprise-why {
+      font-size: 1.5rem;
+      opacity: 0.9;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* What's New enhancement */
+    .whats-new-subtitle {
+      font-size: 1.5rem;
+      opacity: 0.9;
+      margin-top: 10px;
     }
 
     /* Footer with progress indicator */
@@ -672,19 +960,120 @@
   </div>
 
   <script>
-    // Configuration
-    const SLIDE_DURATION = 8000; // 8 seconds per slide
+    // ============================================================
+    // CONFIGURATION
+    // ============================================================
+    const SLIDE_DURATION = 10000; // 10 seconds per slide (increased for readability)
     const REFRESH_INTERVAL = 300000; // Refresh data every 5 minutes
     const NEW_APP_THRESHOLD_DAYS = 30; // Apps added in last 30 days are "new"
-    const MAX_APPS_PER_SLIDE = 6; // Maximum apps to show per slide
+    const MAX_APPS_PER_SLIDE = 4; // Reduced for cleaner display
+    const MAX_SPOTLIGHT_APPS = 3; // Limit spotlight slides to reduce length
 
     let currentSlideIndex = 0;
     let slides = [];
     let slideInterval;
     let appData = null;
+    let processedData = null; // Stores de-duplicated and categorized data
+
+    // ============================================================
+    // CATEGORY DEFINITIONS - Maps categories to icons and "why" messaging
+    // ============================================================
+    const CATEGORY_CONFIG = {
+      'Learning Management': {
+        icon: 'book-open',
+        color: '#228ec2',
+        why: 'Streamline course delivery and student engagement',
+        how: 'Centralized hub for assignments, grades, and communication'
+      },
+      'Content Creation': {
+        icon: 'palette',
+        color: '#a0192a',
+        why: 'Empower creativity and multimedia learning',
+        how: 'Create videos, graphics, presentations, and interactive content'
+      },
+      'Assessment': {
+        icon: 'clipboard-check',
+        color: '#1a2d58',
+        why: 'Measure understanding and track progress',
+        how: 'Formative quizzes, summative tests, and learning analytics'
+      },
+      'Collaboration': {
+        icon: 'users',
+        color: '#fabc00',
+        why: 'Foster teamwork and communication skills',
+        how: 'Real-time document editing, video calls, and project spaces'
+      },
+      'Productivity': {
+        icon: 'briefcase',
+        color: '#6d6f72',
+        why: 'Work smarter, not harder',
+        how: 'Email, calendars, documents, and workflow automation'
+      },
+      'Communication': {
+        icon: 'message-circle',
+        color: '#228ec2',
+        why: 'Connect families, students, and teachers',
+        how: 'Messaging, portfolios, and parent engagement platforms'
+      },
+      'Research': {
+        icon: 'search',
+        color: '#1a2d58',
+        why: 'Access credible sources and develop inquiry skills',
+        how: 'Databases, citation tools, and academic resources'
+      },
+      'STEM': {
+        icon: 'cpu',
+        color: '#a0192a',
+        why: 'Hands-on learning in science, tech, and math',
+        how: 'Coding, simulations, robotics, and data analysis'
+      },
+      'Reading & Writing': {
+        icon: 'book',
+        color: '#228ec2',
+        why: 'Build literacy and language skills',
+        how: 'Reading platforms, writing tools, and language practice'
+      },
+      'Other': {
+        icon: 'grid',
+        color: '#6d6f72',
+        why: 'Specialized tools for unique learning needs',
+        how: 'Diverse applications supporting various educational goals'
+      }
+    };
+
+    // ============================================================
+    // DIVISION MESSAGING - "Why" for each division
+    // ============================================================
+    const DIVISION_CONFIG = {
+      elementary: {
+        title: 'Elementary School',
+        grades: 'Pre-K through Grade 5',
+        tagline: 'Building Digital Foundations',
+        color: '#228ec2',
+        description: 'Age-appropriate tools that spark curiosity and develop foundational digital literacy skills'
+      },
+      middleSchool: {
+        title: 'Middle School',
+        grades: 'Grades 6-8',
+        tagline: 'Expanding Digital Horizons',
+        color: '#a0192a',
+        description: 'Tools that support exploration, deeper inquiry, and growing independence'
+      },
+      highSchool: {
+        title: 'High School',
+        grades: 'Grades 9-12',
+        tagline: 'Preparing Global Citizens',
+        color: '#1a2d58',
+        description: 'Advanced platforms for research, collaboration, and college-ready skills'
+      }
+    };
+
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
 
     /**
-     * Helper: Get favicon URL from website domain
+     * Get favicon URL from website domain
      */
     function getFaviconUrl(website) {
       if (!website) return '';
@@ -696,424 +1085,56 @@
       }
     }
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-      lucide.createIcons();
-      loadData();
-
-      // Set up auto-refresh
-      setInterval(loadData, REFRESH_INTERVAL);
-    });
-
     /**
-     * Load data from Google Apps Script backend
+     * Get all unique apps across all divisions (de-duplicated)
      */
-    function loadData() {
-      console.log('Loading dashboard data...');
-
-      // Check if running in Google Apps Script environment
-      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
-        google.script.run
-          .withSuccessHandler(handleDataLoaded)
-          .withFailureHandler(handleError)
-          .getDashboardData();
-      } else {
-        // Local testing with mock data
-        console.log('Running in local test mode with mock data');
-        setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
-      }
-    }
-
-    /**
-     * Handle successful data load
-     */
-    function handleDataLoaded(jsonData) {
-      try {
-        const data = JSON.parse(jsonData);
-
-        if (data.error) {
-          handleError(data.error);
-          return;
-        }
-
-        appData = data;
-        console.log('Data loaded successfully:', data.stats);
-
-        generateSlides();
-        startSlideshow();
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').style.display = 'none';
-        document.getElementById('slideshow').style.display = 'block';
-
-      } catch (error) {
-        console.error('Error parsing data:', error);
-        handleError('Failed to parse data: ' + error.message);
-      }
-    }
-
-    /**
-     * Handle data loading error
-     */
-    function handleError(error) {
-      console.error('Error loading data:', error);
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('error').style.display = 'flex';
-      document.getElementById('error-message').textContent = error;
-    }
-
-    /**
-     * Generate all slides based on loaded data
-     */
-    function generateSlides() {
-      const slideshowContainer = document.getElementById('slideshow');
-      slideshowContainer.innerHTML = '';
-      slides = [];
-
-      // 1. Welcome Slide
-      slides.push(createWelcomeSlide());
-
-      // 2. Stats Overview Slide
-      slides.push(createStatsSlide());
-
-      // 3. Enterprise Apps Slide (if any)
-      const enterpriseApps = appData.wholeSchool.enterpriseApps || [];
-      if (enterpriseApps.length > 0) {
-        slides.push(createEnterpriseSlide(enterpriseApps));
-      }
-
-      // 4. What's New Slides (if any new apps)
-      const newApps = getAllNewApps();
-      if (newApps.length > 0) {
-        // Create multiple slides if there are many new apps
-        for (let i = 0; i < newApps.length; i += MAX_APPS_PER_SLIDE) {
-          const appsChunk = newApps.slice(i, i + MAX_APPS_PER_SLIDE);
-          slides.push(createWhatsNewSlide(appsChunk));
-        }
-      }
-
-      // 5. App Spotlight Slides (featured apps)
-      const featuredApps = getFeaturedApps(5);
-      featuredApps.forEach(app => {
-        slides.push(createSpotlightSlide(app));
-      });
-
-      // 6. Division Overview Slides
-      slides.push(createDivisionSlide('Elementary', appData.elementary, 'elementary'));
-      slides.push(createDivisionSlide('Middle School', appData.middleSchool, 'middle'));
-      slides.push(createDivisionSlide('High School', appData.highSchool, 'high'));
-
-      // Append all slides to container
-      slides.forEach((slide, index) => {
-        if (index === 0) slide.classList.add('active');
-        slideshowContainer.appendChild(slide);
-      });
-
-      // Create progress indicator
-      createProgressIndicator();
-    }
-
-    /**
-     * Create Welcome Slide
-     */
-    function createWelcomeSlide() {
-      const slide = document.createElement('div');
-      slide.className = 'slide welcome-slide';
-      slide.innerHTML = `
-        <div class="logo">
-          <i data-lucide="layout-grid" style="width: 120px; height: 120px;"></i>
-        </div>
-        <h1>SAS DIGITAL TOOLKIT</h1>
-        <p class="subtitle">Empowering Education Through Technology</p>
-        <p class="tagline">
-          Discover our curated collection of educational apps and digital tools<br>
-          designed to enhance teaching, learning, and collaboration
-        </p>
-      `;
-      lucide.createIcons({ nameAttr: 'data-lucide' });
-      return slide;
-    }
-
-    /**
-     * Create Stats Overview Slide
-     */
-    function createStatsSlide() {
-      const slide = document.createElement('div');
-      slide.className = 'slide stats-slide';
-
-      const stats = appData.stats;
-
-      slide.innerHTML = `
-        <h2 class="stats-title">Our Digital Ecosystem</h2>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-number">${stats.totalApps}</div>
-            <div class="stat-label">Total Applications</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">${stats.wholeSchoolCount}</div>
-            <div class="stat-label">School-Wide Tools</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">${stats.elementaryCount + stats.middleSchoolCount + stats.highSchoolCount}</div>
-            <div class="stat-label">Division-Specific Apps</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">${(appData.wholeSchool.enterpriseApps || []).length}</div>
-            <div class="stat-label">Enterprise Core Tools</div>
-          </div>
-        </div>
-      `;
-
-      return slide;
-    }
-
-    /**
-     * Create Enterprise Apps Slide
-     */
-    function createEnterpriseSlide(apps) {
-      const slide = document.createElement('div');
-      slide.className = 'slide enterprise-slide';
-
-      const displayApps = apps.slice(0, MAX_APPS_PER_SLIDE);
-
-      const appsHTML = displayApps.map(app => {
-        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
-        return `
-          <div class="enterprise-app-card">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="enterprise-app-logo" onerror="this.style.display='none'">` : ''}
-            <div class="enterprise-app-name">${app.product}</div>
-            <div class="enterprise-app-desc">${app.description || 'Official SAS core tool for enhanced productivity and collaboration'}</div>
-          </div>
-        `;
-      }).join('');
-
-      slide.innerHTML = `
-        <div class="enterprise-header">
-          <div class="enterprise-badge">
-            <i data-lucide="award" style="width: 24px; height: 24px;"></i>
-            <span>OFFICIAL SAS CORE TOOLS</span>
-          </div>
-          <h2 class="enterprise-title">Enterprise Applications</h2>
-        </div>
-        <div class="enterprise-grid">
-          ${appsHTML}
-        </div>
-      `;
-
-      lucide.createIcons({ nameAttr: 'data-lucide' });
-      return slide;
-    }
-
-    /**
-     * Create What's New Slide
-     */
-    function createWhatsNewSlide(apps) {
-      const slide = document.createElement('div');
-      slide.className = 'slide whats-new-slide';
-
-      const appsHTML = apps.map(app => {
-        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
-        return `
-          <div class="new-app-card">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="new-app-logo" onerror="this.style.display='none'">` : ''}
-            <div class="new-app-name">${app.product}</div>
-            <div class="new-app-desc">${app.description || 'Recently added to our digital toolkit'}</div>
-            <div class="new-app-date">Added ${formatDate(app.dateAdded)}</div>
-          </div>
-        `;
-      }).join('');
-
-      slide.innerHTML = `
-        <div class="whats-new-header">
-          <div class="new-badge">
-            <i data-lucide="sparkles" style="width: 24px; height: 24px;"></i>
-            <span>RECENTLY ADDED</span>
-          </div>
-          <h2 class="whats-new-title">What's New</h2>
-        </div>
-        <div class="new-apps-grid">
-          ${appsHTML}
-        </div>
-      `;
-
-      lucide.createIcons({ nameAttr: 'data-lucide' });
-      return slide;
-    }
-
-    /**
-     * Create App Spotlight Slide
-     */
-    function createSpotlightSlide(app) {
-      const slide = document.createElement('div');
-      slide.className = 'slide spotlight-slide';
-
-      const features = [];
-      if (app.ssoEnabled) features.push('Single Sign-On Available');
-      if (app.mobileApp && app.mobileApp.toLowerCase() !== 'no') features.push('Mobile App Available');
-      if (app.gradeLevels) features.push(`For ${app.gradeLevels}`);
-      if (app.audience) features.push(`Audience: ${app.audience}`);
-
-      const featuresHTML = features.length > 0 ? `
-        <ul class="spotlight-features">
-          ${features.map(f => `<li>${f}</li>`).join('')}
-        </ul>
-      ` : '';
-
-      const badges = [];
-      if (app.ssoEnabled) badges.push(`<div class="spotlight-badge"><i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> SSO</div>`);
-      if (app.mobileApp && app.mobileApp.toLowerCase() !== 'no') badges.push(`<div class="spotlight-badge"><i data-lucide="smartphone" style="width: 16px; height: 16px;"></i> Mobile</div>`);
-
-      const logoUrl = app.logoUrl || getFaviconUrl(app.website);
-
-      slide.innerHTML = `
-        <div class="spotlight-content">
-          <div class="spotlight-visual">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="spotlight-logo" onerror="this.style.display='none'">` : `<i data-lucide="star" style="width: 300px; height: 300px;" class="spotlight-logo"></i>`}
-            <div class="spotlight-badges">
-              ${badges.join('')}
-            </div>
-          </div>
-          <div class="spotlight-info">
-            <div class="spotlight-category">${app.category || app.subject || 'Featured App'}</div>
-            <h2 class="spotlight-name">${app.product}</h2>
-            <p class="spotlight-description">${app.description || 'A powerful tool for teaching and learning'}</p>
-            ${featuresHTML}
-          </div>
-        </div>
-      `;
-
-      lucide.createIcons({ nameAttr: 'data-lucide' });
-      return slide;
-    }
-
-    /**
-     * Create Division Overview Slide
-     */
-    function createDivisionSlide(divisionName, divisionData, divisionClass) {
-      const slide = document.createElement('div');
-      slide.className = `slide division-slide ${divisionClass}`;
-
-      // Get a sample of apps from this division
-      const allApps = divisionData.apps || [];
-      const displayApps = allApps.slice(0, MAX_APPS_PER_SLIDE);
-
-      const appsHTML = displayApps.map(app => {
-        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
-        return `
-          <div class="division-app-card">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="division-app-logo" onerror="this.style.display='none'">` : ''}
-            <div class="division-app-name">${app.product}</div>
-            <div class="division-app-subject">${app.subject || app.category}</div>
-          </div>
-        `;
-      }).join('');
-
-      slide.innerHTML = `
-        <div class="division-header">
-          <h2 class="division-title">${divisionName}</h2>
-          <p class="division-subtitle">${allApps.length} Applications Available</p>
-        </div>
-        <div class="division-apps-grid">
-          ${appsHTML}
-        </div>
-      `;
-
-      return slide;
-    }
-
-    /**
-     * Create progress indicator dots
-     */
-    function createProgressIndicator() {
-      const indicator = document.getElementById('progress-indicator');
-      indicator.innerHTML = '';
-
-      slides.forEach((_, index) => {
-        const dot = document.createElement('div');
-        dot.className = 'progress-dot';
-        if (index === 0) dot.classList.add('active');
-        indicator.appendChild(dot);
-      });
-    }
-
-    /**
-     * Start the slideshow
-     */
-    function startSlideshow() {
-      if (slideInterval) clearInterval(slideInterval);
-
-      slideInterval = setInterval(() => {
-        nextSlide();
-      }, SLIDE_DURATION);
-    }
-
-    /**
-     * Go to next slide
-     */
-    function nextSlide() {
-      const currentSlide = slides[currentSlideIndex];
-      currentSlide.classList.remove('active');
-
-      currentSlideIndex = (currentSlideIndex + 1) % slides.length;
-
-      const nextSlide = slides[currentSlideIndex];
-      nextSlide.classList.add('active');
-
-      updateProgressIndicator();
-    }
-
-    /**
-     * Update progress indicator
-     */
-    function updateProgressIndicator() {
-      const dots = document.querySelectorAll('.progress-dot');
-      dots.forEach((dot, index) => {
-        if (index === currentSlideIndex) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
-      });
-    }
-
-    /**
-     * Get all new apps (added within threshold)
-     */
-    function getAllNewApps() {
+    function getAllUniqueApps() {
       const allApps = [
         ...(appData.wholeSchool.apps || []),
         ...(appData.elementary.apps || []),
         ...(appData.middleSchool.apps || []),
         ...(appData.highSchool.apps || [])
       ];
-
-      // Remove duplicates
-      const uniqueApps = Array.from(new Map(allApps.map(app => [app.product, app])).values());
-
-      return uniqueApps.filter(app => isWithinDays(app.dateAdded, NEW_APP_THRESHOLD_DAYS));
+      return Array.from(new Map(allApps.map(app => [app.product, app])).values());
     }
 
     /**
-     * Get featured apps for spotlight
+     * Group apps by category
      */
-    function getFeaturedApps(count) {
-      // Prioritize: Enterprise apps > Apps with logos > Apps with descriptions
-      const enterpriseApps = appData.wholeSchool.enterpriseApps || [];
-      const everyoneApps = appData.wholeSchool.everyoneApps || [];
+    function groupAppsByCategory(apps) {
+      const groups = {};
+      apps.forEach(app => {
+        const category = normalizeCategory(app.category || app.subject || 'Other');
+        if (!groups[category]) {
+          groups[category] = [];
+        }
+        groups[category].push(app);
+      });
+      return groups;
+    }
 
-      const featured = [...enterpriseApps, ...everyoneApps]
-        .filter(app => app.description && app.description.length > 10)
-        .sort((a, b) => {
-          // Prioritize apps with logos
-          if (a.logoUrl && !b.logoUrl) return -1;
-          if (!a.logoUrl && b.logoUrl) return 1;
-          // Then by description length
-          return (b.description?.length || 0) - (a.description?.length || 0);
-        })
-        .slice(0, count);
+    /**
+     * Normalize category names to match our CATEGORY_CONFIG
+     */
+    function normalizeCategory(category) {
+      const cat = (category || '').toLowerCase();
+      if (cat.includes('lms') || cat.includes('learning management')) return 'Learning Management';
+      if (cat.includes('content') || cat.includes('creat') || cat.includes('design') || cat.includes('video') || cat.includes('media')) return 'Content Creation';
+      if (cat.includes('assess') || cat.includes('quiz') || cat.includes('test') || cat.includes('grade')) return 'Assessment';
+      if (cat.includes('collab') || cat.includes('team') || cat.includes('project')) return 'Collaboration';
+      if (cat.includes('product') || cat.includes('office') || cat.includes('workspace')) return 'Productivity';
+      if (cat.includes('commun') || cat.includes('message') || cat.includes('parent') || cat.includes('portfolio')) return 'Communication';
+      if (cat.includes('research') || cat.includes('database') || cat.includes('citation') || cat.includes('library')) return 'Research';
+      if (cat.includes('stem') || cat.includes('code') || cat.includes('coding') || cat.includes('math') || cat.includes('science') || cat.includes('robot')) return 'STEM';
+      if (cat.includes('read') || cat.includes('writ') || cat.includes('literacy') || cat.includes('language') || cat.includes('english')) return 'Reading & Writing';
+      return 'Other';
+    }
 
-      return featured;
+    /**
+     * Get apps added within threshold days (de-duplicated)
+     */
+    function getNewApps() {
+      return getAllUniqueApps().filter(app => isWithinDays(app.dateAdded, NEW_APP_THRESHOLD_DAYS));
     }
 
     /**
@@ -1121,7 +1142,6 @@
      */
     function isWithinDays(dateString, days) {
       if (!dateString) return false;
-
       try {
         const date = new Date(dateString);
         const now = new Date();
@@ -1138,7 +1158,6 @@
      */
     function formatDate(dateString) {
       if (!dateString) return 'Recently';
-
       try {
         const date = new Date(dateString);
         const options = { month: 'short', day: 'numeric', year: 'numeric' };
@@ -1149,42 +1168,498 @@
     }
 
     /**
-     * Mock data for local testing
+     * Get accurate stats (de-duplicated counts)
      */
+    function getAccurateStats() {
+      const uniqueApps = getAllUniqueApps();
+      const enterpriseApps = appData.wholeSchool.enterpriseApps || [];
+      const everyoneApps = appData.wholeSchool.everyoneApps || [];
+      const categoryGroups = groupAppsByCategory(uniqueApps);
+
+      // Count unique division-specific apps (not including whole school)
+      const elementaryOnly = (appData.elementary.apps || []).filter(app => !app.isWholeSchool);
+      const middleOnly = (appData.middleSchool.apps || []).filter(app => !app.isWholeSchool);
+      const highOnly = (appData.highSchool.apps || []).filter(app => !app.isWholeSchool);
+
+      return {
+        totalUniqueApps: uniqueApps.length,
+        enterpriseCount: enterpriseApps.length,
+        schoolWideCount: everyoneApps.length,
+        elementaryCount: elementaryOnly.length,
+        middleCount: middleOnly.length,
+        highCount: highOnly.length,
+        categoryCount: Object.keys(categoryGroups).length,
+        newAppsCount: getNewApps().length,
+        ssoEnabledCount: uniqueApps.filter(app => app.ssoEnabled).length,
+        mobileCount: uniqueApps.filter(app => app.mobileApp && app.mobileApp.toLowerCase() !== 'no').length
+      };
+    }
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      lucide.createIcons();
+      loadData();
+      setInterval(loadData, REFRESH_INTERVAL);
+    });
+
+    /**
+     * Load data from Google Apps Script backend
+     */
+    function loadData() {
+      console.log('Loading dashboard data...');
+      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
+        google.script.run
+          .withSuccessHandler(handleDataLoaded)
+          .withFailureHandler(handleError)
+          .getDashboardData();
+      } else {
+        console.log('Running in local test mode with mock data');
+        setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
+      }
+    }
+
+    /**
+     * Handle successful data load
+     */
+    function handleDataLoaded(jsonData) {
+      try {
+        const data = JSON.parse(jsonData);
+        if (data.error) {
+          handleError(data.error);
+          return;
+        }
+        appData = data;
+        console.log('Data loaded successfully');
+        generateSlides();
+        startSlideshow();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('slideshow').style.display = 'block';
+      } catch (error) {
+        console.error('Error parsing data:', error);
+        handleError('Failed to parse data: ' + error.message);
+      }
+    }
+
+    /**
+     * Handle data loading error
+     */
+    function handleError(error) {
+      console.error('Error loading data:', error);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'flex';
+      document.getElementById('error-message').textContent = error;
+    }
+
+    // ============================================================
+    // SLIDE GENERATION - Focus on WHY and HOW, not overlaps
+    // ============================================================
+
+    /**
+     * Generate all slides based on loaded data
+     */
+    function generateSlides() {
+      const slideshowContainer = document.getElementById('slideshow');
+      slideshowContainer.innerHTML = '';
+      slides = [];
+
+      const stats = getAccurateStats();
+
+      // 1. Welcome Slide - Updated messaging
+      slides.push(createWelcomeSlide());
+
+      // 2. Impact Stats Slide - Accurate, de-duplicated counts
+      slides.push(createImpactSlide(stats));
+
+      // 3. Enterprise Apps Slide - Core tools everyone uses
+      const enterpriseApps = appData.wholeSchool.enterpriseApps || [];
+      if (enterpriseApps.length > 0) {
+        slides.push(createEnterpriseSlide(enterpriseApps));
+      }
+
+      // 4. Category Showcase Slides - Show the "why" for each category
+      const uniqueApps = getAllUniqueApps();
+      const categoryGroups = groupAppsByCategory(uniqueApps);
+      const topCategories = Object.entries(categoryGroups)
+        .sort((a, b) => b[1].length - a[1].length)
+        .slice(0, 4); // Top 4 categories only
+
+      topCategories.forEach(([category, apps]) => {
+        slides.push(createCategorySlide(category, apps));
+      });
+
+      // 5. Division Highlights - One slide per division with purpose
+      slides.push(createDivisionHighlightSlide('elementary', appData.elementary));
+      slides.push(createDivisionHighlightSlide('middleSchool', appData.middleSchool));
+      slides.push(createDivisionHighlightSlide('highSchool', appData.highSchool));
+
+      // 6. What's New Slide (if any new apps) - Limited to one slide
+      const newApps = getNewApps();
+      if (newApps.length > 0) {
+        slides.push(createWhatsNewSlide(newApps.slice(0, MAX_APPS_PER_SLIDE)));
+      }
+
+      // 7. Features Highlight Slide - SSO, Mobile, etc.
+      slides.push(createFeaturesSlide(stats));
+
+      // Append all slides
+      slides.forEach((slide, index) => {
+        if (index === 0) slide.classList.add('active');
+        slideshowContainer.appendChild(slide);
+      });
+
+      createProgressIndicator();
+    }
+
+    /**
+     * Create Welcome Slide - Updated with purpose-driven messaging
+     */
+    function createWelcomeSlide() {
+      const slide = document.createElement('div');
+      slide.className = 'slide welcome-slide';
+      slide.innerHTML = `
+        <div class="logo">
+          <i data-lucide="rocket" style="width: 120px; height: 120px;"></i>
+        </div>
+        <h1>SAS DIGITAL TOOLKIT</h1>
+        <p class="subtitle">Your Gateway to Educational Technology</p>
+        <p class="tagline">
+          <strong>Discover</strong> the right tools for your classroom<br>
+          <strong>Learn</strong> how to integrate technology effectively<br>
+          <strong>Connect</strong> with resources that enhance learning
+        </p>
+      `;
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create Impact Stats Slide - Shows accurate, de-duplicated counts
+     */
+    function createImpactSlide(stats) {
+      const slide = document.createElement('div');
+      slide.className = 'slide stats-slide';
+      slide.innerHTML = `
+        <h2 class="stats-title">Our Digital Ecosystem</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalUniqueApps}</div>
+            <div class="stat-label">Educational Tools</div>
+            <div class="stat-detail">Curated for SAS learners</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${stats.enterpriseCount}</div>
+            <div class="stat-label">Core Platforms</div>
+            <div class="stat-detail">Enterprise-wide solutions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${stats.categoryCount}</div>
+            <div class="stat-label">Categories</div>
+            <div class="stat-detail">From STEM to Literacy</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${stats.ssoEnabledCount}</div>
+            <div class="stat-label">SSO Enabled</div>
+            <div class="stat-detail">One-click access</div>
+          </div>
+        </div>
+      `;
+      return slide;
+    }
+
+    /**
+     * Create Enterprise Apps Slide - Focuses on WHY these are core tools
+     */
+    function createEnterpriseSlide(apps) {
+      const slide = document.createElement('div');
+      slide.className = 'slide enterprise-slide';
+      const displayApps = apps.slice(0, MAX_APPS_PER_SLIDE);
+
+      const appsHTML = displayApps.map(app => {
+        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+        return `
+          <div class="enterprise-app-card">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="enterprise-app-logo" onerror="this.style.display='none'">` : ''}
+            <div class="enterprise-app-name">${app.product}</div>
+            <div class="enterprise-app-desc">${app.description || 'Core SAS platform'}</div>
+          </div>
+        `;
+      }).join('');
+
+      slide.innerHTML = `
+        <div class="enterprise-header">
+          <div class="enterprise-badge">
+            <i data-lucide="shield-check" style="width: 24px; height: 24px;"></i>
+            <span>CORE PLATFORMS</span>
+          </div>
+          <h2 class="enterprise-title">Your Essential Tools</h2>
+          <p class="enterprise-why">These enterprise platforms form the foundation of digital learning at SAS</p>
+        </div>
+        <div class="enterprise-grid">
+          ${appsHTML}
+        </div>
+      `;
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create Category Showcase Slide - Shows WHY and HOW for each category
+     */
+    function createCategorySlide(category, apps) {
+      const slide = document.createElement('div');
+      slide.className = 'slide category-slide';
+
+      const config = CATEGORY_CONFIG[category] || CATEGORY_CONFIG['Other'];
+      const displayApps = apps.slice(0, MAX_APPS_PER_SLIDE);
+
+      const appsHTML = displayApps.map(app => {
+        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+        return `
+          <div class="category-app-card">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="category-app-logo" onerror="this.style.display='none'">` : ''}
+            <div class="category-app-name">${app.product}</div>
+          </div>
+        `;
+      }).join('');
+
+      slide.innerHTML = `
+        <div class="category-header" style="--category-color: ${config.color}">
+          <div class="category-icon">
+            <i data-lucide="${config.icon}" style="width: 60px; height: 60px;"></i>
+          </div>
+          <h2 class="category-title">${category}</h2>
+          <p class="category-count">${apps.length} tools available</p>
+        </div>
+        <div class="category-content">
+          <div class="category-why-section">
+            <div class="why-card">
+              <div class="why-label">WHY</div>
+              <p class="why-text">${config.why}</p>
+            </div>
+            <div class="how-card">
+              <div class="how-label">HOW</div>
+              <p class="how-text">${config.how}</p>
+            </div>
+          </div>
+          <div class="category-apps-grid">
+            ${appsHTML}
+          </div>
+        </div>
+      `;
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create Division Highlight Slide - Purpose-driven division overview
+     */
+    function createDivisionHighlightSlide(divisionKey, divisionData) {
+      const slide = document.createElement('div');
+      const config = DIVISION_CONFIG[divisionKey];
+      slide.className = `slide division-slide ${divisionKey}`;
+
+      // Get unique apps for this division (excluding whole school)
+      const uniqueApps = (divisionData.apps || []).filter(app => !app.isWholeSchool);
+      const displayApps = uniqueApps.slice(0, MAX_APPS_PER_SLIDE);
+
+      // Group by category for this division
+      const categoryGroups = groupAppsByCategory(uniqueApps);
+      const topCategories = Object.entries(categoryGroups)
+        .sort((a, b) => b[1].length - a[1].length)
+        .slice(0, 3);
+
+      const categoryBadgesHTML = topCategories.map(([cat, apps]) => {
+        const catConfig = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG['Other'];
+        return `<div class="division-category-badge"><i data-lucide="${catConfig.icon}" style="width: 16px; height: 16px;"></i> ${cat} (${apps.length})</div>`;
+      }).join('');
+
+      const appsHTML = displayApps.map(app => {
+        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+        return `
+          <div class="division-app-card">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="division-app-logo" onerror="this.style.display='none'">` : ''}
+            <div class="division-app-name">${app.product}</div>
+          </div>
+        `;
+      }).join('');
+
+      slide.innerHTML = `
+        <div class="division-header">
+          <div class="division-grades">${config.grades}</div>
+          <h2 class="division-title">${config.title}</h2>
+          <p class="division-tagline">${config.tagline}</p>
+        </div>
+        <div class="division-content">
+          <p class="division-description">${config.description}</p>
+          <div class="division-categories">
+            ${categoryBadgesHTML}
+          </div>
+          <div class="division-stats">
+            <div class="division-stat"><strong>${uniqueApps.length}</strong> Division-Specific Tools</div>
+          </div>
+        </div>
+        <div class="division-apps-grid">
+          ${appsHTML}
+        </div>
+      `;
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create What's New Slide - Limited, clean display
+     */
+    function createWhatsNewSlide(apps) {
+      const slide = document.createElement('div');
+      slide.className = 'slide whats-new-slide';
+
+      const appsHTML = apps.map(app => {
+        const logoUrl = app.logoUrl || getFaviconUrl(app.website);
+        return `
+          <div class="new-app-card">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${app.product}" class="new-app-logo" onerror="this.style.display='none'">` : ''}
+            <div class="new-app-name">${app.product}</div>
+            <div class="new-app-desc">${app.description || 'New addition to our toolkit'}</div>
+            <div class="new-app-date">Added ${formatDate(app.dateAdded)}</div>
+          </div>
+        `;
+      }).join('');
+
+      slide.innerHTML = `
+        <div class="whats-new-header">
+          <div class="new-badge">
+            <i data-lucide="sparkles" style="width: 24px; height: 24px;"></i>
+            <span>NEW TOOLS</span>
+          </div>
+          <h2 class="whats-new-title">Recently Added</h2>
+          <p class="whats-new-subtitle">Fresh additions to enhance your teaching and learning</p>
+        </div>
+        <div class="new-apps-grid">
+          ${appsHTML}
+        </div>
+      `;
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    /**
+     * Create Features Slide - Highlights SSO, Mobile, etc.
+     */
+    function createFeaturesSlide(stats) {
+      const slide = document.createElement('div');
+      slide.className = 'slide features-slide';
+      slide.innerHTML = `
+        <h2 class="features-title">Designed for Easy Access</h2>
+        <div class="features-grid">
+          <div class="feature-card sso">
+            <i data-lucide="key" style="width: 48px; height: 48px;"></i>
+            <div class="feature-number">${stats.ssoEnabledCount}</div>
+            <div class="feature-label">Single Sign-On</div>
+            <p class="feature-desc">Log in once, access everything with your SAS credentials</p>
+          </div>
+          <div class="feature-card mobile">
+            <i data-lucide="smartphone" style="width: 48px; height: 48px;"></i>
+            <div class="feature-number">${stats.mobileCount}</div>
+            <div class="feature-label">Mobile Ready</div>
+            <p class="feature-desc">Learn anywhere with apps available on iOS and Android</p>
+          </div>
+          <div class="feature-card support">
+            <i data-lucide="life-buoy" style="width: 48px; height: 48px;"></i>
+            <div class="feature-number">24/7</div>
+            <div class="feature-label">Support Available</div>
+            <p class="feature-desc">Get help when you need it from our Tech Integration team</p>
+          </div>
+          <div class="feature-card training">
+            <i data-lucide="graduation-cap" style="width: 48px; height: 48px;"></i>
+            <div class="feature-number">100+</div>
+            <div class="feature-label">Training Resources</div>
+            <p class="feature-desc">Tutorials, guides, and workshops to build your skills</p>
+          </div>
+        </div>
+      `;
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+      return slide;
+    }
+
+    // ============================================================
+    // SLIDESHOW CONTROLS
+    // ============================================================
+
+    function createProgressIndicator() {
+      const indicator = document.getElementById('progress-indicator');
+      indicator.innerHTML = '';
+      slides.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (index === 0) dot.classList.add('active');
+        indicator.appendChild(dot);
+      });
+    }
+
+    function startSlideshow() {
+      if (slideInterval) clearInterval(slideInterval);
+      slideInterval = setInterval(() => nextSlide(), SLIDE_DURATION);
+    }
+
+    function nextSlide() {
+      slides[currentSlideIndex].classList.remove('active');
+      currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+      slides[currentSlideIndex].classList.add('active');
+      updateProgressIndicator();
+    }
+
+    function updateProgressIndicator() {
+      const dots = document.querySelectorAll('.progress-dot');
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlideIndex);
+      });
+    }
+
+    // ============================================================
+    // MOCK DATA FOR LOCAL TESTING
+    // ============================================================
     function getMockData() {
       return {
         wholeSchool: {
           apps: [
-            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: '', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
-            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' }
+            { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: '', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students', isWholeSchool: true },
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'Learning Management', audience: 'Teachers,Students', isWholeSchool: true },
+            { product: 'Zoom', division: 'Whole School', department: 'IT', subject: 'Communication', licenseType: 'School', enterprise: true, description: 'Video conferencing for remote learning and meetings', logoUrl: '', dateAdded: '2024-01-10', ssoEnabled: true, mobileApp: 'Yes', category: 'Collaboration', audience: 'Staff,Teachers,Students', isWholeSchool: true }
           ],
           enterpriseApps: [
             { product: 'Google Workspace', division: 'Whole School', department: 'IT', subject: 'Productivity', licenseType: 'Site', enterprise: true, description: 'Complete suite of productivity and collaboration tools', logoUrl: '', dateAdded: '2024-01-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Productivity', audience: 'Staff,Teachers,Students' },
-            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'LMS', audience: 'Teachers,Students' }
+            { product: 'Canvas LMS', division: 'Whole School', department: 'IT', subject: 'Education', licenseType: 'School', enterprise: true, description: 'Learning Management System for course delivery', logoUrl: '', dateAdded: '2024-02-01', ssoEnabled: true, mobileApp: 'Yes', category: 'Learning Management', audience: 'Teachers,Students' },
+            { product: 'Zoom', division: 'Whole School', department: 'IT', subject: 'Communication', licenseType: 'School', enterprise: true, description: 'Video conferencing for remote learning', logoUrl: '', dateAdded: '2024-01-10', ssoEnabled: true, mobileApp: 'Yes', category: 'Collaboration', audience: 'Staff,Teachers,Students' }
           ],
           everyoneApps: []
         },
         elementary: {
           apps: [
-            { product: 'Seesaw', division: 'Elementary', department: 'Elementary', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Digital portfolio and parent communication', logoUrl: '', dateAdded: new Date().toISOString(), ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students,Parents', gradeLevels: 'K-5' }
+            { product: 'Seesaw', division: 'Elementary', department: 'Elementary', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Digital portfolio and parent communication', logoUrl: '', dateAdded: new Date().toISOString(), ssoEnabled: true, mobileApp: 'Yes', category: 'Communication', audience: 'Teachers,Students,Parents', gradeLevels: 'K-5', isWholeSchool: false },
+            { product: 'Epic!', division: 'Elementary', department: 'Elementary', subject: 'Reading', licenseType: 'School', enterprise: false, description: 'Digital library for young readers', logoUrl: '', dateAdded: '2024-10-01', ssoEnabled: true, mobileApp: 'Yes', category: 'Reading & Writing', audience: 'Students', gradeLevels: 'K-5', isWholeSchool: false }
           ]
         },
         middleSchool: {
           apps: [
-            { product: 'Kahoot!', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Game-based learning platform', logoUrl: '', dateAdded: '2024-10-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Engagement', audience: 'Teachers,Students', gradeLevels: '6-8' }
+            { product: 'Kahoot!', division: 'Middle', department: 'Middle School', subject: 'Education', licenseType: 'School', enterprise: false, description: 'Game-based learning platform', logoUrl: '', dateAdded: '2024-10-15', ssoEnabled: false, mobileApp: 'Yes', category: 'Assessment', audience: 'Teachers,Students', gradeLevels: '6-8', isWholeSchool: false },
+            { product: 'Desmos', division: 'Middle', department: 'Math', subject: 'Math', licenseType: 'Free', enterprise: false, description: 'Interactive graphing calculator', logoUrl: '', dateAdded: '2024-09-01', ssoEnabled: true, mobileApp: 'Yes', category: 'STEM', audience: 'Teachers,Students', gradeLevels: '6-8', isWholeSchool: false }
           ]
         },
         highSchool: {
           apps: [
-            { product: 'Turnitin', division: 'High', department: 'High School', subject: 'English', licenseType: 'School', enterprise: false, description: 'Plagiarism detection and feedback tool', logoUrl: '', dateAdded: '2024-09-01', ssoEnabled: true, mobileApp: 'No', category: 'Academic Integrity', audience: 'Teachers,Students', gradeLevels: '9-12' }
+            { product: 'Turnitin', division: 'High', department: 'High School', subject: 'English', licenseType: 'School', enterprise: false, description: 'Plagiarism detection and feedback tool', logoUrl: '', dateAdded: '2024-09-01', ssoEnabled: true, mobileApp: 'No', category: 'Assessment', audience: 'Teachers,Students', gradeLevels: '9-12', isWholeSchool: false },
+            { product: 'JSTOR', division: 'High', department: 'Library', subject: 'Research', licenseType: 'School', enterprise: false, description: 'Academic research database', logoUrl: '', dateAdded: '2024-08-15', ssoEnabled: true, mobileApp: 'Yes', category: 'Research', audience: 'Teachers,Students', gradeLevels: '9-12', isWholeSchool: false }
           ]
         },
         stats: {
-          totalApps: 5,
-          wholeSchoolCount: 2,
-          elementaryCount: 1,
-          middleSchoolCount: 1,
-          highSchoolCount: 1
+          totalApps: 9,
+          wholeSchoolCount: 3,
+          elementaryCount: 2,
+          middleSchoolCount: 2,
+          highSchoolCount: 2
         }
       };
     }
