@@ -1,3 +1,42 @@
+<!--
+/**
+ * SAS Digital Toolkit - Main Dashboard
+ *
+ * The primary user-facing interface for the SAS Digital Toolkit web application.
+ * Displays educational apps organized by school divisions (Whole School, Elementary,
+ * Middle School, High School) with search, filtering, and AI-powered recommendations.
+ *
+ * @fileoverview Main dashboard HTML for the SAS Digital Toolkit Google Apps Script web app.
+ * Served via doGet() in Code.js when no page parameter is specified.
+ *
+ * Features:
+ * - Division-based tab navigation with color coding
+ * - Enterprise Apps section (Whole School tab only) with premium gold styling
+ * - "Apps Everyone Can Use" section for site/school licenses
+ * - Department-grouped apps with icons and counts
+ * - Real-time search across all fields (product, category, subject, department, audience)
+ * - AI-powered search toggle for natural language queries
+ * - Floating AI chat bubble for app recommendations
+ * - App detail modal with comprehensive information
+ * - "What's New" section for recently added apps (last 30 days)
+ * - Responsive design with CSS Grid
+ *
+ * External Dependencies:
+ * - Google Fonts: Bebas Neue (headings), DM Sans (body)
+ * - Lucide Icons: Icon library for UI elements
+ * - Marked.js: Markdown parser for AI responses
+ * - Tailwind CSS: Utility-first CSS framework
+ *
+ * Backend Integration:
+ * - getDashboardData(): Fetches app data from Google Sheets
+ * - queryAI(): Handles AI-powered search queries
+ *
+ * @author SAS Technology Innovation Team
+ * @see {@link branding.md} for SAS brand guidelines
+ * @see {@link Code.js#getDashboardData} for backend data function
+ * @see {@link ai-functions.js#queryAI} for AI query handling
+ */
+-->
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,12 +44,31 @@
   <title>SAS Digital Toolkit</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- SAS Brand Fonts: Bebas Neue for headings, DM Sans for body text -->
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Icon library for UI elements -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- Markdown parser for AI chat responses -->
   <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <!-- Tailwind CSS for utility classes -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* SAS Brand Colors */
+    /**
+     * SAS Brand Colors
+     * @see branding.md for complete color specifications
+     *
+     * Primary Colors:
+     * - SAS Red (#a0192a): Secondary brand color, Middle School division
+     * - SAS Blue (#1a2d58): Primary brand color, High School division
+     * - Eagle Yellow (#fabc00): Accent color, Enterprise apps highlight
+     * - Light Gray (#d8dadb): Neutral/background color
+     *
+     * Division Colors:
+     * - Elementary (#228ec2): Light blue
+     * - Middle School (#a0192a): SAS Red
+     * - High School (#1a2d58): SAS Blue/Navy
+     * - Admin/General (#6d6f72): Gray
+     */
     :root {
       /* Primary Colors */
       --sas-red: #a0192a;
@@ -140,7 +198,7 @@
       background: transparent;
       border: none;
       color: rgba(255, 255, 255, 0.8);
-      font-family: 'Poppins', sans-serif;
+      font-family: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       font-weight: 500;
       font-size: 14px;
       cursor: pointer;
