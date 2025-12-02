@@ -21,11 +21,12 @@ The Digital Toolkit Dashboard provides an elegant, user-friendly interface for o
 - **Styling**: Tailwind CSS (via CDN)
 - **Icons**: Lucide Icons
 - **Data Source**: Google Sheets
-- **Deployment**: Google Apps Script Web App
+- **Deployment**: Google Apps Script Web App + Vercel (optional)
 
 **Data Flow:**
 ```
 Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
+                                   ↳ Vercel API (optional) → CDN-distributed Frontend
 ```
 
 ## ✨ Features
@@ -69,10 +70,24 @@ Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
 - **AI Integration**: AI assistant provides app request guidance when requested apps aren't available
 
 ### 📱 Responsive Design
+
 - Mobile-first responsive layout
 - Touch-friendly interface
 - Works on desktop, tablet, and mobile devices
 - Clean, modern SAS-branded design
+
+### 📺 Digital Signage Display
+
+A full-screen, auto-advancing slideshow for digital signage boards:
+
+- **Purpose-Driven Slides**: Each category showcases WHY and HOW apps support learning
+- **Division Highlights**: Dedicated slides for Elementary, Middle, and High School apps
+- **Auto-Refresh**: Fetches fresh data every 5 minutes
+- **De-duplicated Stats**: Accurate app counts without overlap
+- **Category Showcase**: Apps grouped by category with icons and messaging
+- **SAS Branding**: Official colors, fonts, and styling
+
+Access via `?page=signage` URL parameter. See [SIGNAGE.md](SIGNAGE.md) for full documentation.
 
 ## 🚀 Quick Start
 
@@ -149,11 +164,12 @@ Configuration is managed using **Script Properties** to avoid hardcoding sensiti
 2.  In the left-hand menu, click on **Project Settings** (the ⚙️ gear icon).
 3.  Scroll down to the **Script Properties** section.
 4.  Click **Add script property**.
-5.  Add the following two properties:
-    -   **Property:** `SPREADSHEET_ID`
-        **Value:** `your-google-sheets-id`
-    -   **Property:** `SHEET_NAME`
-        **Value:** `your-sheet-name`
+5.  Add the following properties:
+    - **Property:** `SPREADSHEET_ID` **Value:** `your-google-sheets-id`
+    - **Property:** `SHEET_NAME` **Value:** `your-sheet-name`
+    - **Property:** `GEMINI_API_KEY` **Value:** `your-gemini-api-key` (for AI features)
+    - **Property:** `CLAUDE_API_KEY` **Value:** `your-claude-api-key` (optional, for data enrichment)
+    - **Property:** `FRONTEND_KEY` **Value:** `your-secret-key` (required for Vercel deployment)
 
 ## 🔧 Development
 
@@ -168,23 +184,37 @@ npm run open      # Open Apps Script editor
 ```
 
 ### Project Structure
-```
+
+```text
 digital-toolkit/
-├── Code.js                 # Apps Script backend
-├── index.html             # Frontend dashboard
-├── signage.html           # Digital signage display
-├── appsscript.json       # Apps Script configuration
-├── package.json          # npm scripts
-├── .clasp.json          # clasp configuration (local only)
-├── assets/                # Static assets
+├── Code.js                 # Apps Script main entry point
+├── ai-functions.js         # AI provider integrations (Gemini/Claude)
+├── utilities.js            # Shared helper functions
+├── data-management.js      # Data validation and enrichment
+├── index.html              # Frontend dashboard
+├── signage.html            # Digital signage display
+├── analytics-dashboard.html # Analytics modal for admin
+├── appsscript.json         # Apps Script configuration
+├── package.json            # npm scripts
+├── .clasp.json             # clasp configuration (local only)
+├── api/                    # Vercel serverless functions
+│   ├── data.js             # Data API proxy
+│   └── ai.js               # AI API proxy
+├── scripts/                # Build scripts
+│   └── build-vercel.js     # Vercel build script
+├── public/                 # Vercel static output
+├── assets/                 # Static assets
 │   └── App Request Process for Teachers.png
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml    # Auto-deployment
-├── CLAUDE.md             # Developer documentation
-├── AI_FEATURES.md        # AI integration guide
-├── SIGNAGE.md            # Signage display guide
-└── UPCOMING_FEATURES.md  # Future roadmap
+│       └── deploy.yml      # Auto-deployment to Apps Script
+├── vercel.json             # Vercel configuration
+├── CLAUDE.md               # Developer documentation
+├── AI_FEATURES.md          # AI integration guide
+├── SIGNAGE.md              # Signage display guide
+├── VERCEL.md               # Vercel deployment guide
+├── DATA_MANAGEMENT.md      # Data management workflows
+└── UPCOMING_FEATURES.md    # Future roadmap
 ```
 
 ### Business Logic
@@ -217,11 +247,31 @@ The repository includes automatic deployment via GitHub Actions:
    - Manual deployment via Actions tab
 
 ### Manual Deployment
+
 ```bash
 # Push and deploy manually
 npm run push
 npm run deploy
 ```
+
+### Vercel Deployment (Optional)
+
+For faster loading and CDN distribution, deploy the frontend to Vercel:
+
+1. **Set environment variables in Vercel:**
+   - `FRONTEND_KEY`: Shared secret key (also set in Apps Script Properties)
+   - `APPS_SCRIPT_URL`: Your deployed Apps Script web app URL
+
+2. **Set `FRONTEND_KEY` in Apps Script Properties** (Project Settings > Script Properties)
+
+3. **Deploy to Vercel:**
+
+   ```bash
+   npm install -g vercel
+   vercel
+   ```
+
+The Vercel deployment proxies API requests to Apps Script, keeping your data secure. See [VERCEL.md](VERCEL.md) for complete setup instructions.
 
 ## 📱 Usage
 
@@ -307,7 +357,7 @@ This project follows a phased development approach:
 
 - **✅ Phase 1 & 2**: Enterprise apps section, search functionality, audience tags
 - **✅ Phase 3**: Enhanced cards with logos, grade badges, "What's New" section, detail modal
-- **✅ Phase 4 (Partial)**: AI-powered search with Gemini/Claude integration, content moderation, app request guidance
+- **✅ Phase 4**: AI-powered search, Gemini/Claude integration, data enrichment, Vercel deployment, signage redesign
 - **🔮 Phase 5**: User favorites, ratings/reviews, usage analytics, dark mode, Google Workspace SSO
 
 ### Phase 4: AI-Powered Features (Implemented)
@@ -320,10 +370,13 @@ The dashboard now includes intelligent natural language search powered by Google
 - **App Request Guidance**: Provides structured guidance when requested apps aren't available
 - **Dual API Support**: Works with both Gemini and Claude AI providers
 - **Automatic Logging & Analytics**: Tracks AI queries and data enrichment operations for audit trails and pattern analysis
+- **Vercel Deployment**: Optional CDN-distributed frontend with serverless API proxies
+- **Digital Signage Redesign**: Purpose-driven slides with WHY/HOW messaging, de-duplicated stats, category showcases
 
 **Setup**: Add `GEMINI_API_KEY` or `CLAUDE_API_KEY` to Script Properties. See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.
 
 **Logging Features**:
+
 - **Update Logs**: Auto-tracks all data enrichment operations with before/after values
 - **AI Chat Analytics**: Logs user queries, categorizes by type, and identifies search patterns
 - **Pattern Analysis**: Built-in menu tool analyzes chat logs to discover missing apps users are searching for
