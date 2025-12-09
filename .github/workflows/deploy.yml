@@ -20,17 +20,22 @@ jobs:
 
     - name: Setup clasp credentials
       run: |
+        # Clasp looks for credentials in multiple locations depending on version
+        # Place in both legacy (~/.clasprc.json) and new (~/.config/clasp/.clasprc.json) locations
         mkdir -p ~/.config/clasp
+        echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
         echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.config/clasp/.clasprc.json
+        chmod 600 ~/.clasprc.json
         chmod 600 ~/.config/clasp/.clasprc.json
 
     - name: Verify clasp setup
       run: |
-        ls -la ~/.config/clasp/
-        echo "Credentials file exists: $(test -f ~/.config/clasp/.clasprc.json && echo 'YES' || echo 'NO')"
-        echo "Credentials file size: $(wc -c < ~/.config/clasp/.clasprc.json) bytes"
+        echo "Checking credentials locations..."
+        echo "~/.clasprc.json exists: $(test -f ~/.clasprc.json && echo 'YES' || echo 'NO')"
+        echo "~/.config/clasp/.clasprc.json exists: $(test -f ~/.config/clasp/.clasprc.json && echo 'YES' || echo 'NO')"
+        echo "Credentials file size: $(wc -c < ~/.clasprc.json) bytes"
         # Verify JSON is valid (without showing content)
-        if jq empty ~/.config/clasp/.clasprc.json 2>/dev/null; then
+        if jq empty ~/.clasprc.json 2>/dev/null; then
           echo "Credentials JSON is valid"
         else
           echo "ERROR: Credentials JSON is invalid!"
