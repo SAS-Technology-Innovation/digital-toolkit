@@ -11,11 +11,20 @@
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/data",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "s-maxage=300, stale-while-revalidate=60"
+        }
+      ]
+    },
+    {
+      "source": "/api/ai",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
         }
       ]
     }

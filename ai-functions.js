@@ -216,7 +216,7 @@ function queryGeminiAPI(systemPrompt, userPrompt, userQuery) {
     });
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODELS.GEMINI_CHAT}:generateContent?key=${GEMINI_API_KEY}`;
 
   const payload = {
     contents: [{
@@ -296,7 +296,7 @@ function queryClaudeAPI(systemPrompt, userPrompt, userQuery) {
   const url = 'https://api.anthropic.com/v1/messages';
 
   const payload = {
-    model: 'claude-sonnet-4-5-20250929',
+    model: AI_MODELS.CLAUDE_CHAT,
     max_tokens: 1024,
     system: systemPrompt,
     messages: [{
@@ -396,7 +396,7 @@ Return ONLY the description text, nothing else.`;
 
   const url = 'https://api.anthropic.com/v1/messages';
   const payload = {
-    model: 'claude-3-5-haiku-20241022', // Haiku for faster responses
+    model: AI_MODELS.CLAUDE_FAST, // Haiku for faster responses
     max_tokens: 150,
     messages: [{
       role: 'user',
@@ -529,7 +529,7 @@ Return ONLY valid JSON in this exact format:
 
   const url = 'https://api.anthropic.com/v1/messages';
   const payload = {
-    model: 'claude-3-5-haiku-20241022', // Using Haiku for faster, cheaper responses
+    model: AI_MODELS.CLAUDE_FAST, // Using Haiku for faster, cheaper responses
     max_tokens: 600,
     messages: [{
       role: 'user',
@@ -648,7 +648,7 @@ Instructions:
 Response:`;
 
     const payload = {
-      model: 'claude-sonnet-4-20250514',
+      model: AI_MODELS.CLAUDE_ANALYTICS,
       max_tokens: 500,
       messages: [{
         role: 'user',
@@ -1028,7 +1028,7 @@ function testGemini() {
   const systemPrompt = 'You are an educational technology assistant.';
   const userPrompt = `Available Apps: ${JSON.stringify(mockAppData)}\n\nUser Question: "${testPrompt}"\n\nRecommend relevant apps.`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODELS.GEMINI_CHAT}:generateContent?key=${GEMINI_API_KEY}`;
 
   const payload = {
     contents: [{
@@ -1136,7 +1136,7 @@ function testClaude() {
   const url = 'https://api.anthropic.com/v1/messages';
 
   const payload = {
-    model: 'claude-sonnet-4-5-20250929',
+    model: AI_MODELS.CLAUDE_CHAT,
     max_tokens: 1024,
     system: systemPrompt,
     messages: [{
