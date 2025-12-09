@@ -1,6 +1,9 @@
 /**
  * Vercel Serverless Function: /api/ai
  * Proxies AI query requests to Google Apps Script backend with FRONTEND_KEY authentication
+ *
+ * Uses POST to Apps Script to handle large appsData payloads that would exceed
+ * URL length limits with GET parameters.
  */
 
 export default async function handler(req, res) {
@@ -62,29 +65,43 @@ export default async function handler(req, res) {
   }
 
   try {
-    // For AI queries, we need to use POST to Apps Script because the data can be large
-    // But Apps Script doGet only supports GET, so we'll URL-encode the data
-    // Note: For very large appsData, consider using doPost in Apps Script
-
-    const params = new URLSearchParams({
+    // Use POST to Apps Script to handle large appsData payloads
+    // This avoids URL length limits that would occur with GET parameters
+    const postBody = {
       api: 'ai',
       key: FRONTEND_KEY,
       query: query,
       provider: provider,
-      appsData: typeof appsData === 'string' ? appsData : JSON.stringify(appsData)
-    });
+      appsData: appsData
+    };
 
-    const apiUrl = `${APPS_SCRIPT_URL}?${params.toString()}`;
-
-    // Fetch from Apps Script
-    const response = await fetch(apiUrl, {
-      method: 'GET',
+    // Fetch from Apps Script using POST
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Accept': 'application/json'
-      }
+      },
+      body: JSON.stringify(postBody),
+      redirect: 'follow'
     });
 
-    const data = await response.json();
+    // Get response text first for debugging
+    const responseText = await response.text();
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON:', parseError.message);
+      console.error('Response was:', responseText.substring(0, 500));
+      return res.status(500).json({
+        error: 'Invalid response from Apps Script',
+        message: 'Response was not valid JSON',
+        debug: responseText.substring(0, 200)
+      });
+    }
 
     if (data.error) {
       console.error('Apps Script AI error:', data);
@@ -92,7 +109,7 @@ export default async function handler(req, res) {
     }
 
     // No caching for AI responses (they should be fresh)
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
     return res.status(200).json(data);
 

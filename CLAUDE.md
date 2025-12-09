@@ -23,7 +23,7 @@ Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard → Us
 
 ### Division Assignment Logic (Code.js)
 
-Apps are categorized based on these business rules in [Code.js:91-126](Code.js#L91-L126):
+Apps are categorized based on these business rules in [Code.js:304-410](Code.js#L304-L410) and [utilities.js:270-289](utilities.js#L270-L289):
 
 **Three-Tier Hierarchy:**
 
@@ -220,11 +220,17 @@ Configuration is **NOT in code**. Set via Apps Script Editor:
    - `CLAUDE_API_KEY`: Claude API key for admin data management (optional, for data enrichment only)
 
 ### GitHub Actions Deployment
-Auto-deploys on push to `main`. Requires three repository secrets:
+Auto-deploys on push to `main`. Requires repository secrets:
+
+**For Apps Script Deployment (deploy.yml):**
 
 1. **`CLASP_CREDENTIALS`**: Run `npm run login`, then `cat ~/.config/clasp/.clasprc.json` and copy entire JSON
 2. **`APPS_SCRIPT_ID`**: Find in Apps Script Editor → Project Settings → IDs
 3. **`APPS_SCRIPT_DEPLOYMENT_ID`**: Find in Deploy → Manage deployments → Copy deployment ID
+
+**For Claude Code Integration (claude.yml, claude-code-review.yml):**
+
+- **`CLAUDE_CODE_OAUTH_TOKEN`**: OAuth token for Claude Code GitHub Action (get from Anthropic)
 
 **Note**: `.clasp.json` is NOT in repo. Created locally via `npx @google/clasp clone` or dynamically in GitHub Actions.
 
@@ -254,7 +260,8 @@ The dashboard can also be deployed to Vercel for faster loading and CDN distribu
 - **Permission denied**: Run `npm run login` and verify Google Sheets access
 
 ### Business Logic Issues
-- **Apps in wrong division**: Check division string matching logic in [Code.js:85-99](Code.js#L85-L99)
+
+- **Apps in wrong division**: Check division string matching logic in [utilities.js:237-289](utilities.js#L237-L289)
 - **Division names appearing as departments**: Verify department filtering array matches actual division names
 - **Missing apps**: Ensure `Active` column is TRUE (case-insensitive)
 
@@ -381,8 +388,11 @@ The dashboard features **intelligent natural language search** with support for 
 - **Sheet Menu Integration**: Custom menu in Google Sheets for easy data management
 
 **Key Files:**
-- [Code.js:32-210](Code.js#L32-L210) - `queryAI()`, `queryGeminiAPI()`, `queryClaudeAPI()` functions
-- [index.html:2134-2349](index.html#L2134-L2349) - AI chat interface and message handling
+
+- [ai-functions.js:81-196](ai-functions.js#L81-L196) - `queryAI()` main entry point
+- [ai-functions.js:210-273](ai-functions.js#L210-L273) - `queryGeminiAPI()` function
+- [ai-functions.js:287-355](ai-functions.js#L287-L355) - `queryClaudeAPI()` function
+- [index.html:3035-3165](index.html#L3035-L3165) - AI chat interface and message handling
 - [AI_FEATURES.md](AI_FEATURES.md) - Complete AI features documentation
 
 **Setup Required:**
@@ -456,44 +466,44 @@ When you open the Google Sheets containing your app data, a custom menu "🤖 Di
 
 **Menu Functions** (requires `CLAUDE_API_KEY` for AI features):
 
-1. **📊 Validate Data** ([Code.js:635-685](Code.js#L635-L685))
+1. **📊 Validate Data** ([data-management.js:38-95](data-management.js#L38-L95))
    - Checks all active apps for required fields
    - Reports missing: product_name, description, Division, Department, Category, Website
    - Shows up to 20 issues with row numbers
    - Logs full validation report to Apps Script Logger
 
-2. **🔍 Find Missing Fields** ([Code.js:690-767](Code.js#L690-L767))
+2. **🔍 Find Missing Fields** ([data-management.js:115-250](data-management.js#L115-L250))
    - Generates comprehensive report of missing data
    - Tracks: descriptions, categories, audience, grade levels, logos
    - Shows first 5 apps missing each field type
    - Reports total counts for each missing field type
 
-3. **✨ Enrich Missing Descriptions** ([Code.js:772-842](Code.js#L772-L842))
+3. **✨ Enrich Missing Descriptions** ([data-management.js:269-385](data-management.js#L269-L385))
    - Uses Claude AI to generate descriptions for apps missing them
    - Processes up to 10 apps per run (rate limiting)
    - Generates 1-2 sentence educational descriptions
    - Automatically saves to sheet with immediate flushing
 
-4. **🔄 Refresh All Missing Data** ([Code.js:847-940](Code.js#L847-L940))
+4. **🔄 Refresh All Missing Data** ([data-management.js:399-550](data-management.js#L399-L550))
    - Comprehensive data enrichment for ALL missing fields
    - Fills in: descriptions, categories, audience, grade levels
    - Processes up to 15 apps per run (quota protection)
    - Uses intelligent prompts based on division, subject, website
    - Includes 1-second rate limiting between requests
 
-5. **📈 Analyze AI Chat Patterns** ([Code.js:1253-1331](Code.js#L1253-L1331))
+5. **📈 Analyze AI Chat Patterns** ([ai-functions.js:857-927](ai-functions.js#L857-L927))
    - Analyzes user AI chat interactions to identify missing apps
    - Reports query types, top keywords, and recent queries
    - Helps discover gaps in app database based on search patterns
    - Requires "AI Chat Analytics" sheet with logged queries
 
-6. **🧪 Test Claude Connection** ([Code.js:1119-1139](Code.js#L1119-L1139))
+6. **🧪 Test Claude Connection** ([ai-functions.js:1102-1207](ai-functions.js#L1102-L1207))
    - Validates `CLAUDE_API_KEY` configuration
    - Tests Claude API connectivity with sample description generation
    - Displays actual API response (first 200 characters)
    - User-friendly success/failure alerts
 
-7. **🧪 Test Gemini Connection** ([Code.js:1157-1179](Code.js#L1157-L1179))
+7. **🧪 Test Gemini Connection** ([ai-functions.js:997-1096](ai-functions.js#L997-L1096))
    - Validates `GEMINI_API_KEY` configuration
    - Tests Gemini API connectivity with simple prompt
    - Confirms API key validity and working status
@@ -503,13 +513,13 @@ When you open the Google Sheets containing your app data, a custom menu "🤖 Di
 
 **How Claude AI Enrichment Works:**
 
-1. **Description Generation** ([Code.js:945-1006](Code.js#L945-L1006)):
+1. **Description Generation** ([ai-functions.js:381-436](ai-functions.js#L381-L436)):
    - Analyzes: app name, category, subject, website
    - Generates factual, non-promotional 1-2 sentence descriptions
    - Tailored for international school educators
    - Uses Claude Sonnet 4.5 model with 150 max tokens
 
-2. **Full Data Enrichment** ([Code.js:1011-1094](Code.js#L1011-L1094)):
+2. **Full Data Enrichment** ([ai-functions.js:480-592](ai-functions.js#L480-L592)):
    - Returns structured JSON with all missing fields
    - Category selection from predefined list (Learning Management, Content Creation, etc.)
    - Audience from: Teachers, Students, Staff, Parents
@@ -541,19 +551,19 @@ When you open the Google Sheets containing your app data, a custom menu "🤖 Di
 
 The dashboard includes automatic logging for audit trails and analytics.
 
-**Update Logs Sheet** ([Code.js:1181-1220](Code.js#L1181-L1220)):
+**Update Logs Sheet** ([data-management.js:553-600](data-management.js#L553-L600)):
 - Auto-created when first enrichment operation runs
 - Tracks: Timestamp, Operation, App Name, Row, Field, Old Value, New Value
 - Provides complete audit trail of all data changes
 - Silent failure to prevent disrupting enrichment operations
 
-**AI Chat Analytics Sheet** ([Code.js:1222-1268](Code.js#L1222-L1268)):
+**AI Chat Analytics Sheet** ([ai-functions.js:799-838](ai-functions.js#L799-L838)):
 - Auto-created when first AI query is processed
 - Logs: Timestamp, User Query, Apps Recommended, Response Length, Query Type
 - Auto-categorizes queries: General, Recommendation Request, Grade-Specific, Subject-Specific
 - Enables pattern analysis to identify missing apps
 
-**App Name Extraction** ([Code.js:1144-1155](Code.js#L1144-L1155)):
+**App Name Extraction** ([ai-functions.js:843-852](ai-functions.js#L843-L852)):
 - Extracts app names from AI responses using markdown pattern matching
 - Identifies apps mentioned in bold (**App Name**)
 - Returns comma-separated list of up to 5 apps or count if more

@@ -102,6 +102,71 @@ function doGet(e) {
 }
 
 /**
+ * Handles HTTP POST requests for API endpoints.
+ * Used for AI queries where the payload (appsData) is too large for GET parameters.
+ *
+ * POST Body Format (JSON):
+ * {
+ *   "api": "ai",
+ *   "key": "FRONTEND_KEY",
+ *   "query": "user's question",
+ *   "provider": "gemini" or "claude",
+ *   "appsData": [...array of app objects...]
+ * }
+ *
+ * @function doPost
+ * @param {Object} e - Event parameter from Google Apps Script
+ * @param {string} e.postData.contents - JSON string of the POST body
+ * @returns {TextOutput} JSON response with data or error
+ */
+function doPost(e) {
+  // Create JSON response helper
+  const jsonResponse = (data) => {
+    const output = ContentService.createTextOutput(JSON.stringify(data));
+    output.setMimeType(ContentService.MimeType.JSON);
+    return output;
+  };
+
+  try {
+    // Parse the POST body
+    if (!e || !e.postData || !e.postData.contents) {
+      return jsonResponse({
+        error: 'Bad Request',
+        message: 'No POST body provided'
+      });
+    }
+
+    const body = JSON.parse(e.postData.contents);
+    const endpoint = body.api;
+    const frontendKey = body.key;
+
+    // Validate required fields
+    if (!endpoint) {
+      return jsonResponse({
+        error: 'Bad Request',
+        message: 'api field is required in POST body'
+      });
+    }
+
+    // Build params object from body for handleApiRequest
+    const params = {
+      query: body.query,
+      provider: body.provider,
+      appsData: typeof body.appsData === 'string' ? body.appsData : JSON.stringify(body.appsData)
+    };
+
+    return handleApiRequest(endpoint, frontendKey, params);
+
+  } catch (error) {
+    Logger.log('doPost error: ' + error.message);
+    return jsonResponse({
+      error: 'Server Error',
+      message: 'Failed to process POST request: ' + error.message
+    });
+  }
+}
+
+/**
  * Handles API requests from external frontends (e.g., Vercel deployment).
  * Validates FRONTEND_KEY before returning data to ensure authorized access.
  *
