@@ -89,16 +89,24 @@ function doGet(e) {
   }
 
   // --- HTML Page Serving ---
-  if (page === 'signage') {
-    return HtmlService.createTemplateFromFile('signage').evaluate()
-      .setTitle('SAS Digital Toolkit - Signage')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  }
+  // Note: Main dashboard pages (index, signage, renewal) are served via Vercel deployment.
+  // This doGet only serves the API endpoints.
+  // For direct Apps Script access, redirect to Vercel deployment.
 
-  // Default to main dashboard
-  return HtmlService.createTemplateFromFile('index').evaluate()
-    .setTitle('SAS Apps Dashboard')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  // Return a simple redirect or message
+  const vercelUrl = 'https://sas-digital-toolkit.vercel.app';
+  return HtmlService.createHtmlOutput(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta http-equiv="refresh" content="0; url=${vercelUrl}">
+      <title>Redirecting...</title>
+    </head>
+    <body>
+      <p>Redirecting to <a href="${vercelUrl}">${vercelUrl}</a>...</p>
+    </body>
+    </html>
+  `).setTitle('SAS Digital Toolkit');
 }
 
 /**
@@ -249,10 +257,24 @@ function handleApiRequest(endpoint, providedKey, params) {
       const aiResult = queryAI(query, appsData, provider);
       return jsonResponse(JSON.parse(aiResult));
 
+    case 'verify-password':
+      // Handle password verification for renewal page
+      const password = params.password;
+
+      if (!password) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'Password parameter is required'
+        }, 400);
+      }
+
+      const isValid = verifyRenewalPassword(password);
+      return jsonResponse({ valid: isValid });
+
     default:
       return jsonResponse({
         error: 'Not Found',
-        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai`
+        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai, verify-password`
       }, 404);
   }
 }
@@ -265,6 +287,35 @@ function handleApiRequest(endpoint, providedKey, params) {
 // - testGemini, testClaude
 // - logAIQuery, extractAppNames
 // ==========================================
+
+/**
+ * Verifies the renewal page password.
+ * Password is stored in Script Properties as RENEWAL_PASSWORD.
+ *
+ * @function verifyRenewalPassword
+ * @param {string} password - The password to verify
+ * @returns {boolean} True if password matches, false otherwise
+ *
+ * @example
+ * // Called from frontend or API
+ * const isValid = verifyRenewalPassword('user-entered-password');
+ */
+function verifyRenewalPassword(password) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const storedPassword = scriptProperties.getProperty('RENEWAL_PASSWORD');
+
+    if (!storedPassword) {
+      Logger.log('Warning: RENEWAL_PASSWORD not set in Script Properties');
+      return false;
+    }
+
+    return password === storedPassword;
+  } catch (error) {
+    Logger.log('Error verifying renewal password: ' + error.message);
+    return false;
+  }
+}
 
 /**
  * Reads data from the Google Sheet, processes it for the dashboard, and returns it as a JSON string.

@@ -1,7 +1,5 @@
 # Ignore Vercel-specific files (not for Apps Script)
-api/**
-public/**
-scripts/**
+vercel/**
 vercel.json
 .vercel/**
 
