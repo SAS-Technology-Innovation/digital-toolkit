@@ -1769,9 +1769,10 @@
           const searchFields = [
             app.product,
             app.department,
+            app.subjects || app.subject,  // Support both 'subjects' (optimized) and 'subject'
             app.category,
-            app.subject,
-            app.budget
+            app.budget,
+            app.audience
           ].join(' ').toLowerCase();
 
           if (!searchFields.includes(searchTerm)) return false;
