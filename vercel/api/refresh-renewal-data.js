@@ -22,26 +22,18 @@ function optimizeForEdgeConfig(data) {
     product: app.product,
     division: app.division,
     department: app.department,
-    subject: app.subject,
-    subjects: app.subjects,
+    subjects: app.subjects || app.subject, // Normalize to subjects
     budget: app.budget,
     licenseType: app.licenseType,
     licenses: app.licenses,
     category: app.category,
-    spend: app.spend,
-    value: app.value,
     renewalDate: app.renewalDate,
-    dateAdded: app.dateAdded,
     enterprise: app.enterprise,
     audience: app.audience,
-    gradeLevels: app.gradeLevels,
-    website: app.website,
-    ssoEnabled: app.ssoEnabled,
-    mobileApp: app.mobileApp,
-    // Strip out large fields:
-    // - description (can be long)
-    // - logoUrl (can be data URIs)
-    // - tutorialLink, supportEmail (less critical for renewal view)
+    // Minimal fields only - renewal page focused
+    // Removed: description, logoUrl, tutorialLink, supportEmail, website
+    // Removed: gradeLevels, ssoEnabled, mobileApp, spend, value, dateAdded
+    // These can be fetched from main API if needed for detail view
   });
 
   const optimizeSection = (section) => {
