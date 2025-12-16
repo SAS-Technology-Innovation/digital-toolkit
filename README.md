@@ -225,19 +225,47 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instruction
 
 ### Available Commands
 
-```bash
-# Apps Script
-npm run login      # Login to Google Apps Script
-npm run push       # Push code changes
-npm run deploy     # Create new deployment
-npm run pull       # Pull latest from Apps Script
-npm run logs       # View execution logs
-npm run open       # Open Apps Script editor
+#### Apps Script Development
 
-# Vercel
-vercel             # Deploy to Vercel
+```bash
+# Authentication
+npm run login                    # Login to Google Apps Script
+npx @google/clasp logout         # Logout
+
+# Code Management
+npm run push                     # Push code changes to Apps Script
+npm run pull                     # Pull latest code from Apps Script
+npx @google/clasp push --force   # Force push (overwrite remote)
+npx @google/clasp status         # Show files that will be pushed
+
+# Deployments
+npm run deploy                   # Create new deployment
+npx @google/clasp deployments   # List all deployments
+npx @google/clasp undeploy <id> # Delete a deployment
+npx @google/clasp redeploy <id> # Update existing deployment
+
+# Monitoring & Debugging
+npm run logs                     # View execution logs
+npx @google/clasp logs --tail    # Tail logs in real-time
+npm run open                     # Open Apps Script editor in browser
+
+# Project Information
+npx @google/clasp list           # List all your Apps Script projects
+npx @google/clasp versions       # List versions of current script
+
+# Testing (from Google Sheets UI)
+# Open your Google Sheets → 🤖 Digital Toolkit Admin menu
+# - 🧪 Test Claude Connection
+# - 🧪 Test Gemini Connection
+```
+
+#### Vercel Development
+
+```bash
+vercel             # Deploy to Vercel preview
 vercel --prod      # Deploy to production
 vercel logs        # View deployment logs
+vercel env         # Manage environment variables
 ```
 
 ### Project Structure
