@@ -2141,27 +2141,101 @@
           .withFailureHandler(handleDataError)
           .getDashboardData();
       } else {
-        // Vercel environment - always fetch fresh data from Apps Script
-        fetch('/api/data')
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
+        // Vercel environment - two-stage loading for performance
+        // Stage 1: Load minimal data from Edge Config (fast)
+        // Stage 2: Load detailed data from Apps Script (background)
+        loadTwoStageData();
+      }
+    }
+
+    // Two-stage data loading for optimal performance
+    async function loadTwoStageData() {
+      try {
+        // Stage 1: Load minimal data from Edge Config (very fast)
+        console.log('[Stage 1] Loading minimal data from Edge Config...');
+        const minimalResponse = await fetch('/api/renewal-data');
+
+        if (!minimalResponse.ok) {
+          throw new Error(`Failed to load minimal data: ${minimalResponse.status}`);
+        }
+
+        const minimalData = await minimalResponse.json();
+        const dataSource = minimalResponse.headers.get('X-Data-Source') || 'unknown';
+        console.log(`[Stage 1] Loaded minimal data from: ${dataSource}`);
+
+        // Immediately render with minimal data (filters, search, basic display)
+        appData = minimalData;
+        allApps = getAllApps();
+        filteredApps = [...allApps];
+
+        // Show the UI with minimal data (fast initial paint)
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('timeline-section').style.display = 'block';
+
+        // Render what we can with minimal data
+        renderStats(); // Will show 0 costs until details load
+        applyFilters();
+
+        console.log(`[Stage 1] Rendered ${allApps.length} apps with minimal data`);
+
+        // Stage 2: Load detailed data in background
+        console.log('[Stage 2] Loading detailed data from Apps Script...');
+        loadDetailedData(allApps.map(app => app.product));
+
+      } catch (error) {
+        console.error('Error in two-stage loading:', error);
+        // Fallback to mock data for local testing
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log('Using mock data for local testing');
+          setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
+        } else {
+          handleDataError('Failed to load renewal data: ' + error.message);
+        }
+      }
+    }
+
+    // Load detailed app data from Apps Script
+    async function loadDetailedData(productNames) {
+      try {
+        const response = await fetch('/api/renewal-details', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            products: productNames
           })
-          .then(data => {
-            handleDataLoaded(JSON.stringify(data));
-          })
-          .catch(error => {
-            console.error('Error loading data:', error);
-            // Fallback to mock data for local testing
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-              console.log('Using mock data for local testing');
-              setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
-            } else {
-              handleDataError('Failed to load renewal data: ' + error.message);
-            }
-          });
+        });
+
+        if (!response.ok) {
+          console.error('Failed to load detailed data:', response.status);
+          return; // Don't fail - just continue with minimal data
+        }
+
+        const result = await response.json();
+        console.log(`[Stage 2] Loaded details for ${result.count} apps`);
+
+        // Merge detailed data into existing apps
+        allApps.forEach(app => {
+          if (result.apps[app.product]) {
+            Object.assign(app, result.apps[app.product]);
+          }
+        });
+
+        // Re-initialize cost range now that we have cost data
+        initializeCostRange();
+
+        // Update stats with real cost data
+        renderStats();
+
+        // Re-render to show detailed fields (logos, descriptions, etc.)
+        applyFilters();
+
+        console.log('[Stage 2] Detailed data loaded and merged successfully');
+
+      } catch (error) {
+        console.error('Error loading detailed data:', error);
+        // Don't fail - continue with minimal data
       }
     }
 
