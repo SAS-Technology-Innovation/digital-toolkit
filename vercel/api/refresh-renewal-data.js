@@ -55,9 +55,9 @@ export default async function handler(request) {
       throw new Error('APPS_SCRIPT_URL or FRONTEND_KEY not configured');
     }
 
-    // Fetch renewal data from Apps Script
+    // Fetch renewal data from Apps Script (same endpoint as main dashboard)
     console.log('Fetching renewal data from Apps Script...');
-    const response = await fetch(`${appsScriptUrl}?action=getRenewalData&key=${frontendKey}`, {
+    const response = await fetch(`${appsScriptUrl}?api=data&key=${frontendKey}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
