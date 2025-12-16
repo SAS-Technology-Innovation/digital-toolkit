@@ -1997,7 +1997,8 @@
       aiPanel: {
         visible: false,
         loading: false,
-        recommendations: null
+        recommendations: null,
+        provider: 'claude' // AI provider: 'claude' | 'gemini' (configurable)
       },
 
       // Column definitions for table view
@@ -3359,7 +3360,7 @@
             api: 'ai',
             query: 'Analyze these apps for budget optimization opportunities. Look for duplicates, underutilized licenses, and cost-saving alternatives. Provide specific recommendations with estimated savings.',
             appsData: JSON.stringify(filteredApps.slice(0, 20)), // Limit to 20 apps for AI processing
-            provider: 'claude'
+            provider: dataTable.aiPanel.provider // Configurable: 'claude' (default) or 'gemini'
           })
         });
 

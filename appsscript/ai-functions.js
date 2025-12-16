@@ -296,7 +296,7 @@ function queryClaudeAPI(systemPrompt, userPrompt, userQuery) {
   const url = 'https://api.anthropic.com/v1/messages';
 
   const payload = {
-    model: AI_MODELS.CLAUDE_CHAT,
+    model: AI_MODELS.CLAUDE_FAST, // Using Haiku (smallest/cheapest model) for user queries
     max_tokens: 1024,
     system: systemPrompt,
     messages: [{
