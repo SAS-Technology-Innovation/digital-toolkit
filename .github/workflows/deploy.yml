@@ -45,8 +45,12 @@ jobs:
     - name: Install clasp globally
       run: npm install -g @google/clasp
 
-    - name: Create .clasp.json from secret
-      run: echo '{"scriptId":"${{ secrets.APPS_SCRIPT_ID }}","rootDir":"."}' > .clasp.json
+    - name: Create .clasp.json in appsscript directory
+      run: |
+        cd appsscript
+        echo '{"scriptId":"${{ secrets.APPS_SCRIPT_ID }}","rootDir":"."}' > .clasp.json
 
     - name: Push Apps Script code
-      run: clasp push --force
+      run: |
+        cd appsscript
+        clasp push --force
