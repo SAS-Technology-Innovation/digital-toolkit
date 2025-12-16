@@ -89,16 +89,24 @@ function doGet(e) {
   }
 
   // --- HTML Page Serving ---
-  if (page === 'signage') {
-    return HtmlService.createTemplateFromFile('signage').evaluate()
-      .setTitle('SAS Digital Toolkit - Signage')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  }
+  // Note: Main dashboard pages (index, signage, renewal) are served via Vercel deployment.
+  // This doGet only serves the API endpoints.
+  // For direct Apps Script access, redirect to Vercel deployment.
 
-  // Default to main dashboard
-  return HtmlService.createTemplateFromFile('index').evaluate()
-    .setTitle('SAS Apps Dashboard')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  // Return a simple redirect or message
+  const vercelUrl = 'https://sas-digital-toolkit.vercel.app';
+  return HtmlService.createHtmlOutput(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta http-equiv="refresh" content="0; url=${vercelUrl}">
+      <title>Redirecting...</title>
+    </head>
+    <body>
+      <p>Redirecting to <a href="${vercelUrl}">${vercelUrl}</a>...</p>
+    </body>
+    </html>
+  `).setTitle('SAS Digital Toolkit');
 }
 
 /**
@@ -249,10 +257,40 @@ function handleApiRequest(endpoint, providedKey, params) {
       const aiResult = queryAI(query, appsData, provider);
       return jsonResponse(JSON.parse(aiResult));
 
+    case 'verify-password':
+      // Handle password verification for renewal page
+      const password = params.password;
+
+      if (!password) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'Password parameter is required'
+        }, 400);
+      }
+
+      const isValid = verifyRenewalPassword(password);
+      return jsonResponse({ valid: isValid });
+
+    case 'saveRenewalAction':
+      // Handle saving renewal actions to Google Sheets
+      const product = params.product;
+      const action = params.action;
+      const notes = params.notes || '';
+
+      if (!product || !action) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'product and action parameters are required'
+        }, 400);
+      }
+
+      const saveResult = saveRenewalAction(product, action, notes);
+      return jsonResponse(JSON.parse(saveResult));
+
     default:
       return jsonResponse({
         error: 'Not Found',
-        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai`
+        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai, verify-password, saveRenewalAction`
       }, 404);
   }
 }
@@ -265,6 +303,105 @@ function handleApiRequest(endpoint, providedKey, params) {
 // - testGemini, testClaude
 // - logAIQuery, extractAppNames
 // ==========================================
+
+/**
+ * Verifies the renewal page password.
+ * Password is stored in Script Properties as RENEWAL_PASSWORD.
+ *
+ * @function verifyRenewalPassword
+ * @param {string} password - The password to verify
+ * @returns {boolean} True if password matches, false otherwise
+ *
+ * @example
+ * // Called from frontend or API
+ * const isValid = verifyRenewalPassword('user-entered-password');
+ */
+function verifyRenewalPassword(password) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const storedPassword = scriptProperties.getProperty('RENEWAL_PASSWORD');
+
+    if (!storedPassword) {
+      Logger.log('Warning: RENEWAL_PASSWORD not set in Script Properties');
+      return false;
+    }
+
+    return password === storedPassword;
+  } catch (error) {
+    Logger.log('Error verifying renewal password: ' + error.message);
+    return false;
+  }
+}
+
+/**
+ * Saves a renewal action (Renew, Modify, Retire) to the "Renewal Actions" sheet.
+ * Creates the sheet if it doesn't exist with headers: timestamp, product_name, action, notes.
+ *
+ * @function saveRenewalAction
+ * @param {string} product - The app product name
+ * @param {string} action - The renewal action: 'renew', 'modify', or 'retire'
+ * @param {string} notes - Optional notes about the action
+ * @returns {string} JSON string with success status or error
+ *
+ * @example
+ * // Save a renewal decision
+ * saveRenewalAction('Google Classroom', 'renew', 'Essential for all divisions');
+ * saveRenewalAction('Old App', 'retire', 'No longer used');
+ */
+function saveRenewalAction(product, action, notes) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+
+    if (!SPREADSHEET_ID) {
+      return JSON.stringify({
+        error: 'Configuration error',
+        message: 'SPREADSHEET_ID not set in Script Properties'
+      });
+    }
+
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let actionsSheet = spreadsheet.getSheetByName('Renewal Actions');
+
+    // Create the sheet if it doesn't exist
+    if (!actionsSheet) {
+      actionsSheet = spreadsheet.insertSheet('Renewal Actions');
+      // Add headers
+      actionsSheet.appendRow(['timestamp', 'product_name', 'action', 'notes']);
+      // Format header row
+      const headerRange = actionsSheet.getRange(1, 1, 1, 4);
+      headerRange.setFontWeight('bold');
+      headerRange.setBackground('#1a2d58'); // SAS Blue
+      headerRange.setFontColor('#ffffff');
+      // Freeze header row
+      actionsSheet.setFrozenRows(1);
+    }
+
+    // Append the renewal action
+    const timestamp = new Date();
+    actionsSheet.appendRow([timestamp, product, action, notes || '']);
+
+    Logger.log(`Renewal action saved: ${product} - ${action}`);
+
+    return JSON.stringify({
+      success: true,
+      message: 'Renewal action saved successfully',
+      data: {
+        timestamp: timestamp.toISOString(),
+        product: product,
+        action: action,
+        notes: notes || ''
+      }
+    });
+
+  } catch (error) {
+    Logger.log('Error saving renewal action: ' + error.message);
+    return JSON.stringify({
+      error: 'Failed to save renewal action',
+      message: error.message
+    });
+  }
+}
 
 /**
  * Reads data from the Google Sheet, processes it for the dashboard, and returns it as a JSON string.

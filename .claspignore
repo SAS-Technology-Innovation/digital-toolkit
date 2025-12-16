@@ -1,9 +1,9 @@
-# Ignore Vercel-specific files (not for Apps Script)
-api/**
-public/**
-scripts/**
-vercel.json
+# Ignore Vercel deployment directory entirely
+vercel/**
 .vercel/**
+
+# Ignore legacy public directory
+public/**
 
 # Ignore node/npm files
 node_modules/**
@@ -16,9 +16,10 @@ package-lock.json
 
 # Ignore documentation (not needed in Apps Script)
 *.md
-!README.md
 
-# Ignore other config files
+# Ignore config files
 .env
 .env.local
 .env*.local
+vercel.json
+.clasp.json

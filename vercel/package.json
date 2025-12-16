@@ -1,0 +1,15 @@
+{
+  "name": "digital-toolkit-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vercel deployment for SAS Digital Toolkit Dashboard",
+  "scripts": {
+    "test:edge-config": "node scripts/test-edge-config.js",
+    "deploy": "vercel --prod",
+    "env:pull": "vercel env pull"
+  },
+  "dependencies": {
+    "@vercel/edge-config": "^1.4.3"
+  }
+}
