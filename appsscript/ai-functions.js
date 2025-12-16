@@ -648,7 +648,7 @@ Instructions:
 Response:`;
 
     const payload = {
-      model: AI_MODELS.CLAUDE_ANALYTICS,
+      model: AI_MODELS.CLAUDE_FAST, // Using Haiku for all Claude operations
       max_tokens: 500,
       messages: [{
         role: 'user',
@@ -1136,7 +1136,7 @@ function testClaude() {
   const url = 'https://api.anthropic.com/v1/messages';
 
   const payload = {
-    model: AI_MODELS.CLAUDE_CHAT,
+    model: AI_MODELS.CLAUDE_FAST, // Using Haiku for all Claude operations
     max_tokens: 1024,
     system: systemPrompt,
     messages: [{
