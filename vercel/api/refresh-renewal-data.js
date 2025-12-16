@@ -13,6 +13,49 @@
  * @returns {Object} JSON response with refresh status
  */
 
+/**
+ * Optimize data for Edge Config storage (512KB limit)
+ * Strips out large fields and keeps only essential renewal information
+ */
+function optimizeForEdgeConfig(data) {
+  const optimizeApp = (app) => ({
+    product: app.product,
+    division: app.division,
+    department: app.department,
+    budget: app.budget,
+    licenseType: app.licenseType,
+    licenses: app.licenses,
+    category: app.category,
+    spend: app.spend,
+    renewalDate: app.renewalDate,
+    dateAdded: app.dateAdded,
+    enterprise: app.enterprise,
+    audience: app.audience,
+    gradeLevels: app.gradeLevels,
+    website: app.website,
+    // Strip out large fields:
+    // - description (can be long)
+    // - logoUrl (can be data URIs)
+    // - tutorialLink, supportEmail (not needed for renewal view)
+  });
+
+  const optimizeSection = (section) => {
+    if (!section || !section.apps) return section;
+    return {
+      ...section,
+      apps: section.apps.map(optimizeApp)
+    };
+  };
+
+  return {
+    wholeSchool: optimizeSection(data.wholeSchool),
+    elementary: optimizeSection(data.elementary),
+    middleSchool: optimizeSection(data.middleSchool),
+    highSchool: optimizeSection(data.highSchool),
+    stats: data.stats,
+  };
+}
+
 export const config = {
   runtime: 'edge',
 };
@@ -74,6 +117,10 @@ export default async function handler(request) {
       throw new Error(`Apps Script error: ${renewalData.error}`);
     }
 
+    // Optimize data for Edge Config (512KB limit)
+    // Keep only essential renewal fields
+    const optimizedData = optimizeForEdgeConfig(renewalData);
+
     // Update Edge Config using Vercel API
     const edgeConfigId = process.env.EDGE_CONFIG_ID;
     const vercelToken = process.env.VERCEL_TOKEN;
@@ -96,7 +143,7 @@ export default async function handler(request) {
             {
               operation: 'upsert',
               key: 'renewal_data',
-              value: renewalData,
+              value: optimizedData,
             },
             {
               operation: 'upsert',
@@ -115,12 +162,22 @@ export default async function handler(request) {
 
     const updateResult = await updateResponse.json();
 
+    // Calculate size savings
+    const originalSize = JSON.stringify(renewalData).length;
+    const optimizedSize = JSON.stringify(optimizedData).length;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Renewal data refreshed successfully',
         timestamp: new Date().toISOString(),
         appsCount: renewalData.stats?.totalApps || 0,
+        dataSize: {
+          original: `${(originalSize / 1024).toFixed(1)}KB`,
+          optimized: `${(optimizedSize / 1024).toFixed(1)}KB`,
+          savings: `${savings}%`,
+        },
         edgeConfigUpdate: updateResult,
       }),
       {
