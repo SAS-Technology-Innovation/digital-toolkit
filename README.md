@@ -2,314 +2,376 @@
 
 A **free, open-source** Google Apps Script web application for schools to manage and showcase their educational technology stack. Originally developed for Singapore American School, this dashboard can be easily customized for any educational institution.
 
+**Live Demo**: [https://sas-digital-toolkit.vercel.app](https://sas-digital-toolkit.vercel.app)
+
+---
+
 ## 🎯 Overview
 
 The Digital Toolkit Dashboard provides an elegant, user-friendly interface for organizing and discovering educational applications across your school. Apps are automatically categorized by school divisions (Whole School, Elementary, Middle School, High School) with smart filtering, department grouping, and powerful search capabilities.
 
 **Perfect for:**
+
 - Schools managing multiple educational apps and licenses
-- Technology directors tracking software inventory
+- Technology directors tracking software inventory and renewals
 - Teachers and staff discovering available tools
 - Parents understanding school technology resources
 - Budget planning and license management
 
-## 🏗️ Architecture
+---
 
-**Technology Stack:**
-- **Backend**: Google Apps Script (JavaScript V8 runtime)
-- **Frontend**: HTML5, CSS3, JavaScript
-- **Styling**: Tailwind CSS (via CDN)
-- **Icons**: Lucide Icons
-- **Data Source**: Google Sheets
-- **Deployment**: Google Apps Script Web App + Vercel (optional)
+## ✨ Key Features
 
-**Data Flow:**
-```
-Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard
-                                   ↳ Vercel API (optional) → CDN-distributed Frontend
-```
+### 📚 Main Dashboard
 
-## ✨ Features
+- **Division-Based Organization**: Whole School, Elementary, Middle School, High School
+- **Smart Categorization**:
+  - Enterprise Apps (premium core tools)
+  - Apps Everyone Can Use (site/school licenses)
+  - Department-Specific Apps (grouped with counts)
+- **Enhanced App Cards**:
+  - App logos for visual recognition
+  - Grade level badges
+  - "NEW" badges for recently added apps (last 30 days)
+  - Audience tags (Teachers, Students, Parents, Staff)
+  - SSO and mobile app indicators
+- **Powerful Search**: Real-time filtering across name, category, subject, department, audience
+- **App Details Modal**: Comprehensive information including descriptions, renewal dates, features, and tutorial links
+- **Responsive Design**: Works perfectly on desktop, tablet, and mobile
 
-### 🎨 Enhanced User Experience (Phase 3)
-- **App Logos & Branding**: Display app logos for quick visual recognition
-- **Grade Level Badges**: Quickly identify representative grade levels for each app
-- **"What's New" Section**: Automatically highlights apps added in the last 30 days
-- **NEW Badges**: Eye-catching animated badges for recently added apps
-- **App Detail Modal**: Click "Details" for comprehensive app information including:
-  - Full description and features
-  - License information and renewal dates
-  - SSO and mobile app availability
-  - Tutorial links and support resources
-- **Integrated Search**: Header-based search across all app metadata
-- **Tutorial Links**: Direct access to training resources
+### 🤖 AI-Powered Features
 
-### 📚 Division-Based Organization
-- **Whole School**: Apps available to all divisions
-- **Elementary**: Apps specific to elementary + whole school apps
-- **Middle School**: Apps specific to middle school + whole school apps
-- **High School**: Apps specific to high school + whole school apps
+- **Natural Language Search**: Ask questions like "What can I use for collaborative writing with 8th graders?"
+- **Smart Recommendations**: AI analyzes grade levels, subjects, SSO, mobile support, and audience
+- **Dual AI Provider Support**: Google Gemini (user-facing) and Anthropic Claude (admin data enrichment)
+- **Safety Guardrails**: Closed system ensures AI only recommends apps from your database
+- **App Request Guidance**: Structured guidance when requested apps aren't available
 
-### 🎯 Smart Categorization
-- **Enterprise Apps**: Premium section for official school-wide core tools
-- **Apps Everyone Can Use**: Site/School/Enterprise licenses for broad access
-- **Department-Specific Apps**: Individual licenses grouped by department with counts
-- **Automatic Filtering**: Excludes invalid departments and prevents duplicate entries
+See [docs/AI_FEATURES.md](docs/AI_FEATURES.md) for complete AI integration guide.
 
-### 🔍 Powerful Search & Discovery
-- **Real-time Search**: Instant filtering across product name, category, subject, department, and audience
-- **Visual Tags**: Color-coded tags for categories, subjects, license types, and audiences
-- **Meta Badges**: SSO availability and mobile app indicators
-- **Department Icons**: Auto-assigned icons based on department keywords
+### 💼 App Renewal Management
 
-### 📝 App Request Process
-- **Guided Workflow**: Step-by-step process for requesting new applications
-- **Visual Flowchart**: Interactive process diagram displayed alongside instructions
-- **Required Questions**: Six structured questions to ensure thorough requests
-- **Consultation Guidance**: Clear steps for working with department leads and PLC coaches
-- **AI Integration**: AI assistant provides app request guidance when requested apps aren't available
+Password-protected admin dashboard for managing subscription renewals:
 
-### 📱 Responsive Design
-
-- Mobile-first responsive layout
-- Touch-friendly interface
-- Works on desktop, tablet, and mobile devices
-- Clean, modern SAS-branded design
+- **Timeline View**: Apps organized by renewal urgency (Overdue, Urgent, Upcoming, Future)
+- **Advanced Table View**: Sortable columns with multi-dimensional filtering
+- **Cost Tracking**: Real-time calculation of total costs, renewals, and potential savings
+- **Comparison Mode**: Side-by-side app comparison for decision making
+- **Bulk Actions**: Mark multiple apps for renewal, modification, or retirement
+- **Action Persistence**: All decisions saved to Google Sheets with timestamps
+- **Two-Stage Loading**: Ultra-fast initial load (~100ms) with progressive enhancement
 
 ### 📺 Digital Signage Display
 
-A full-screen, auto-advancing slideshow for digital signage boards:
+Full-screen auto-advancing slideshow for display boards:
 
-- **Purpose-Driven Slides**: Each category showcases WHY and HOW apps support learning
-- **Division Highlights**: Dedicated slides for Elementary, Middle, and High School apps
+- **Purpose-Driven Slides**: Showcases WHY and HOW apps support learning
+- **Division Highlights**: Dedicated slides for each school division
 - **Auto-Refresh**: Fetches fresh data every 5 minutes
-- **De-duplicated Stats**: Accurate app counts without overlap
-- **Category Showcase**: Apps grouped by category with icons and messaging
-- **SAS Branding**: Official colors, fonts, and styling
+- **Category Showcase**: Apps grouped by category with messaging
+- **Customizable**: Configurable slide duration, refresh interval, and apps per slide
 
-Access via `?page=signage` URL parameter. See [SIGNAGE.md](SIGNAGE.md) for full documentation.
+Access via `?page=signage` URL parameter.
+
+### 🔧 Data Management Tools
+
+Google Sheets admin menu for data quality control:
+
+- **Data Validation**: Check for missing required fields
+- **AI Data Enrichment**: Auto-generate descriptions, categories, audience, grade levels
+- **CSV/XLSX Import**: Direct import from EdTech Impact platform exports
+- **Update Logging**: Complete audit trail of all data changes
+- **Analytics**: AI chat pattern analysis to discover missing apps
+
+See [docs/DATA_MANAGEMENT.md](docs/DATA_MANAGEMENT.md) for complete workflows.
+
+---
+
+## 🏗️ Architecture
+
+**Technology Stack:**
+
+- **Backend**: Google Apps Script (JavaScript V8 runtime)
+- **Frontend**: Vercel (Edge Config + Serverless Functions)
+- **Styling**: Tailwind CSS via CDN
+- **Icons**: Lucide Icons
+- **Data Source**: Google Sheets
+- **AI**: Google Gemini API (user-facing), Anthropic Claude API (admin)
+
+**Data Flow:**
+
+```
+Google Sheets → Apps Script Backend → Edge Config (minimal data)
+                                   ↓
+                            Vercel Frontend (fast initial load)
+                                   ↓
+                            Apps Script (detailed data in background)
+```
+
+**Two-Stage Loading Architecture:**
+
+1. **Stage 1 (Edge Config)**: ~100-200ms
+   - Minimal fields: product, division, department, subjects
+   - Enables immediate filtering and search
+   - Served from global CDN edge locations
+
+2. **Stage 2 (Apps Script)**: ~1-2 seconds (background)
+   - Detailed fields: costs, logos, descriptions, renewal dates
+   - Progressive enhancement doesn't block UI
+   - Graceful degradation if fails
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Google Account with access to Google Apps Script
 - Google Sheets document with application data
-- Node.js installed (for development)
+- Node.js 18+ installed
+- Vercel account (for production deployment)
 
-### Local Setup & Development
+### 1. Clone and Setup
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/SAS-Technology-Innovation/digital-toolkit.git
-    cd digital-toolkit
-    ```
+```bash
+git clone https://github.com/SAS-Technology-Innovation/digital-toolkit.git
+cd digital-toolkit
+npm install
+```
 
-2.  **Connect to your Apps Script project:**
-    To link your local environment to your Google Apps Script project, you need to create a `.clasp.json` file. This file is intentionally not stored in the repository.
+### 2. Google Apps Script Setup
 
-    -   First, find your **Script ID** in the Apps Script editor under **Project Settings (⚙️) > IDs**.
-    -   Then, run the `clasp clone` command:
-    ```bash
-    npx @google/clasp clone "YOUR_SCRIPT_ID"
-    ```
-    This will create the `.clasp.json` file and pull the latest code from the cloud, ensuring your local project is correctly linked.
+1. Create a new Google Apps Script project
+1. Get your Script ID from Project Settings → IDs
+1. Clone your project:
 
-3.  **Log in to clasp:**
-    If you haven't already, log in to your Google account.
-    ```bash
-    npm run login
-    ```
+   ```bash
+   npx @google/clasp clone "YOUR_SCRIPT_ID"
+   npm run login
+   ```
 
-4.  **Start developing:**
-    Use the npm scripts in `package.json` to push, pull, and deploy your code.
+1. Configure Script Properties (Project Settings → Script Properties):
 
-## 📋 Configuration
+| Property | Description | Required |
+|----------|-------------|----------|
+| `SPREADSHEET_ID` | Your Google Sheets ID | ✅ |
+| `SHEET_NAME` | Sheet name (e.g., "Apps") | ✅ |
+| `FRONTEND_KEY` | Shared secret for Vercel API auth | ✅ |
+| `GEMINI_API_KEY` | Google Gemini API key | For AI features |
+| `CLAUDE_API_KEY` | Anthropic Claude API key | For data enrichment |
+| `RENEWAL_PASSWORD` | Password for renewal page | For renewal features |
 
-### Google Sheets Setup
+### 3. Google Sheets Structure
 
-Create a Google Sheet with the following 22 columns (see [expected-data-template.csv](expected-data-template.csv) for a complete example):
+Create a sheet with these 22 columns (see [expected-data-template.csv](expected-data-template.csv)):
 
-| Column | Type | Description | Example |
-|--------|------|-------------|---------|
-| `active` | Boolean | TRUE/FALSE - only TRUE apps displayed | TRUE |
-| `product_name` | String | Application name | Google Classroom |
-| `division` | String | School divisions | SAS Elementary School, SAS Middle School, SAS High School, Whole School |
-| `grade_levels` | String | Comma-separated individual grades (multi-select dropdown) | Pre-K, Kindergarten, Grade 1, Grade 2 |
-| `department` | String | Department name | Mathematics, Technology, School Operations |
-| `subjects` | String | Subject area | Math, Science, Arts |
-| `enterprise` | Boolean | Official enterprise/core tool | TRUE/FALSE |
-| `budget` | String | Budget source | Office Of Learning, IT Operations |
-| `audience` | String | Comma-separated audience | Teachers, Students, Parents |
-| `license_type` | String | License model | Site Licence, Inidividual, Enterprise, School |
-| `licence_count` | Number/String | Number of licenses | 500 or Unlimited |
-| `value` | Number | Annual cost | 2500 |
-| `date_added` | Date | When app was added | 2024-01-15 |
-| `renewal_date` | Date | Subscription renewal | 2025-12-31 |
-| `category` | String | App category | Learning Management, Design, Math Tools |
-| `website` | String | App URL | https://classroom.google.com |
-| `description` | String | Brief description (1-2 sentences) | Classroom management and assignment distribution platform |
-| `support_email` | String | Support contact | support@sas.edu.sg |
-| `tutorial_link` | String | Training URL | https://help.example.com |
-| `mobile_app` | String | Mobile availability | Yes, No, iOS/Android |
-| `sso_enabled` | Boolean | SSO available | TRUE/FALSE |
-| `logo_url` | String | App logo image URL | https://example.com/logo.png |
+1. `active` (Boolean) - TRUE/FALSE
+2. `product_name` (String) - App name
+3. `division` (String) - SAS Elementary School, SAS Middle School, etc.
+4. `grade_levels` (String) - Pre-K, Kindergarten, Grade 1, Grade 2, ...
+5. `department` (String) - Department name
+6. `subjects` (String) - Subject areas
+7. `enterprise` (Boolean) - Official core tool flag
+8. `budget` (String) - Office Of Learning, IT Operations, etc.
+9. `audience` (String) - Teachers, Students, Parents, Staff
+10. `license_type` (String) - Site Licence, Individual, Enterprise
+11. `licence_count` (Number/String) - Number of licenses or "Unlimited"
+12. `value` (Number) - Annual cost
+13. `date_added` (Date) - YYYY-MM-DD
+14. `renewal_date` (Date) - YYYY-MM-DD
+15. `category` (String) - App category
+16. `website` (String) - App URL
+17. `description` (String) - 1-2 sentence description
+18. `support_email` (String) - Support contact
+19. `tutorial_link` (String) - Training URL
+20. `mobile_app` (String) - Yes, No, iOS/Android
+21. `sso_enabled` (Boolean) - TRUE/FALSE
+22. `logo_url` (String) - App logo URL
 
-**💡 Tip:** Download and customize [expected-data-template.csv](expected-data-template.csv) to get started quickly!
+**💡 Tip:** Download [expected-data-template.csv](expected-data-template.csv) for a complete example.
 
-### Apps Script Configuration
+### 4. Deploy Apps Script
 
-Configuration is managed using **Script Properties** to avoid hardcoding sensitive information in the code.
+```bash
+# Push code to Apps Script
+cd appsscript
+npm run push
 
-1.  Open the Apps Script project by running `npm run open`.
-2.  In the left-hand menu, click on **Project Settings** (the ⚙️ gear icon).
-3.  Scroll down to the **Script Properties** section.
-4.  Click **Add script property**.
-5.  Add the following properties:
-    - **Property:** `SPREADSHEET_ID` **Value:** `your-google-sheets-id`
-    - **Property:** `SHEET_NAME` **Value:** `your-sheet-name`
-    - **Property:** `GEMINI_API_KEY` **Value:** `your-gemini-api-key` (for AI features)
-    - **Property:** `CLAUDE_API_KEY` **Value:** `your-claude-api-key` (optional, for data enrichment)
-    - **Property:** `FRONTEND_KEY` **Value:** `your-secret-key` (required for Vercel deployment)
+# Create deployment
+npm run deploy
+```
+
+Save your deployment URL - you'll need it for Vercel.
+
+### 5. Deploy to Vercel
+
+1. Connect GitHub repository to Vercel
+1. Set environment variables in Vercel dashboard:
+
+   | Variable | Value |
+   |----------|-------|
+   | `APPS_SCRIPT_URL` | Your Apps Script web app URL |
+   | `FRONTEND_KEY` | Same secret from Script Properties |
+   | `RENEWAL_PASSWORD` | Password for /renewal page |
+   | `EDGE_CONFIG` | Edge Config connection string (auto-created) |
+
+1. Deploy (automatic via GitHub integration)
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instructions.
+
+---
 
 ## 🔧 Development
 
-### Available Scripts
+### Available Commands
+
 ```bash
-npm run login     # Login to Google Apps Script
-npm run push      # Push code changes
-npm run deploy    # Create new deployment
-npm run pull      # Pull latest from Apps Script
-npm run logs      # View execution logs
-npm run open      # Open Apps Script editor
+# Apps Script
+npm run login      # Login to Google Apps Script
+npm run push       # Push code changes
+npm run deploy     # Create new deployment
+npm run pull       # Pull latest from Apps Script
+npm run logs       # View execution logs
+npm run open       # Open Apps Script editor
+
+# Vercel
+vercel             # Deploy to Vercel
+vercel --prod      # Deploy to production
+vercel logs        # View deployment logs
 ```
 
 ### Project Structure
 
 ```text
 digital-toolkit/
-├── Code.js                 # Apps Script main entry point
-├── ai-functions.js         # AI provider integrations (Gemini/Claude)
-├── utilities.js            # Shared helper functions
-├── data-management.js      # Data validation and enrichment
-├── index.html              # Frontend dashboard
-├── signage.html            # Digital signage display
-├── analytics-dashboard.html # Analytics modal for admin
-├── appsscript.json         # Apps Script configuration
-├── package.json            # npm scripts
-├── .clasp.json             # clasp configuration (local only)
-├── api/                    # Vercel serverless functions
-│   ├── data.js             # Data API proxy
-│   └── ai.js               # AI API proxy
-├── scripts/                # Build scripts
-│   └── build-vercel.js     # Vercel build script
-├── public/                 # Vercel static output
-├── assets/                 # Static assets
-│   └── App Request Process for Teachers.png
-├── .github/
-│   └── workflows/
-│       └── deploy.yml      # Auto-deployment to Apps Script
-├── vercel.json             # Vercel configuration
-├── CLAUDE.md               # Developer documentation
-├── AI_FEATURES.md          # AI integration guide
-├── SIGNAGE.md              # Signage display guide
-├── VERCEL.md               # Vercel deployment guide
-├── DATA_MANAGEMENT.md      # Data management workflows
-└── UPCOMING_FEATURES.md    # Future roadmap
+├── appsscript/              # Google Apps Script backend
+│   ├── Code.js              # Main entry point
+│   ├── ai-functions.js      # AI provider integrations
+│   ├── utilities.js         # Helper functions
+│   ├── data-management.js   # Data enrichment
+│   └── appsscript.json      # Apps Script config
+├── vercel/                  # Vercel frontend
+│   ├── index.html           # Main dashboard
+│   ├── renewal.html         # Renewal management page
+│   ├── signage.html         # Digital signage display
+│   └── api/                 # Serverless functions
+│       ├── data.js          # Main data API
+│       ├── renewal-data.js  # Minimal renewal data (Edge)
+│       ├── renewal-details.js # Detailed renewal data
+│       ├── save-renewal-action.js
+│       ├── verify-password.js
+│       └── ai.js            # AI API proxy
+├── docs/                    # Documentation
+│   ├── DEPLOYMENT.md        # Deployment guide
+│   ├── AI_FEATURES.md       # AI integration docs
+│   └── DATA_MANAGEMENT.md   # Data workflows
+├── .github/workflows/       # GitHub Actions
+│   └── deploy.yml           # Auto-deploy Apps Script
+├── CHANGELOG.md             # Version history
+├── CLAUDE.md                # Claude Code dev guide
+└── README.md                # This file
 ```
 
-### Business Logic
+### GitHub Actions
 
-**Division Assignment:**
-- Apps are assigned to divisions based on the Division column
-- Apps with multiple divisions listed become "Whole School" apps
-- "School Operations" department apps are treated as whole school
-- Site/School/Enterprise licenses appear in "Apps Everyone Can Use"
+Automatic deployment on push to `main` branch:
 
-**Department Filtering:**
-- Only valid department names are shown as department cards
-- Division names (Elementary, Middle, High) are filtered out
-- Empty, "N/A", or placeholder departments are excluded
+1. **Setup secrets** (Settings → Secrets and variables → Actions):
+   - `CLASP_CREDENTIALS`: `cat ~/.config/clasp/.clasprc.json`
+   - `APPS_SCRIPT_ID`: From Apps Script Project Settings
+   - `APPS_SCRIPT_DEPLOYMENT_ID`: From Deploy → Manage deployments
 
-## 🚀 Deployment
+2. **Auto-deploy**: Push to `main` triggers deployment
 
-### GitHub Actions (Recommended)
-The repository includes automatic deployment via GitHub Actions:
-1.  **Add GitHub Secrets:**
-    Go to your repository's **Settings → Secrets and variables → Actions** and add the following three secrets:
-    -   `CLASP_CREDENTIALS`: Your local clasp authentication token. Get it by running `npm run login` and then `cat ~/.config/clasp/.clasprc.json`.
-    -   `APPS_SCRIPT_ID`: The ID of your Google Apps Script project. Find it in the Apps Script editor under **Project Settings (⚙️) > IDs**.
-    -   `APPS_SCRIPT_DEPLOYMENT_ID`: The stable deployment ID for your web app. Find it under **Deploy > Manage deployments**.
+---
 
-    > **Note:** The `.clasp.json` file is not committed to the repository. It is generated dynamically during the GitHub Actions workflow. For local development, this file will be created when you run `npm run login` and `npm run pull` or `npm run clone`.
+## 📊 Business Logic
 
-3. **Auto-Deploy:**
-   - Pushes to `main` branch automatically deploy
-   - Manual deployment via Actions tab
+### Division Assignment
 
-### Manual Deployment
+Apps are categorized based on these rules:
 
-```bash
-# Push and deploy manually
-npm run push
-npm run deploy
-```
+**Three-Tier Hierarchy:**
 
-### Vercel Deployment (Optional)
+1. **Enterprise Apps** (Whole School only):
+   - `enterprise` column = TRUE
+   - Official SAS-approved core tools
+   - Premium gold styling
 
-For faster loading and CDN distribution, deploy the frontend to Vercel:
+2. **Apps Everyone Can Use**:
+   - **Whole School tab**: Site/School/Enterprise/Unlimited licenses
+   - **Division tabs**: Division-specific "everyone" apps only
+   - Excludes whole school apps from division tabs
 
-1. **Set environment variables in Vercel:**
-   - `FRONTEND_KEY`: Shared secret key (also set in Apps Script Properties)
-   - `APPS_SCRIPT_URL`: Your deployed Apps Script web app URL
+3. **Department-Specific Apps**:
+   - Individual licenses
+   - Grouped by department with counts
+   - Filtered to exclude invalid departments
 
-2. **Set `FRONTEND_KEY` in Apps Script Properties** (Project Settings > Script Properties)
+**Whole School Determination:**
 
-3. **Deploy to Vercel:**
+An app is "Whole School" if ANY of these are true:
 
-   ```bash
-   npm install -g vercel
-   vercel
-   ```
+- License type includes: site, school, enterprise, unlimited
+- Department is: "school operations" or "school-wide"
+- Division includes: "school-wide" or "whole school"
+- Listed in all 3 divisions: Elementary AND Middle AND High
 
-The Vercel deployment proxies API requests to Apps Script, keeping your data secure. See [VERCEL.md](VERCEL.md) for complete setup instructions.
+**Key Rules:**
 
-## 📱 Usage
+- Enterprise apps NEVER appear on division tabs
+- Whole school apps do NOT appear in division "Everyone" sections
+- Division tabs only show division-specific + department apps
 
-1. **Access the Dashboard**: Visit your deployed Google Apps Script web app URL
-2. **Navigate Divisions**: Click tabs to view different school divisions
-3. **Browse Apps**: View apps in "Everyone Can Use" and department sections
-4. **Access Apps**: Click app names to visit application websites
-5. **View Details**: Check tags for categories, subjects, and license types
+### Department Filtering
+
+- Only valid department names shown as department cards
+- Division names (Elementary, Middle, High) filtered out
+- Empty, "N/A", or placeholder departments excluded
+
+### Grade Level Inference
+
+When importing data, grade levels are auto-inferred from division:
+
+- Elementary → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+- Middle School → "Grade 6, Grade 7, Grade 8"
+- High School → "Grade 9, Grade 10, Grade 11, Grade 12"
+- Multiple divisions → Combined grade list
+
+---
 
 ## 🎨 Customization
 
-### Branding & Styling
-Easily customize the dashboard for your school:
+### SAS Branding
 
-1. **Colors**: Update CSS variables in [index.html](index.html#L12-L30)
-   ```css
-   :root {
-     --sas-red: #a0192a;      /* Your primary color */
-     --sas-blue: #1a2d58;     /* Your secondary color */
-     --sas-yellow: #fabc00;   /* Your accent color */
-     --elementary: #228ec2;   /* Elementary division color */
-     --middle-school: #a0192a;/* Middle School color */
-     --high-school: #1a2d58;  /* High School color */
-   }
-   ```
+Easily customize for your school:
 
-2. **Fonts**: Update font families in [index.html](index.html#L8)
-   - Currently uses: Bebas Neue (headings) and DM Sans (body)
-   - Change Google Fonts link to use your school's fonts
+**1. Colors** (in vercel/index.html):
 
-3. **School Logo**: Update logo URL in header section [index.html](index.html#L1037)
+```css
+:root {
+  --sas-red: #a0192a;         /* Your primary color */
+  --sas-blue: #1a2d58;        /* Your secondary color */
+  --sas-yellow: #fabc00;      /* Your accent color */
+  --elementary: #228ec2;      /* Elementary color */
+  --middle-school: #a0192a;   /* Middle School color */
+  --high-school: #1a2d58;     /* High School color */
+}
+```
 
-4. **Division Names**: Customize division names (e.g., "Lower School" instead of "Elementary")
+**2. Fonts** (Google Fonts link):
 
-See [branding.md](branding.md) for SAS's branding guidelines as an example.
+- Current: Bebas Neue (headings), DM Sans (body)
+- Update font-family in CSS
+
+**3. School Logo**: Update logo URL in header section
+
+**4. Division Names**: Customize (e.g., "Lower School" instead of "Elementary")
 
 ### Department Icons
-Icons are automatically assigned based on department names in [index.html](index.html#L1478-L1500):
+
+Icons auto-assigned based on keywords in `getDepartmentIcon()`:
+
 - Technology/IT → Monitor
 - English/Language → Book
 - Math → Calculator
@@ -319,117 +381,188 @@ Icons are automatically assigned based on department names in [index.html](index
 - Library → Library
 - Counseling → Heart
 
-Add your own department icon mappings in the `getDepartmentIcon()` function.
+Add your own mappings in the function.
+
+---
 
 ## 🔒 Security & Privacy
 
-- **Domain Restricted**: Web app access can be limited to your domain in [appsscript.json](appsscript.json#L8)
-- **@OnlyCurrentDoc**: Limited to current document permissions in [Code.js](Code.js#L2)
-- **No Data Storage**: No persistent data storage in Apps Script
-- **Read-Only Sheet Access**: Real-time data from Google Sheets
-- **Script Properties**: Configuration stored securely, not in code
+### Access Control
 
-**Customizing Access:**
-- Change `access` in [appsscript.json](appsscript.json#L8) from `DOMAIN` to `ANYONE` for public access
-- Or keep `DOMAIN` and update to your school's Google Workspace domain
+- **Domain Restricted**: Configure in `appsscript.json`
+- **Password Protection**: Renewal page requires `RENEWAL_PASSWORD`
+- **API Authentication**: `FRONTEND_KEY` validates all API requests
+- **HTTPS Only**: All traffic encrypted
+
+### Data Security
+
+- **Read-Only Access**: Apps Script only reads from Google Sheets
+- **No Persistent Storage**: No data stored in Apps Script
+- **Script Properties**: Secrets stored securely, not in code
+- **Audit Trails**: All renewal actions and data changes logged
+
+### Customizing Access
+
+In `appsscript.json`, change `access`:
+
+- `DOMAIN`: Restricted to your Google Workspace domain (recommended)
+- `ANYONE`: Public access (use with caution)
+
+---
+
+## 📝 Data Management Workflows
+
+### CSV Import from EdTech Impact
+
+1. Export CSV from EdTech Impact platform
+2. Go to Google Sheets → **🤖 Digital Toolkit Admin → 📤 Upload CSV Data**
+3. Select update mode (Add & Update recommended)
+4. Upload file - system auto-detects format
+5. Review statistics and verify import
+
+**Auto-transformations:**
+
+- `Schools` → `Division`
+- `Price` → `value` (handles free apps)
+- `Budget` → `Department`
+- `Status` → `Active` (TRUE/FALSE)
+- `Licences` → Infers `License Type`
+
+**Auto-populated fields:**
+
+- `grade_levels`: Inferred from division using AI or rules
+- `audience`: "Teachers, Staff" (default)
+- `category`: "Apps" (default)
+- `enterprise`: FALSE (default)
+
+### AI Data Enrichment
+
+Google Sheets admin menu (requires `CLAUDE_API_KEY`):
+
+- **Validate Data**: Check for missing required fields
+- **Find Missing Fields**: Comprehensive report of missing data
+- **Enrich Missing Descriptions**: AI-generated descriptions (10 apps/run)
+- **Refresh All Missing Data**: Complete enrichment (15 apps/run)
+- **Analyze AI Chat Patterns**: Discover missing apps from user searches
+
+### Update Logging
+
+Automatic audit trails:
+
+- **Update Logs**: Tracks all data enrichment operations
+- **AI Chat Analytics**: Logs user queries and recommendations
+- **Pattern Analysis**: Identifies gaps in app database
+
+See [docs/DATA_MANAGEMENT.md](docs/DATA_MANAGEMENT.md) for complete workflows.
+
+---
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
 **"Script not found" error:**
+
 - Verify `scriptId` in `.clasp.json`
 - Ensure you have access to the Apps Script project
+- Run `npm run login` to authenticate
 
 **Google Sheets permission error:**
-- Check that the spreadsheet ID is correct
-- Verify sheet name matches configuration
-- Ensure the Apps Script has read access to the sheet
+
+- Check `SPREADSHEET_ID` in Script Properties
+- Verify sheet name matches `SHEET_NAME`
+- Ensure Apps Script has read access
 
 **Deployment fails:**
-- Check Google Apps Script editor for syntax errors
-- Verify all files are valid
+
+- Check Apps Script editor for syntax errors
+- Verify all files are valid JavaScript
 - Ensure proper OAuth scopes in `appsscript.json`
+
+**Vercel deployment issues:**
+
+- Verify environment variables are set correctly
+- Check `FRONTEND_KEY` matches in both Vercel and Apps Script
+- Ensure `APPS_SCRIPT_URL` is the correct deployment URL
+
+**Data not loading on renewal page:**
+
+- Check browser console for errors
+- Verify Edge Config is populated (or fallback is working)
+- Test `/api/renewal-data` endpoint directly
+
+### Getting Help
+
+- 📖 Read [CLAUDE.md](CLAUDE.md) for technical details
+- 🐛 Report bugs via [GitHub Issues](https://github.com/SAS-Technology-Innovation/digital-toolkit/issues)
+- 💡 Request features via [GitHub Issues](https://github.com/SAS-Technology-Innovation/digital-toolkit/issues)
+- 📧 For SAS-specific support: [edtech@sas.edu.sg](mailto:edtech@sas.edu.sg)
+
+---
 
 ## 🗺️ Roadmap
 
-This project follows a phased development approach:
+### ✅ Implemented Features
 
-- **✅ Phase 1 & 2**: Enterprise apps section, search functionality, audience tags
-- **✅ Phase 3**: Enhanced cards with logos, grade badges, "What's New" section, detail modal
-- **✅ Phase 4**: AI-powered search, Gemini/Claude integration, data enrichment, Vercel deployment, signage redesign
-- **🔮 Phase 5**: User favorites, ratings/reviews, usage analytics, dark mode, Google Workspace SSO
+- **Phase 1-2**: Enterprise apps, search, audience tags
+- **Phase 3**: Logos, grade badges, "What's New", detail modal
+- **Phase 4**: AI search, dual AI providers, Vercel deployment, signage redesign
+- **Renewal Features**: Timeline view, table view, cost tracking, comparison mode, two-stage loading
 
-### Phase 4: AI-Powered Features (Implemented)
+### 🔮 Future Enhancements
 
-The dashboard now includes intelligent natural language search powered by Google's Gemini API or Anthropic's Claude API:
+- User favorites/bookmarks with AI-suggested collections
+- Ratings and reviews system
+- Usage analytics dashboard
+- Dark mode
+- Mobile PWA
+- AI conversation history persistence
+- Multi-language AI support
+- Google Workspace SSO integration
 
-- **Smart App Recommendations**: Ask questions like "What can I use for collaborative writing with 8th graders?"
-- **AI Safety Guardrails**: Closed system ensures AI only recommends apps from your database
-- **Content Moderation**: Filters harmful, inappropriate, or off-topic requests
-- **App Request Guidance**: Provides structured guidance when requested apps aren't available
-- **Dual API Support**: Works with both Gemini and Claude AI providers
-- **Automatic Logging & Analytics**: Tracks AI queries and data enrichment operations for audit trails and pattern analysis
-- **Vercel Deployment**: Optional CDN-distributed frontend with serverless API proxies
-- **Digital Signage Redesign**: Purpose-driven slides with WHY/HOW messaging, de-duplicated stats, category showcases
-
-**Setup**: Add `GEMINI_API_KEY` or `CLAUDE_API_KEY` to Script Properties. See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.
-
-**Logging Features**:
-
-- **Update Logs**: Auto-tracks all data enrichment operations with before/after values
-- **AI Chat Analytics**: Logs user queries, categorizes by type, and identifies search patterns
-- **Pattern Analysis**: Built-in menu tool analyzes chat logs to discover missing apps users are searching for
-
-See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for Phase 5 plans.
+---
 
 ## 🤝 Contributing
 
 We welcome contributions from schools and developers! This is an open-source project designed to benefit the entire education community.
 
 **How to Contribute:**
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Test changes locally by opening `index.html`
+3. Test changes locally
 4. Commit your changes (`git commit -m 'Add amazing feature'`)
 5. Push to the branch (`git push origin feature/amazing-feature`)
 6. Open a Pull Request
 
 **Contribution Ideas:**
+
 - New UI themes and branding options
 - Additional department icon mappings
 - Internationalization/translations
 - Performance improvements
 - Bug fixes and documentation improvements
 
+---
+
 ## 📄 License
 
-This project is licensed under the **ISC License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **ISC License** - see the LICENSE file for details.
 
 **You are free to:**
+
 - Use this software for any purpose (commercial or non-commercial)
 - Modify the code to fit your needs
 - Distribute the software
 - Sublicense the software
 
-## 📞 Support & Community
-
-**Getting Help:**
-- 📖 Read [CLAUDE.md](CLAUDE.md) for comprehensive technical documentation
-- 🐛 Report bugs via [GitHub Issues](https://github.com/SAS-Technology-Innovation/digital-toolkit/issues)
-- 💡 Request features via [GitHub Issues](https://github.com/SAS-Technology-Innovation/digital-toolkit/issues)
-- 📧 For SAS-specific support: [edtech@sas.edu.sg](mailto:edtech@sas.edu.sg)
-
-**For Other Schools:**
-- This project is free to use and customize for your institution
-- We'd love to hear how you're using it! Share your implementation via GitHub Discussions
-- Consider contributing improvements back to the project
+---
 
 ## 🙏 Acknowledgments
 
 - **Singapore American School Technology & Innovation Team** - Original development
 - **Open-source community** - For tools and inspiration
-- **Educational institutions** worldwide - For feedback and feature ideas
+- **Educational institutions worldwide** - For feedback and feature ideas
 
 ---
 
