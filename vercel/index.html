@@ -2127,7 +2127,7 @@
             <!-- Image on the right side -->
             <div class="why-purpose-image-container">
               <img
-                src="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/sci-fi-toolbox.png"
+                src="/assets/sci-fi-toolbox.png"
                 alt="Digital Toolkit Illustration"
                 class="why-purpose-image"
                 loading="lazy">
@@ -2238,7 +2238,7 @@
             <!-- Image on the right side -->
             <div class="app-request-image-container">
               <img
-                src="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/App%20Request%20Process%20for%20Teachers.png"
+                src="/assets/App Request Process for Teachers.png"
                 alt="App Request Process Flowchart"
                 class="app-request-image"
                 loading="lazy"
@@ -2344,7 +2344,7 @@
           <h2 class="modal-title">App Request Process</h2>
           <div style="display: flex; gap: 12px;">
             <a
-              href="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/App%20Request%20Process%20for%20Teachers.png"
+              href="/assets/App Request Process for Teachers.png"
               download="App Request Process for Teachers.png"
               class="flowchart-download-btn"
               title="Download flowchart"
@@ -2359,7 +2359,7 @@
         </div>
         <div class="flowchart-modal-body">
           <img
-            src="https://raw.githubusercontent.com/SAS-Technology-Innovation/digital-toolkit/main/assets/App%20Request%20Process%20for%20Teachers.png"
+            src="/assets/App Request Process for Teachers.png"
             alt="App Request Process Flowchart"
             class="flowchart-modal-image">
         </div>
@@ -2370,9 +2370,9 @@
     <footer class="footer">
       <p class="footer-title">Developed by the Technology & Innovation Team</p>
       <p class="footer-text">
-        For support, contact <a href="mailto:edtech@sas.edu.sg" class="footer-link">edtech@sas.edu.sg</a>
+        © <span id="footer-year"></span> Singapore American School | For support, contact <a href="mailto:edtech@sas.edu.sg" class="footer-link">edtech@sas.edu.sg</a>
       </p>
-      <a href="?page=signage" class="footer-button" aria-label="View Digital Signage Display">
+      <a href="/signage" class="footer-button" aria-label="View Digital Signage Display">
         <i data-lucide="monitor"></i>
         View Digital Signage
       </a>
@@ -2459,6 +2459,12 @@
     let aiModeEnabled = false;
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Set current year in footer
+      const yearSpan = document.getElementById('footer-year');
+      if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+      }
+
       // Load data from server or use mock data for local testing
       loadData();
 
@@ -2467,21 +2473,25 @@
     });
 
     /**
-     * Load data from Apps Script backend or use mock data for local testing
+     * Load data from Vercel API endpoint
      */
     function loadData() {
-      // Check if running in Google Apps Script environment
-      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
-        // Production: Use google.script.run to get data from the server
-        google.script.run
-          .withSuccessHandler(renderDashboard)
-          .withFailureHandler(showError)
-          .getDashboardData();
-      } else {
-        // Local testing: Use mock data
-        console.log('Running in local test mode with mock data');
-        setTimeout(() => renderDashboard(JSON.stringify(getMockData())), 500);
-      }
+      // Fetch data from Vercel API
+      fetch('/api/data')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Convert to JSON string format that renderDashboard expects
+          renderDashboard(JSON.stringify(data));
+        })
+        .catch(error => {
+          console.error('Error loading data:', error);
+          showError({ message: error.message || 'Failed to load dashboard data' });
+        });
     }
 
     function renderDashboard(dataString) {
@@ -3226,26 +3236,18 @@
       }
     }
 
-    function handleAIResponse(responseString) {
+    function handleAIResponse(responseData) {
       const aiChatSend = document.getElementById('ai-chat-send');
 
-      try {
-        const response = JSON.parse(responseString);
+      removeLoadingMessage();
+      aiChatSend.disabled = false;
 
-        removeLoadingMessage();
-        aiChatSend.disabled = false;
-
-        if (response.error) {
-          addMessageToChat('assistant', `Sorry, I encountered an error: ${response.error}`);
-        } else if (response.success && response.response) {
-          addMessageToChat('assistant', response.response);
-        } else {
-          addMessageToChat('assistant', 'Sorry, I couldn\'t process that request. Please try again.');
-        }
-      } catch (error) {
-        removeLoadingMessage();
-        aiChatSend.disabled = false;
-        addMessageToChat('assistant', 'Sorry, something went wrong. Please try again.');
+      if (responseData.error) {
+        addMessageToChat('assistant', `Sorry, I encountered an error: ${responseData.error}`);
+      } else if (responseData.response) {
+        addMessageToChat('assistant', responseData.response);
+      } else {
+        addMessageToChat('assistant', 'Sorry, I couldn\'t process that request. Please try again.');
       }
     }
 
