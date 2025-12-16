@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Vercel deployment for SAS Digital Toolkit Dashboard",
   "scripts": {
+    "build": "cp -f index.html signage.html renewal.html public/",
     "test:edge-config": "node scripts/test-edge-config.js",
     "deploy": "vercel --prod",
     "env:pull": "vercel env pull"
