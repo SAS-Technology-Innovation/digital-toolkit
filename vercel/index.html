@@ -2457,7 +2457,6 @@
     // Global variable to store all apps data for AI queries
     let globalAppsData = [];
     let aiModeEnabled = false;
-    let selectedAIProvider = 'claude'; // Default to Claude
 
     document.addEventListener('DOMContentLoaded', () => {
       // Load data from server or use mock data for local testing
@@ -3129,11 +3128,26 @@
       aiChatSend.disabled = true;
       addLoadingMessage();
 
-      // Call AI API
-      google.script.run
-        .withSuccessHandler(handleAIResponse)
-        .withFailureHandler(handleAIError)
-        .queryAI(message, JSON.stringify(globalAppsData), selectedAIProvider);
+      // Call AI API via Vercel endpoint
+      fetch('/api/ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: message,
+          appsData: globalAppsData
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            handleAIError({ message: data.message || data.error });
+          } else {
+            handleAIResponse(data.response);
+          }
+        })
+        .catch(error => handleAIError(error));
     }
 
     function addMessageToChat(role, content) {

@@ -10,6 +10,7 @@
     "env:pull": "vercel env pull"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@vercel/edge-config": "^1.4.3"
   }
 }
