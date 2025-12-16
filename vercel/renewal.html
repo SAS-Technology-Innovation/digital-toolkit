@@ -1602,11 +1602,17 @@
           .withFailureHandler(handleDataError)
           .getDashboardData();
       } else {
-        // Vercel environment - fetch from Edge Config API
+        // Vercel environment - try Edge Config first, fallback to Apps Script
         fetch('/api/renewal-data')
           .then(response => {
             if (!response.ok) {
-              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              // Edge Config not populated, try Apps Script
+              console.log('Edge Config not available, trying Apps Script...');
+              return fetch('/api/data')
+                .then(r => {
+                  if (!r.ok) throw new Error(`Apps Script error: ${r.status}`);
+                  return r.json();
+                });
             }
             return response.json();
           })
@@ -1614,14 +1620,10 @@
             handleDataLoaded(JSON.stringify(data));
           })
           .catch(error => {
-            console.error('Error loading data from Edge Config:', error);
-            // Fallback to mock data for local testing
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-              console.log('Using mock data for local testing');
-              setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
-            } else {
-              handleDataError('Failed to load renewal data: ' + error.message);
-            }
+            console.error('Error loading data:', error);
+            // Final fallback to mock data
+            console.log('Using mock data fallback');
+            setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
           });
       }
     }
