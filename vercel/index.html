@@ -2404,20 +2404,6 @@
         <i data-lucide="sparkles" aria-hidden="true"></i>
         AI Assistant
       </div>
-      <div class="ai-provider-selector" role="group" aria-label="Select AI provider">
-        <button
-          class="ai-provider-btn active"
-          data-provider="gemini"
-          aria-pressed="true">
-          Gemini
-        </button>
-        <button
-          class="ai-provider-btn"
-          data-provider="claude"
-          aria-pressed="false">
-          Claude
-        </button>
-      </div>
       <button
         class="ai-chat-close"
         id="ai-chat-close"
@@ -2471,7 +2457,6 @@
     // Global variable to store all apps data for AI queries
     let globalAppsData = [];
     let aiModeEnabled = false;
-    let selectedAIProvider = 'gemini'; // Default to Gemini
 
     document.addEventListener('DOMContentLoaded', () => {
       // Load data from server or use mock data for local testing
@@ -3025,20 +3010,6 @@
       const aiChatInput = document.getElementById('ai-chat-input');
       const aiChatSend = document.getElementById('ai-chat-send');
       const aiSuggestions = document.querySelectorAll('.ai-suggestion-chip');
-      const providerBtns = document.querySelectorAll('.ai-provider-btn');
-
-      // AI Provider selection
-      providerBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          providerBtns.forEach(b => {
-            b.classList.remove('active');
-            b.setAttribute('aria-pressed', 'false');
-          });
-          btn.classList.add('active');
-          btn.setAttribute('aria-pressed', 'true');
-          selectedAIProvider = btn.dataset.provider;
-        });
-      });
 
       // AI Toggle in search bar
       if (aiToggle) {
@@ -3157,11 +3128,26 @@
       aiChatSend.disabled = true;
       addLoadingMessage();
 
-      // Call AI API
-      google.script.run
-        .withSuccessHandler(handleAIResponse)
-        .withFailureHandler(handleAIError)
-        .queryAI(message, JSON.stringify(globalAppsData), selectedAIProvider);
+      // Call AI API via Vercel endpoint
+      fetch('/api/ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: message,
+          appsData: globalAppsData
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            handleAIError({ message: data.message || data.error });
+          } else {
+            handleAIResponse(data.response);
+          }
+        })
+        .catch(error => handleAIError(error));
     }
 
     function addMessageToChat(role, content) {

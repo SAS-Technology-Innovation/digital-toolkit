@@ -2060,31 +2060,26 @@
       submitBtn.textContent = 'Verifying...';
       errorEl.classList.remove('show');
 
-      // Verify password via server
-      if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
-        google.script.run
-          .withSuccessHandler(function(isValid) {
-            if (isValid) {
-              onAuthSuccess();
-            } else {
-              showPasswordError();
-            }
-          })
-          .withFailureHandler(function(error) {
-            console.error('Auth error:', error);
-            showPasswordError();
-          })
-          .verifyRenewalPassword(password);
-      } else {
-        // Local testing mode
-        setTimeout(() => {
-          if (password === LOCAL_TEST_PASSWORD) {
+      // Verify password via Vercel API
+      fetch('/api/verify-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: password })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.valid) {
             onAuthSuccess();
           } else {
             showPasswordError();
           }
-        }, 500);
-      }
+        })
+        .catch(error => {
+          console.error('Auth error:', error);
+          showPasswordError();
+        });
     }
 
     function showPasswordError() {
@@ -3357,10 +3352,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            api: 'ai',
             query: 'Analyze these apps for budget optimization opportunities. Look for duplicates, underutilized licenses, and cost-saving alternatives. Provide specific recommendations with estimated savings.',
-            appsData: JSON.stringify(filteredApps.slice(0, 20)), // Limit to 20 apps for AI processing
-            provider: dataTable.aiPanel.provider // Configurable: 'claude' (default) or 'gemini'
+            appsData: filteredApps.slice(0, 20) // Limit to 20 apps for AI processing
           })
         });
 
