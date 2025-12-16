@@ -271,10 +271,26 @@ function handleApiRequest(endpoint, providedKey, params) {
       const isValid = verifyRenewalPassword(password);
       return jsonResponse({ valid: isValid });
 
+    case 'saveRenewalAction':
+      // Handle saving renewal actions to Google Sheets
+      const product = params.product;
+      const action = params.action;
+      const notes = params.notes || '';
+
+      if (!product || !action) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'product and action parameters are required'
+        }, 400);
+      }
+
+      const saveResult = saveRenewalAction(product, action, notes);
+      return jsonResponse(JSON.parse(saveResult));
+
     default:
       return jsonResponse({
         error: 'Not Found',
-        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai, verify-password`
+        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai, verify-password, saveRenewalAction`
       }, 404);
   }
 }
@@ -314,6 +330,76 @@ function verifyRenewalPassword(password) {
   } catch (error) {
     Logger.log('Error verifying renewal password: ' + error.message);
     return false;
+  }
+}
+
+/**
+ * Saves a renewal action (Renew, Modify, Retire) to the "Renewal Actions" sheet.
+ * Creates the sheet if it doesn't exist with headers: timestamp, product_name, action, notes.
+ *
+ * @function saveRenewalAction
+ * @param {string} product - The app product name
+ * @param {string} action - The renewal action: 'renew', 'modify', or 'retire'
+ * @param {string} notes - Optional notes about the action
+ * @returns {string} JSON string with success status or error
+ *
+ * @example
+ * // Save a renewal decision
+ * saveRenewalAction('Google Classroom', 'renew', 'Essential for all divisions');
+ * saveRenewalAction('Old App', 'retire', 'No longer used');
+ */
+function saveRenewalAction(product, action, notes) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+
+    if (!SPREADSHEET_ID) {
+      return JSON.stringify({
+        error: 'Configuration error',
+        message: 'SPREADSHEET_ID not set in Script Properties'
+      });
+    }
+
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let actionsSheet = spreadsheet.getSheetByName('Renewal Actions');
+
+    // Create the sheet if it doesn't exist
+    if (!actionsSheet) {
+      actionsSheet = spreadsheet.insertSheet('Renewal Actions');
+      // Add headers
+      actionsSheet.appendRow(['timestamp', 'product_name', 'action', 'notes']);
+      // Format header row
+      const headerRange = actionsSheet.getRange(1, 1, 1, 4);
+      headerRange.setFontWeight('bold');
+      headerRange.setBackground('#1a2d58'); // SAS Blue
+      headerRange.setFontColor('#ffffff');
+      // Freeze header row
+      actionsSheet.setFrozenRows(1);
+    }
+
+    // Append the renewal action
+    const timestamp = new Date();
+    actionsSheet.appendRow([timestamp, product, action, notes || '']);
+
+    Logger.log(`Renewal action saved: ${product} - ${action}`);
+
+    return JSON.stringify({
+      success: true,
+      message: 'Renewal action saved successfully',
+      data: {
+        timestamp: timestamp.toISOString(),
+        product: product,
+        action: action,
+        notes: notes || ''
+      }
+    });
+
+  } catch (error) {
+    Logger.log('Error saving renewal action: ' + error.message);
+    return JSON.stringify({
+      error: 'Failed to save renewal action',
+      message: error.message
+    });
   }
 }
 
