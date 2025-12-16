@@ -307,6 +307,11 @@
       border-left-color: var(--sas-red);
     }
 
+    .stat-card.primary {
+      border-left-color: var(--sas-blue);
+      background: #eff6ff;
+    }
+
     .stat-card.success {
       border-left-color: #10b981;
     }
@@ -322,6 +327,101 @@
       font-size: 0.875rem;
       color: #666;
       margin-top: 4px;
+    }
+
+    .stat-sublabel {
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* Cost Breakdown Section */
+    .cost-breakdown {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .breakdown-section h4 {
+      margin: 0 0 12px 0;
+      color: #374151;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .breakdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .breakdown-item {
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .breakdown-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .breakdown-name {
+      font-weight: 600;
+      color: #111827;
+      font-size: 0.875rem;
+    }
+
+    .breakdown-total {
+      font-weight: 700;
+      color: var(--sas-blue);
+      font-size: 0.875rem;
+    }
+
+    .breakdown-bar-container {
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .breakdown-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--sas-blue), #3b82f6);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .breakdown-details {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .breakdown-renewed {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .breakdown-none {
+      color: #9ca3af;
     }
 
     /* Filter Section */
@@ -1882,6 +1982,9 @@
       selectedApps: new Set(),       // App product names
       compareMode: false,            // Enable comparison checkboxes
 
+      // Renewal decisions tracking
+      renewalDecisions: {},          // { productName: 'renew' | 'modify' | 'retire' }
+
       // Filter state (additional to existing filters)
       costRange: {
         min: 0,
@@ -2128,39 +2231,137 @@
     // ============================================================
     // STATS RENDERING
     // ============================================================
+    // ============================================================
+    // COST CALCULATIONS
+    // ============================================================
+
+    function calculateCosts() {
+      const costs = {
+        overall: { total: 0, renewed: 0, count: 0, renewedCount: 0 },
+        byDivision: {},
+        byDepartment: {},
+        bySubject: {},
+        byBudget: {}
+      };
+
+      // Process each app
+      filteredApps.forEach(app => {
+        const cost = parseCost(app.spend);
+        const isRenewed = dataTable.renewalDecisions?.[app.product] === 'renew';
+
+        // Overall totals
+        costs.overall.total += cost;
+        costs.overall.count++;
+        if (isRenewed) {
+          costs.overall.renewed += cost;
+          costs.overall.renewedCount++;
+        }
+
+        // By Division
+        const divisions = getDivisionsList(app.division);
+        divisions.forEach(div => {
+          if (!costs.byDivision[div]) {
+            costs.byDivision[div] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+          }
+          costs.byDivision[div].total += cost;
+          costs.byDivision[div].count++;
+          if (isRenewed) {
+            costs.byDivision[div].renewed += cost;
+            costs.byDivision[div].renewedCount++;
+          }
+        });
+
+        // By Department
+        const dept = app.department || 'Uncategorized';
+        if (!costs.byDepartment[dept]) {
+          costs.byDepartment[dept] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+        }
+        costs.byDepartment[dept].total += cost;
+        costs.byDepartment[dept].count++;
+        if (isRenewed) {
+          costs.byDepartment[dept].renewed += cost;
+          costs.byDepartment[dept].renewedCount++;
+        }
+
+        // By Subject
+        const subjects = (app.subjects || app.subject || '').split(',').map(s => s.trim()).filter(s => s);
+        subjects.forEach(subj => {
+          if (!costs.bySubject[subj]) {
+            costs.bySubject[subj] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+          }
+          costs.bySubject[subj].total += cost;
+          costs.bySubject[subj].count++;
+          if (isRenewed) {
+            costs.bySubject[subj].renewed += cost;
+            costs.bySubject[subj].renewedCount++;
+          }
+        });
+
+        // By Budget
+        const budget = app.budget || 'Uncategorized';
+        if (!costs.byBudget[budget]) {
+          costs.byBudget[budget] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+        }
+        costs.byBudget[budget].total += cost;
+        costs.byBudget[budget].count++;
+        if (isRenewed) {
+          costs.byBudget[budget].renewed += cost;
+          costs.byBudget[budget].renewedCount++;
+        }
+      });
+
+      return costs;
+    }
+
+    function getDivisionsList(division) {
+      const div = (division || '').toLowerCase();
+      const divisions = [];
+
+      if (div.includes('whole') || div.includes('school-wide')) {
+        divisions.push('Whole School');
+      }
+      if (div.includes('elementary')) {
+        divisions.push('Elementary');
+      }
+      if (div.includes('middle')) {
+        divisions.push('Middle School');
+      }
+      if (div.includes('high')) {
+        divisions.push('High School');
+      }
+
+      return divisions.length > 0 ? divisions : ['General'];
+    }
+
     function renderStats() {
       const now = new Date();
+      const costs = calculateCosts();
 
-      // Calculate stats
-      const overdue = allApps.filter(app => {
+      // Calculate renewal timeline stats
+      const overdue = filteredApps.filter(app => {
         if (!app.renewalDate) return false;
         const date = new Date(app.renewalDate);
         return date < now;
       }).length;
 
-      const next30 = allApps.filter(app => {
+      const next30 = filteredApps.filter(app => {
         if (!app.renewalDate) return false;
         const date = new Date(app.renewalDate);
         const diff = (date - now) / (1000 * 60 * 60 * 24);
         return diff >= 0 && diff <= 30;
       }).length;
 
-      const next90 = allApps.filter(app => {
+      const next90 = filteredApps.filter(app => {
         if (!app.renewalDate) return false;
         const date = new Date(app.renewalDate);
         const diff = (date - now) / (1000 * 60 * 60 * 24);
         return diff > 30 && diff <= 90;
       }).length;
 
-      const noDate = allApps.filter(app => !app.renewalDate).length;
-
-      const totalSpend = allApps.reduce((sum, app) => {
-        if (app.spend === 'Free' || app.spend === 'N/A') return sum;
-        const value = parseFloat(app.spend);
-        return sum + (isNaN(value) ? 0 : value);
-      }, 0);
-
-      const totalLicenses = allApps.reduce((sum, app) => sum + (app.licenses || 0), 0);
+      const savings = costs.overall.total - costs.overall.renewed;
+      const savingsPercent = costs.overall.total > 0
+        ? ((savings / costs.overall.total) * 100).toFixed(1)
+        : 0;
 
       document.getElementById('stats-grid').innerHTML = `
         <div class="stat-card danger">
@@ -2176,16 +2377,142 @@
           <div class="stat-label">Due in 31-90 Days</div>
         </div>
         <div class="stat-card success">
-          <div class="stat-value">${allApps.length}</div>
+          <div class="stat-value">${filteredApps.length}</div>
           <div class="stat-label">Total Subscriptions</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">$${formatNumber(totalSpend)}</div>
-          <div class="stat-label">Total Annual Spend</div>
+          <div class="stat-value">$${formatNumber(costs.overall.total)}</div>
+          <div class="stat-label">Total Annual Cost</div>
+          <div class="stat-sublabel">${costs.overall.count} apps</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value">${formatNumber(totalLicenses)}</div>
-          <div class="stat-label">Total Licenses</div>
+        <div class="stat-card ${costs.overall.renewedCount > 0 ? 'primary' : ''}">
+          <div class="stat-value">$${formatNumber(costs.overall.renewed)}</div>
+          <div class="stat-label">Renewal Cost</div>
+          <div class="stat-sublabel">${costs.overall.renewedCount} apps marked to renew</div>
+        </div>
+        ${costs.overall.renewedCount > 0 ? `
+          <div class="stat-card ${savings > 0 ? 'success' : 'warning'}">
+            <div class="stat-value">$${formatNumber(savings)}</div>
+            <div class="stat-label">${savings >= 0 ? 'Potential Savings' : 'Over Budget'}</div>
+            <div class="stat-sublabel">${savingsPercent}% ${savings >= 0 ? 'reduction' : 'increase'}</div>
+          </div>
+        ` : ''}
+      `;
+
+      // Render cost breakdown if there are renewal decisions
+      if (costs.overall.renewedCount > 0) {
+        renderCostBreakdown(costs);
+      } else {
+        const breakdownEl = document.getElementById('cost-breakdown');
+        if (breakdownEl) breakdownEl.style.display = 'none';
+      }
+    }
+
+    function renderCostBreakdown(costs) {
+      let breakdownEl = document.getElementById('cost-breakdown');
+
+      if (!breakdownEl) {
+        // Create breakdown section if it doesn't exist
+        const statsSection = document.querySelector('.stats-section');
+        breakdownEl = document.createElement('div');
+        breakdownEl.id = 'cost-breakdown';
+        breakdownEl.className = 'cost-breakdown';
+        statsSection.appendChild(breakdownEl);
+      }
+
+      breakdownEl.style.display = 'block';
+
+      // Get top items by cost
+      const topDivisions = Object.entries(costs.byDivision)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5);
+
+      const topDepartments = Object.entries(costs.byDepartment)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5);
+
+      const topBudgets = Object.entries(costs.byBudget)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5);
+
+      breakdownEl.innerHTML = `
+        <h3 style="margin: 0 0 16px 0; color: #111827; font-size: 1.125rem;">Cost Breakdown</h3>
+
+        <div class="breakdown-grid">
+          <div class="breakdown-section">
+            <h4>By Division</h4>
+            <div class="breakdown-list">
+              ${topDivisions.map(([name, data]) => `
+                <div class="breakdown-item">
+                  <div class="breakdown-item-header">
+                    <span class="breakdown-name">${name}</span>
+                    <span class="breakdown-total">$${formatNumber(data.total)}</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar" style="width: ${(data.total / costs.overall.total * 100).toFixed(1)}%"></div>
+                  </div>
+                  <div class="breakdown-details">
+                    <span>${data.count} apps</span>
+                    ${data.renewedCount > 0 ? `
+                      <span class="breakdown-renewed">
+                        ${data.renewedCount} renewed ($${formatNumber(data.renewed)})
+                      </span>
+                    ` : '<span class="breakdown-none">None renewed</span>'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="breakdown-section">
+            <h4>By Department</h4>
+            <div class="breakdown-list">
+              ${topDepartments.map(([name, data]) => `
+                <div class="breakdown-item">
+                  <div class="breakdown-item-header">
+                    <span class="breakdown-name">${name}</span>
+                    <span class="breakdown-total">$${formatNumber(data.total)}</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar" style="width: ${(data.total / costs.overall.total * 100).toFixed(1)}%"></div>
+                  </div>
+                  <div class="breakdown-details">
+                    <span>${data.count} apps</span>
+                    ${data.renewedCount > 0 ? `
+                      <span class="breakdown-renewed">
+                        ${data.renewedCount} renewed ($${formatNumber(data.renewed)})
+                      </span>
+                    ` : '<span class="breakdown-none">None renewed</span>'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="breakdown-section">
+            <h4>By Budget Owner</h4>
+            <div class="breakdown-list">
+              ${topBudgets.map(([name, data]) => `
+                <div class="breakdown-item">
+                  <div class="breakdown-item-header">
+                    <span class="breakdown-name">${name}</span>
+                    <span class="breakdown-total">$${formatNumber(data.total)}</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar" style="width: ${(data.total / costs.overall.total * 100).toFixed(1)}%"></div>
+                  </div>
+                  <div class="breakdown-details">
+                    <span>${data.count} apps</span>
+                    ${data.renewedCount > 0 ? `
+                      <span class="breakdown-renewed">
+                        ${data.renewedCount} renewed ($${formatNumber(data.renewed)})
+                      </span>
+                    ` : '<span class="breakdown-none">None renewed</span>'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
         </div>
       `;
     }
@@ -3074,6 +3401,12 @@
         if (!response.ok || result.error) {
           throw new Error(result.message || 'Failed to save action');
         }
+
+        // Track the renewal decision locally
+        dataTable.renewalDecisions[productName] = action;
+
+        // Update stats to show new costs
+        renderStats();
 
         alert(`✓ ${productName} has been marked for "${actionLabels[action]}".\n\nThe Technology & Innovation team will be notified.`);
 
