@@ -234,23 +234,29 @@ Auto-deploys on push to `main`. Requires repository secrets:
 
 **Note**: `.clasp.json` is NOT in repo. Created locally via `npx @google/clasp clone` or dynamically in GitHub Actions.
 
-### Vercel Deployment (Alternative Frontend)
+### Vercel Deployment (Primary Frontend)
 
-The dashboard can also be deployed to Vercel for faster loading and CDN distribution. See **[VERCEL.md](VERCEL.md)** for complete setup instructions.
+The dashboard is deployed to Vercel for fast global CDN distribution and Edge Config caching.
 
-**Quick Setup:**
+**Setup:**
 
 1. Set `FRONTEND_KEY` in Apps Script Properties
 2. Deploy Apps Script: `npm run push && npm run deploy`
-3. Deploy to Vercel with environment variables:
+3. Deploy to Vercel (automatic via GitHub integration)
+4. Environment variables required:
    - `FRONTEND_KEY`: Same key as Apps Script
    - `APPS_SCRIPT_URL`: Your Apps Script web app URL
+   - `RENEWAL_PASSWORD`: Password for renewal page
+   - `EDGE_CONFIG`: Edge Config connection string (optional)
 
 **Architecture:**
 
-- Vercel serves static HTML + serverless API functions
+- Vercel serves static HTML + Edge/Serverless functions
+- Two-stage data loading: Edge Config (minimal) → Apps Script (detailed)
 - API functions proxy requests to Apps Script with `FRONTEND_KEY` authentication
 - Apps Script remains the single source of truth for data
+
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment instructions.
 
 ## ⚠️ Common Issues
 
@@ -631,20 +637,21 @@ const MAX_APPS_PER_SLIDE = 6;           // Maximum number of apps per slide (def
 - **Cafeteria** - Engage students during breaks
 - **Division offices** - Show division-specific apps
 
-**See [SIGNAGE.md](SIGNAGE.md) for complete documentation, setup instructions, and customization options.**
-
 ---
 
-## 📋 Phase 5: Future Features
-See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for planned advanced features:
+## 📋 Future Features
+
+Planned enhancements for the Digital Toolkit:
+
 - User favorites/bookmarks (with AI-suggested collections)
 - Ratings and reviews
-- Usage analytics
+- Usage analytics dashboard
 - Dark mode
 - Mobile PWA
-- Conversation history persistence
+- AI conversation history persistence
 - Multi-language AI support
 - Google Workspace SSO integration
+- Advanced renewal features (comparison mode, bulk actions, AI optimization)
 
 ---
 

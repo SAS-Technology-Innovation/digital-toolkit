@@ -1,60 +1,87 @@
-# AI Coding Instructions for SAS Digital Toolkit Dashboard
+# CLAUDE.md
 
-This is a **Google Apps Script web application** that provides a comprehensive dashboard for school application management at Singapore American School. Understanding the Google Apps Script environment and the specific business logic is crucial for effective development.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🎯 Project Architecture
+## 🎯 Project Overview
 
-### System Overview
-**Single-Page Web App with Google Sheets Backend:**
-- `Code.js`: Google Apps Script backend that processes Google Sheets data
-- `index.html`: Frontend SPA with embedded CSS/JS (no build process)
-- Data flow: Google Sheets → Apps Script → JSON → Frontend rendering
-- Deployment: Google Apps Script Web App with domain restrictions
+The **SAS Digital Toolkit Dashboard** is a Google Apps Script web application that displays educational applications for Singapore American School. Apps are categorized by school divisions with smart filtering and department grouping.
 
-### Core Business Logic
+### Core Components
 
-**Division-Based Organization:**
-- **Whole School**: Apps available to all divisions (Elementary + Middle + High)
-- **Elementary**: Elementary-specific apps + whole school apps
-- **Middle School**: Middle-specific apps + whole school apps
-- **High School**: High-specific apps + whole school apps
+- **[Code.js](Code.js)**: Google Apps Script backend (reads from Google Sheets, processes data)
+- **[index.html](index.html)**: Single-page frontend with embedded CSS/JS
+- **[signage.html](signage.html)**: Digital signage slideshow display (access via `?page=signage`)
+- **[appsscript.json](appsscript.json)**: Google Apps Script configuration
+- **[package.json](package.json)**: npm scripts for clasp-based deployment
 
-**App Categorization Rules:**
-```javascript
-// Whole School Apps (appear in all division tabs):
-const isEffectivelyWholeSchool =
-  licenseType.includes('site') ||           // Site licenses
-  licenseType.includes('school') ||         // School licenses
-  licenseType.includes('enterprise') ||     // Enterprise licenses
-  department === 'school operations' ||     // School Operations dept
-  department === 'school-wide' ||           // School-wide dept
-  division.includes('school-wide') ||       // School-wide division
-  (hasElementary && hasMiddle && hasHigh);   // Multi-division apps
+## 🏗️ Architecture & Critical Business Logic
+
+### Data Flow
+```
+Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard → User Interface
 ```
 
-**License-Based Filtering (within each tab):**
-- **"Apps Everyone Can Use"**: Site/School/Enterprise/Unlimited licenses + school-wide department
-- **"Department Apps"**: Individual/other licenses grouped by actual departments
+### Division Assignment Logic (Code.js)
 
-## 🔧 Technical Implementation
+Apps are categorized based on these business rules in [Code.js:304-410](Code.js#L304-L410) and [utilities.js:270-289](utilities.js#L270-L289):
 
-### Google Apps Script Specifics
+**Three-Tier Hierarchy:**
 
-**Backend Patterns:**
+1. **Enterprise Apps** (ONLY on Whole School tab):
+   - `Enterprise` column = TRUE checkbox
+   - Highest priority, premium styling
+   - Official SAS-approved core tools
+
+2. **Apps Everyone Can Use**:
+   - **Whole School tab**: Site/School/Enterprise/Unlimited licenses (non-Enterprise checkbox)
+   - **Division tabs**: ONLY division-specific "everyone" apps (excludes whole school apps)
+   - Site/School/Enterprise/Unlimited license types + NOT whole school
+
+3. **Department-Specific Apps**:
+   - Individual licenses or apps not in above categories
+   - Grouped by department with counts
+   - Filtered to exclude invalid department names
+
+**Whole School Determination**:
 ```javascript
-// Required function structure
-function doGet() {
-  return HtmlService.createTemplateFromFile('index').evaluate()
-    .setTitle('SAS Apps Dashboard')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
+// An app is "Whole School" if it meets ANY of these:
+const isEffectivelyWholeSchool =
+  licenseType.includes('site') ||
+  licenseType.includes('school') ||
+  licenseType.includes('enterprise') ||
+  licenseType.includes('unlimited') ||
+  department === 'school operations' ||
+  department === 'school-wide' ||
+  division.includes('school-wide') ||
+  division.includes('whole school') ||
+  (hasElementary && hasMiddle && hasHigh); // All 3 divisions listed
+```
 
-// Data processing with error handling
+**Key Rules:**
+- Enterprise apps NEVER appear on division tabs (Elementary/Middle/High)
+- Whole school apps do NOT appear in division tabs' "Everyone" section
+- Division tabs only show division-specific apps + department apps
+
+## 💻 Google Apps Script Environment
+
+### Critical Constraints
+- **No Node.js modules**: All dependencies via CDN (Tailwind CSS, Lucide Icons)
+- **No build process**: Everything embedded in HTML/JS files
+- **Backend-Frontend communication**: Must use `google.script.run` pattern
+- **Configuration**: Uses Script Properties (not hardcoded values)
+
+### Backend Pattern (Code.js)
+```javascript
+// Configuration via Script Properties (not in code)
+const scriptProperties = PropertiesService.getScriptProperties();
+const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+
+// Always wrap in try-catch
 function getDashboardData() {
   try {
     const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    const values = sheet.getDataRange().getValues();
-    // Process and return JSON
+    // ... processing
     return JSON.stringify(result);
   } catch (error) {
     Logger.log('Error: ' + error.message);
@@ -63,362 +90,571 @@ function getDashboardData() {
 }
 ```
 
-**Frontend Integration:**
+### Frontend Pattern (index.html)
 ```javascript
-// Always use google.script.run for backend calls
-google.script.run
-  .withSuccessHandler(renderDashboard)
-  .withFailureHandler(showError)
-  .getDashboardData();
-```
-
-### Data Structure Standards
-
-**Expected Google Sheets Columns (all lowercase):**
-- `active`: Boolean (TRUE/FALSE) - only TRUE apps are processed
-- `product_name`: String - application name
-- `division`: String - school divisions (SAS Elementary School, SAS Middle School, SAS High School, Whole School)
-- `grade_levels`: String - individual grades (Pre-K, Kindergarten, Grade 1, Grade 2, etc.)
-- `department`: String - actual department name (not division names)
-- `subjects`: String - subject area for tagging
-- `enterprise`: Boolean - official enterprise/core tool checkbox
-- `budget`: String - budget source (Office Of Learning, IT Operations, etc.)
-- `audience`: String - comma-separated (Teachers, Students, Parents, Staff)
-- `license_type`: String - license type (Site Licence, Inidividual, Enterprise, School)
-- `licence_count`: Number/String - number of licenses
-- `value`: Number - annual cost
-- `date_added`: Date - when app was added
-- `renewal_date`: Date - subscription renewal
-- `category`: String - application category
-- `website`: String - application URL
-- `description`: String - brief app description (1-2 sentences)
-- `support_email`: String - support contact
-- `tutorial_link`: String - training/help URL
-- `mobile_app`: String - mobile availability (Yes/No/iOS/Android)
-- `sso_enabled`: Boolean - SSO available
-- `logo_url`: String - app logo image URL
-
-**Note:** Column names changed from mixed-case to all lowercase. The `grade_levels` column now uses individual grades instead of ranges (e.g., "Pre-K, Kindergarten, Grade 1" not "K-5").
-
-**Backend Output Structure:**
-```javascript
-{
-  wholeSchool: {
-    apps: [...],           // All whole school apps
-    everyoneApps: [...],   // Apps everyone can use (site licenses)
-    byDepartment: {...}    // Department-grouped individual apps
-  },
-  elementary: {            // Elementary-specific + whole school
-    apps: [...],
-    everyoneApps: [...],
-    byDepartment: {...}
-  },
-  // ... same for middleSchool, highSchool
-  stats: {
-    totalApps: number,
-    wholeSchoolCount: number,
-    elementaryCount: number,
-    middleSchoolCount: number,
-    highSchoolCount: number
-  }
-}
-```
-
-## 🎨 Frontend Development
-
-### Architecture Principles
-- **No Build Process**: All dependencies via CDN
-- **Embedded Styles**: All CSS embedded in HTML for Apps Script compatibility
-- **Progressive Enhancement**: Works without complex JavaScript
-- **Responsive Design**: Mobile-first with Tailwind CSS
-
-### Key Components
-```javascript
-// Main rendering functions
-function renderDashboard(dataString) { /* Orchestrates UI rendering */ }
-function createAppCard(app) { /* Reusable app card component */ }
-function createDepartmentCard(department, apps) { /* Department container */ }
-function renderDivisionContent(divisionData, division) { /* Tab content */ }
-```
-
-### UI Patterns
-- **Tab Navigation**: Division-based tabs (Whole School, Elementary, Middle, High)
-- **Card Layout**: Consistent app cards with clickable titles
-- **Tag System**: Color-coded tags for categories, subjects, license types
-- **Department Grouping**: Collapsible department cards with app counts
-
-## 🚀 Development Workflow
-
-### Local Development
-```bash
-# No build tools required
-open index.html  # Uses empty mock data for UI testing
-```
-
-### Deployment Commands
-```bash
-npm run login        # First time Google Apps Script login
-npm run push         # Push code changes to Apps Script
-npm run deploy       # Create new web app deployment
-npm run logs         # View execution logs for debugging
-npm run pull         # Pull latest from Apps Script cloud
-```
-
-### GitHub Actions Deployment
-- **Auto-deploys**: On push to `main` branch
-- **Required Secrets**: `CLASP_CREDENTIALS`, `APPS_SCRIPT_ID`, and `APPS_SCRIPT_DEPLOYMENT_ID`.
-- **Manual Trigger**: Available via Actions tab
-
-## ⚠️ Critical Implementation Details
-
-### Department Filtering Logic
-```javascript
-// Filter out division names that appear in department column
-const divisionNames = [
-  'SAS Elementary School', 'SAS Early Learning Center',
-  'SAS Middle School', 'SAS High School',
-  'Elementary School', 'Early Learning Center',
-  'Middle School', 'High School',
-  'Elementary', 'Middle', 'High School'
-];
-
-// Only show valid departments
-const isValidDepartment = !divisionNames.some(divName => 
-  dept.toLowerCase().includes(divName.toLowerCase())
-) && dept !== 'N/A' && dept.trim() !== '';
-```
-
-### Responsive Grid System
-```css
-/* Uses CSS Grid for fluid layouts */
-.apps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.department-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-```
-
-### Error Handling Pattern
-```javascript
-// Backend error handling
-try {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  // Operations
-} catch (error) {
-  Logger.log('Error in getDashboardData: ' + error.message);
-  return JSON.stringify({ error: 'Failed to read data: ' + error.message });
-}
-
-// Frontend error handling
-function showError(error) {
-  document.getElementById('loading').style.display = 'none';
-  const errorContainer = document.getElementById('error');
-  errorContainer.style.display = 'block';
-  errorContainer.innerHTML = `<p>Error: ${error.message}</p>`;
-}
-```
-
-## 🔒 Security & Configuration
-
-### Google Apps Script Configuration
-```json
-// appsscript.json
-{
-  "timeZone": "Asia/Singapore",
-  "runtimeVersion": "V8",
-  "webapp": {
-    "executeAs": "USER_DEPLOYING",
-    "access": "DOMAIN"              // Domain-restricted access
-  }
-}
-```
-
-### Required Configuration Updates
-```javascript
-// Update these in Code.js before deployment
-const SPREADSHEET_ID = 'your-google-sheets-id';
-const SHEET_NAME = 'your-sheet-name';
-```
-
-## 📚 External Dependencies
-
-### CDN Dependencies (No npm packages)
-- **Tailwind CSS**: `https://cdn.tailwindcss.com`
-- **Lucide Icons**: `https://unpkg.com/lucide@latest/dist/umd/lucide.js`
-- **Google Fonts**: Poppins (body), Bebas Neue (headings)
-
-### Development Tools
-- **@google/clasp**: Google Apps Script CLI
-- **Node.js**: For npm scripts only
-
-## 🐛 Common Issues & Solutions
-
-### Development Issues
-1. **"Script not found"**: Check `.clasp.json` scriptId
-2. **Permission denied**: Run `npm run login` and verify access
-3. **Deployment fails**: Check Apps Script editor for syntax errors
-4. **Data not loading**: Verify SPREADSHEET_ID and SHEET_NAME
-
-### Business Logic Issues
-1. **Apps in wrong divisions**: Check division string matching logic
-2. **Division names as departments**: Verify department filtering array
-3. **Missing apps**: Check Active column filtering (must be TRUE)
-4. **Duplicate apps**: Ensure proper else-if logic in division assignment
-
-### Performance Optimization
-```javascript
-// Efficient data processing patterns
-const allApps = values
-  .map(row => convertToObject(row))      // Single pass conversion
-  .filter(app => app.Active === true)    // Early filtering
-  .map(app => cleanData(app));           // Clean transformation
-
-// Avoid multiple sheet reads
-const values = sheet.getDataRange().getValues(); // Single API call
-```
-
-## 🎯 Key Conventions
-
-### Naming Conventions
-- **Functions**: camelCase (`getDashboardData`, `renderDivisionContent`)
-- **Variables**: camelCase (`divisionData`, `everyoneApps`)
-- **CSS Classes**: kebab-case (`app-card`, `department-header`)
-- **IDs**: kebab-case with division prefix (`wholeSchool-content`)
-
-### Code Organization
-- **Backend**: All logic in `Code.js`, single file
-- **Frontend**: All code embedded in `index.html`
-- **No external files**: Everything self-contained for Apps Script
-
-### Testing Strategy
-- **Local UI**: Open `index.html` for interface testing
-- **Backend Logic**: Deploy to Apps Script for data testing
-- **Full Integration**: Test deployed web app with real data
-
----
-
-## 📝 Development Guidelines
-
-**When modifying this project:**
-
-1. **Test Locally First**: Always test UI changes with `index.html`
-2. **Maintain Data Structure**: Keep consistent JSON structure from backend
-3. **Follow Business Rules**: Respect division/department categorization logic
-4. **Use Modern JavaScript**: Leverage ES6+ features where supported
-5. **Keep It Simple**: Avoid complex build processes or external dependencies
-6. **Document Changes**: Update this file when business logic changes
-
-**Remember**: This is a Google Apps Script environment, not Node.js. All dependencies must be CDN-based, and the runtime has specific limitations and capabilities.
-
-## Architecture Overview
-
-**Single-Page Web App with Google Sheets Backend:**
-- `Code.js`: Google Apps Script backend that serves HTML and reads from Google Sheets
-- `index.html`: Frontend SPA with embedded CSS/JS (no build process)
-- Data flows: Google Sheets → Apps Script → JSON → Frontend rendering
-- Environment detection: Code checks for `google.script` availability, falls back to mock data for local testing
-
-## Key Development Patterns
-
-**Google Apps Script Specifics:**
-- Use `HtmlService.createTemplateFromFile('index')` to serve the HTML file
-- All backend functions must be in `Code.js` with Google Apps Script syntax
-- Frontend calls backend via `google.script.run.functionName()`
-- No Node.js modules - pure JavaScript/HTML with CDN dependencies
-
-**Data Processing Pattern:**
-```javascript
-// Apps Script reads from specific Google Sheets structure
-const headers = values.shift(); // First row contains column headers (all lowercase)
-// Expected headers: active, product_name, division, grade_levels, department, subjects, enterprise, budget, audience, license_type, licence_count, value, date_added, renewal_date, category, website, description, support_email, tutorial_link, mobile_app, sso_enabled, logo_url
-```
-
-**Division Categorization Logic:**
-- Apps are categorized into: Whole School, Elementary, Middle School, High School
-- Logic in `getDashboardData()` checks division strings and license types
-- Site/School/Enterprise licenses appear in "Apps Everyone Can Use" sections
-
-## Development Workflow
-
-**Local Development:**
-- Open `index.html` directly in browser (uses mock data)
-- No build tools or dev server required
-- Test with mock data structure matching real Google Sheets format
-
-**Deployment Commands:**
-```bash
-npm run login        # First time setup
-npm run push         # Deploy code changes
-npm run deploy       # Create new deployment
-npm run logs         # View execution logs
-```
-
-**GitHub Actions Deployment:**
-- Auto-deploys on push to `main` branch
-- Requires three secrets: `CLASP_CREDENTIALS`, `APPS_SCRIPT_ID`, and `APPS_SCRIPT_DEPLOYMENT_ID`.
-- Common failure: "No credentials found" means secret is missing or malformed
-- Solution: Run `npm run login` locally, then copy entire `.clasprc.json` to GitHub secret
-- The `.clasp.json` file is generated dynamically in the workflow from the `APPS_SCRIPT_ID` secret.
-
-**Configuration Requirements:**
-- Update `SPREADSHEET_ID` and `SHEET_NAME` in `Code.js` before deployment
-- Set `SPREADSHEET_ID` and `SHEET_NAME` in Script Properties before deployment
-- Google Sheets must match expected column structure
-- Apps Script project permissions must allow sheet access
-- Required OAuth scope: `https://www.googleapis.com/auth/spreadsheets.readonly` in `appsscript.json`
-
-## Critical Implementation Details
-
-**Responsive Grid System:**
-- Uses CSS Grid with `repeat(auto-fit, minmax())` for fluid layouts
-- Two card sizes: larger "everyone apps" vs smaller "department apps"
-- Division-specific color schemes applied via CSS classes
-
-**Error Handling Pattern:**
-```javascript
-// Always wrap Google Sheets operations in try-catch
-try {
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  // ... sheet operations
-} catch (e) {
-  return JSON.stringify({ error: `Could not retrieve data...` });
-}
-```
-
-**Environment Detection:**
-```javascript
-// Check for Apps Script environment
+// Environment detection for local testing vs deployed
 if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
-  google.script.run.withSuccessHandler(renderDashboard).getDashboardData();
+  google.script.run
+    .withSuccessHandler(renderDashboard)
+    .withFailureHandler(showError)
+    .getDashboardData();
 } else {
   renderDashboard(JSON.stringify(mockData)); // Local testing
 }
 ```
 
-## Unique Project Conventions
+### Expected Google Sheets Structure
+**Required columns in exact order** (all lowercase):
+1. `active`: Boolean (TRUE/FALSE) - only TRUE apps processed
+2. `product_name`: String - app name
+3. `division`: String - "SAS Elementary School", "SAS Middle School", "SAS High School", "Whole School", or combinations
+4. `grade_levels`: String - comma-separated individual grades from multi-select dropdown: "Pre-K, Kindergarten, Grade 1, Grade 2" (valid values: Pre-K, Kindergarten, Grade 1-12)
+5. `department`: String - department name (filters out division names)
+6. `subjects`: String - subject tags/categorization
+7. `enterprise`: Boolean (TRUE/FALSE) - **Enterprise checkbox (core SAS tools)**
+8. `budget`: String - "Office Of Learning", "IT Operations", "Communications", "Business Office" (exact capitalization for validation)
+9. `audience`: String - comma-separated: "Staff, Teachers, Students, Parents"
+10. `license_type`: String - "Site Licence" (British), "Inidividual" (typo intentional for validation), "Division License", "Free"
+11. `licence_count`: Number - number of licenses
+12. `value`: Number/String - cost/spend information
+13. `date_added`: Date - when app was added (YYYY-MM-DD)
+14. `renewal_date`: Date - subscription renewal date (YYYY-MM-DD)
+15. `category`: String - for tagging
+16. `website`: String - app URL
+17. `description`: String - 1-2 sentence app description
+18. `support_email`: String - support contact email
+19. `tutorial_link`: String - training/help URL
+20. `mobile_app`: String - "Yes", "No", or "iOS/Android"
+21. `sso_enabled`: Boolean (TRUE/FALSE) - single sign-on available
+22. `logo_url`: String - app logo/icon URL
 
-- **No package imports**: All dependencies via CDN (Tailwind, Lucide icons)
-- **Embedded styling**: All CSS embedded in `index.html` for Apps Script compatibility  
-- **Division-based filtering**: License types determine app visibility (site licenses = "everyone can use")
-- **Singapore timezone**: All Apps Script operations in Asia/Singapore timezone
-- **Domain-restricted deployment**: Web app access limited to SAS domain
+**Important Notes:**
+- All column names are **lowercase** (changed from mixed case)
+- `grade_levels` is in **4th position** (after division, before department)
+- Grade levels format changed from ranges (e.g., "K-5") to **comma-separated individual grades** (e.g., "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5" for Elementary apps)
+- Grade levels are **automatically inferred** during CSV import using Gemini API or rule-based logic from the division field
+- Data validation supports **multi-select dropdown** with comma-separated individual grade values
+- Valid individual grades: Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
+- `license_type` uses intentional typo "Inidividual" and British spelling "Site Licence" to match existing Google Sheets data validation
+- `budget` field uses specific capitalization "Office Of Learning" (capital O in "Of") for validation compatibility
 
-## Integration Points
+**Backwards Compatibility:**
+- Code.js supports both old (capitalized) and new (lowercase) column names for smooth migration
+- data-management.js CSV import handles both formats automatically
 
-**Google Apps Script APIs:**
-- `SpreadsheetApp.openById()` for sheet access
-- `HtmlService` for web app deployment
-- `Logger.log()` for debugging (view via `npm run logs`)
+**See [expected-data-template.csv](expected-data-template.csv) for example data.**
 
-**External Dependencies:**
-- Tailwind CSS via CDN for styling
-- Lucide icons for UI elements
-- Google Fonts (Bebas Neue, Poppins)
+## 🚀 Development Commands
 
-When modifying this project, always test locally first, ensure Google Sheets compatibility, and remember that Apps Script has different JavaScript capabilities than Node.js environments.
+### Setup (First Time)
+```bash
+# Clone the Apps Script project (creates .clasp.json)
+npx @google/clasp clone "YOUR_SCRIPT_ID"
+
+# Login to Google
+npm run login
+```
+
+### Daily Development
+```bash
+npm run push      # Push code changes to Apps Script
+npm run deploy    # Create new deployment
+npm run logs      # View execution logs
+npm run open      # Open Apps Script editor
+npm run pull      # Pull latest from cloud
+```
+
+### Testing Strategy
+- **Frontend only**: Open `index.html` locally (uses mock data)
+- **Full integration**: Deploy to Apps Script and test with real Google Sheets
+
+### Python Development Scripts
+
+**⚠️ These scripts are for LOCAL DEVELOPMENT ONLY - not used in production.**
+
+Production data management happens through the Google Sheets interface via Apps Script.
+
+#### merge-csvs.py
+**Purpose**: Merge EdTech Impact subscription data with existing Google Sheet data
+
+**Workflow**:
+1. Download fresh `EdTech_Impact.csv` from EdTech Impact platform
+2. Export current Google Sheet as CSV (e.g., `SAS Digital Toolkit (MASTER) - Apps.csv`)
+3. Run: `python3 merge-csvs.py`
+4. Imports `merged-import-data.csv` into Google Sheets
+5. **Delete all CSV files** (contain sensitive data - see `.gitignore`)
+
+**What it does**:
+- Syncs `active` status (TRUE if in EdTech Impact, FALSE if not)
+- Updates subscription fields: `licence_count`, `renewal_date`, `division`, `license_type`
+- **Preserves protected fields**: `department`, `subjects`, `enterprise` (never overwrites)
+- **Infers missing grade_levels** using rule-based logic from division field
+- Normalizes data validation fields (`budget`, `license_type`) to match Google Sheets validation
+
+**Grade Level Inference**:
+- Uses division field to determine applicable grades
+- Elementary → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+- Middle School → "Grade 6, Grade 7, Grade 8"
+- High School → "Grade 9, Grade 10, Grade 11, Grade 12"
+- Multiple divisions → combined grade list
+- Only fills in **empty** grade_levels (preserves existing values)
+
+**Output**: `merged-import-data.csv` with all lowercase column headers
+
+#### Other Utility Scripts
+- `sync-active-apps.py` - Simple active status sync (deprecated - use merge-csvs.py)
+- `fix-license-types.py` - Utility to fix license type validation mismatches
+
+**Important**: Always delete temporary CSV files after import - they contain sensitive school data and are excluded via `.gitignore`.
+
+## 🔧 Configuration
+
+### Script Properties Setup
+Configuration is **NOT in code**. Set via Apps Script Editor:
+1. Open project: `npm run open`
+2. Go to **Project Settings (⚙️) > Script Properties**
+3. Add required properties:
+   - `SPREADSHEET_ID`: Your Google Sheets ID (required)
+   - `SHEET_NAME`: Your sheet name (required)
+   - `GEMINI_API_KEY`: Gemini API key for user-facing AI features (required for AI chat)
+   - `CLAUDE_API_KEY`: Claude API key for admin data management (optional, for data enrichment only)
+
+### GitHub Actions Deployment
+Auto-deploys on push to `main`. Requires repository secrets:
+
+**For Apps Script Deployment (deploy.yml):**
+
+1. **`CLASP_CREDENTIALS`**: Run `npm run login`, then `cat ~/.config/clasp/.clasprc.json` and copy entire JSON
+2. **`APPS_SCRIPT_ID`**: Find in Apps Script Editor → Project Settings → IDs
+3. **`APPS_SCRIPT_DEPLOYMENT_ID`**: Find in Deploy → Manage deployments → Copy deployment ID
+
+**For Claude Code Integration (claude.yml, claude-code-review.yml):**
+
+- **`CLAUDE_CODE_OAUTH_TOKEN`**: OAuth token for Claude Code GitHub Action (get from Anthropic)
+
+**Note**: `.clasp.json` is NOT in repo. Created locally via `npx @google/clasp clone` or dynamically in GitHub Actions.
+
+### Vercel Deployment (Alternative Frontend)
+
+The dashboard can also be deployed to Vercel for faster loading and CDN distribution. See **[VERCEL.md](VERCEL.md)** for complete setup instructions.
+
+**Quick Setup:**
+
+1. Set `FRONTEND_KEY` in Apps Script Properties
+2. Deploy Apps Script: `npm run push && npm run deploy`
+3. Deploy to Vercel with environment variables:
+   - `FRONTEND_KEY`: Same key as Apps Script
+   - `APPS_SCRIPT_URL`: Your Apps Script web app URL
+
+**Architecture:**
+
+- Vercel serves static HTML + serverless API functions
+- API functions proxy requests to Apps Script with `FRONTEND_KEY` authentication
+- Apps Script remains the single source of truth for data
+
+## ⚠️ Common Issues
+
+### Configuration Errors
+- **"Configuration error: SPREADSHEET_ID not set"**: Set Script Properties (see above)
+- **"Script not found"**: Check `.clasp.json` has correct scriptId (local) or `APPS_SCRIPT_ID` secret (GitHub Actions)
+- **Permission denied**: Run `npm run login` and verify Google Sheets access
+
+### Business Logic Issues
+
+- **Apps in wrong division**: Check division string matching logic in [utilities.js:237-289](utilities.js#L237-L289)
+- **Division names appearing as departments**: Verify department filtering array matches actual division names
+- **Missing apps**: Ensure `Active` column is TRUE (case-insensitive)
+
+### Deployment Issues
+- **GitHub Actions "No credentials found"**: `CLASP_CREDENTIALS` secret must contain complete, valid JSON
+- **OAuth scope error**: Ensure `appsscript.json` includes `spreadsheets.readonly` scope
+
+## 🎨 Design Patterns & New Features
+
+### Three-Section Layout (per tab)
+1. **Enterprise Apps** (Whole School only): Premium gold styling, "Official SAS Core Tools"
+2. **Apps Everyone Can Use**: Blue/standard styling, site/school licenses
+3. **Department Apps**: Grouped by department with icons and counts
+
+### UI Components (index.html)
+- **Search Bar**: Global search across all fields (sticky, filters in real-time)
+- **Enterprise Section**: Premium gold gradient with border, award icon
+- **Tab Navigation**: Division-based tabs with color coding
+- **App Cards**: Enhanced with descriptions, audience tags, SSO/Mobile badges
+- **Audience Tags**: Color-coded (Staff=purple, Teachers=green, Students=yellow, Parents=pink)
+- **Meta Badges**: SSO (green), Mobile (blue) indicators
+- **Department Grouping**: Collapsible cards with app counts and icons
+- **Responsive Grid**: CSS Grid with `repeat(auto-fit, minmax(280px, 1fr))`
+
+### Search Functionality
+- Searches across: product name, category, subject, department, audience
+- Real-time filtering (hides non-matching cards)
+- Clear button to reset search
+- Hides empty sections when searching
+
+### Icon Assignment Logic
+Department icons auto-assigned based on keywords:
+- Technology/IT → Monitor
+- English/Language → Book
+- Math → Calculator
+- Science → Flask
+- Arts/Music → Palette
+- PE/Athletics → Activity
+
+## 🚀 Phase 3 Features (Recently Implemented)
+
+### Enhanced App Cards
+**Visual Enhancements:**
+- **App Logos**: Displays `logo_url` field with error handling (60x60px, top of card)
+- **Grade Level Badges**: Shows `grade_levels` with graduation cap icon (yellow badge)
+- **"NEW" Badge**: Animated badge for apps added in last 30 days (red gradient, top-right corner)
+- **Description Display**: Shows app descriptions from `description` field
+- **Action Buttons**: Tutorial link button (if `tutorial_link` exists) and Details button
+
+**Code Location:** [index.html:1221-1281](index.html#L1221-L1281) - `createAppCard()` function
+
+### App Detail Modal
+Interactive modal popup with comprehensive app information:
+- **Trigger**: "Details" button on app cards
+- **Content**: Full app details, description, license info, features, renewal date
+- **Actions**: Visit Website, View Tutorial buttons
+- **UX**: Click outside or press ESC to close, prevents body scroll
+
+**Code Location:** [index.html:1403-1557](index.html#L1403-L1557) - `showAppDetails()` and `closeModal()` functions
+
+**CSS Styles:** [index.html:741-960](index.html#L741-L960)
+
+### What's New Section
+Dynamic section showing recently added apps:
+- **Display Logic**: Only shows if apps added in last 30 days exist
+- **Placement**: Top of each division tab (before Enterprise/Everyone sections)
+- **Styling**: SAS Red themed container with gradient border
+- **Date Check**: Uses `isWithinDays()` helper to filter by `date_added` field
+
+**Code Location:**
+- HTML: Each division tab has `<div id="{division}-whats-new">` container
+- JS: [index.html:1320-1335](index.html#L1320-L1335) in `renderDivisionContent()`
+- CSS: [index.html:269-318](index.html#L269-L318)
+
+### SAS Brand Implementation
+**Colors Applied:**
+- Primary: SAS Blue (#1a2d58), SAS Red (#a0192a), Eagle Yellow (#fabc00)
+- Division colors: Elementary (#228ec2), Middle (#a0192a), High (#1a2d58)
+- Typography: Bebas Neue (headings), DM Sans (body text)
+
+**CSS Variables:** [index.html:12-30](index.html#L12-L30)
+
+### Date Handling
+**Helper Function**: `isWithinDays(dateString, days)`
+- Checks if `date_added` is within specified number of days
+- Used for "NEW" badge and "What's New" section
+- Handles invalid dates gracefully
+
+**Code Location:** [index.html:1284-1295](index.html#L1284-L1295)
+
+### Search Enhancements
+**Search Fields**: Now includes audience field in search
+- Searches: product name, category, subject, department, **audience**
+- Real-time filtering with section hiding for empty results
+
+**Code Location:** [index.html:1404-1453](index.html#L1404-L1453) - `setupSearch()` function
+
+### Data Attributes for Search
+All app cards include searchable data attributes:
+- `data-product`, `data-category`, `data-subject`, `data-department`, `data-audience`
+- Enables efficient client-side filtering
+
+**Implementation:** [index.html:1262](index.html#L1262) in `createAppCard()`
+
+## 🤖 Phase 4: AI-Powered Search & Recommendations
+
+### Dual AI Provider Integration (Implemented)
+The dashboard features **intelligent natural language search** with support for two AI providers:
+
+**AI Provider Roles:**
+- **Gemini (Production)**: Read-only queries, app recommendations, user-facing chat (default)
+- **Claude (Admin)**: Data enrichment, validation, and write operations for sheet management
+
+**User-Facing Features:**
+- **AI Toggle in Search Bar**: Click "AI" button to enable natural language queries
+- **Floating Chat Bubble**: Bottom-right corner bot icon for instant AI assistance
+- **Smart Recommendations**: Ask questions like "What can I use for collaborative writing with 8th graders?"
+- **Contextual Understanding**: AI analyzes grade levels, subjects, SSO, mobile support, and audience
+
+**Admin Features (Claude Only):**
+- **Data Enrichment**: Automatically generate missing descriptions
+- **Column Validation**: Detect and fill missing required fields
+- **Content Quality**: Ensure all apps have complete metadata
+- **Sheet Menu Integration**: Custom menu in Google Sheets for easy data management
+
+**Key Files:**
+
+- [ai-functions.js:81-196](ai-functions.js#L81-L196) - `queryAI()` main entry point
+- [ai-functions.js:210-273](ai-functions.js#L210-L273) - `queryGeminiAPI()` function
+- [ai-functions.js:287-355](ai-functions.js#L287-L355) - `queryClaudeAPI()` function
+- [index.html:3035-3165](index.html#L3035-L3165) - AI chat interface and message handling
+- [AI_FEATURES.md](AI_FEATURES.md) - Complete AI features documentation
+
+**Setup Required:**
+1. **For Gemini (Required for users)**:
+   - Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Add to Script Properties: `GEMINI_API_KEY` = your key
+
+2. **For Claude (Optional, admin only)**:
+   - Get API key from [Anthropic Console](https://console.anthropic.com/)
+   - Add to Script Properties: `CLAUDE_API_KEY` = your key
+
+**How It Works:**
+```
+User Query → queryAI(query, appsData, provider) → Gemini/Claude API
+→ Contextual Prompt + Apps Database → AI Response
+→ Smart Recommendations → Display in Chat
+```
+
+**API Provider Selection:**
+- Default: Gemini (faster, free tier available, user-facing)
+- Admin tools: Claude (better for structured data operations)
+- Configurable via `provider` parameter in `queryAI(query, data, provider)`
+
+**See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.**
+
+---
+
+## 🔧 Data Management & Quality Control
+
+### CSV/XLSX Import from EdTech Impact
+
+**Primary Data Source:** EdTech Impact platform exports
+
+The Digital Toolkit supports **automatic import and transformation** of app data from EdTech Impact CSV/XLSX exports.
+
+**Quick Workflow:**
+1. Export CSV/XLSX from EdTech Impact platform
+2. Go to **🤖 Digital Toolkit Admin → 📤 Upload CSV Data**
+3. Select update mode (Add & Update recommended)
+4. Upload file - system auto-detects EdTech Impact format
+5. Review statistics and verify import
+
+**Expected EdTech Impact Export Format:**
+```
+Product, Cancel by, Renews on, Price, Budget, Notes, Licences, Length, Source, Schools, Decision, Status
+```
+
+**Key Transformations:**
+- `Schools` → `Division` ("SAS Elementary School, SAS Middle School" → "Elementary, Middle")
+- `Price` → `value` (`[object Object]` → 0 = Free)
+- `Budget` → `Department` (IT Operations, Office of Learning, etc.)
+- `Status` → `Active` (boolean → TRUE/FALSE)
+- `Licences` → Infers `License Type` (>100 = Site, 1-100 = Individual, 0 = Unlimited)
+
+**Auto-Populated Fields:**
+- `Enterprise`: FALSE (default)
+- `audience`: "Teachers, Staff"
+- `grade_levels`: Inferred from division using Gemini API or rule-based logic
+  - Elementary: "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
+  - Middle School: "Grade 6, Grade 7, Grade 8"
+  - High School: "Grade 9, Grade 10, Grade 11, Grade 12"
+  - Multiple divisions: combined grade list
+- `category`: "Apps" (default)
+
+**See [EDTECH_IMPACT_IMPORT.md](EDTECH_IMPACT_IMPORT.md) for complete import guide.**
+
+**See [XLSX_IMPORT.md](XLSX_IMPORT.md) for technical XLSX/CSV processing details.**
+
+### Google Sheets Admin Menu
+When you open the Google Sheets containing your app data, a custom menu "🤖 Digital Toolkit Admin" appears with data management tools.
+
+**Menu Functions** (requires `CLAUDE_API_KEY` for AI features):
+
+1. **📊 Validate Data** ([data-management.js:38-95](data-management.js#L38-L95))
+   - Checks all active apps for required fields
+   - Reports missing: product_name, description, Division, Department, Category, Website
+   - Shows up to 20 issues with row numbers
+   - Logs full validation report to Apps Script Logger
+
+2. **🔍 Find Missing Fields** ([data-management.js:115-250](data-management.js#L115-L250))
+   - Generates comprehensive report of missing data
+   - Tracks: descriptions, categories, audience, grade levels, logos
+   - Shows first 5 apps missing each field type
+   - Reports total counts for each missing field type
+
+3. **✨ Enrich Missing Descriptions** ([data-management.js:269-385](data-management.js#L269-L385))
+   - Uses Claude AI to generate descriptions for apps missing them
+   - Processes up to 10 apps per run (rate limiting)
+   - Generates 1-2 sentence educational descriptions
+   - Automatically saves to sheet with immediate flushing
+
+4. **🔄 Refresh All Missing Data** ([data-management.js:399-550](data-management.js#L399-L550))
+   - Comprehensive data enrichment for ALL missing fields
+   - Fills in: descriptions, categories, audience, grade levels
+   - Processes up to 15 apps per run (quota protection)
+   - Uses intelligent prompts based on division, subject, website
+   - Includes 1-second rate limiting between requests
+
+5. **📈 Analyze AI Chat Patterns** ([ai-functions.js:857-927](ai-functions.js#L857-L927))
+   - Analyzes user AI chat interactions to identify missing apps
+   - Reports query types, top keywords, and recent queries
+   - Helps discover gaps in app database based on search patterns
+   - Requires "AI Chat Analytics" sheet with logged queries
+
+6. **🧪 Test Claude Connection** ([ai-functions.js:1102-1207](ai-functions.js#L1102-L1207))
+   - Validates `CLAUDE_API_KEY` configuration
+   - Tests Claude API connectivity with sample description generation
+   - Displays actual API response (first 200 characters)
+   - User-friendly success/failure alerts
+
+7. **🧪 Test Gemini Connection** ([ai-functions.js:997-1096](ai-functions.js#L997-L1096))
+   - Validates `GEMINI_API_KEY` configuration
+   - Tests Gemini API connectivity with simple prompt
+   - Confirms API key validity and working status
+   - Clear error messages with troubleshooting guidance
+
+### Data Enrichment Process
+
+**How Claude AI Enrichment Works:**
+
+1. **Description Generation** ([ai-functions.js:381-436](ai-functions.js#L381-L436)):
+   - Analyzes: app name, category, subject, website
+   - Generates factual, non-promotional 1-2 sentence descriptions
+   - Tailored for international school educators
+   - Uses Claude Sonnet 4.5 model with 150 max tokens
+
+2. **Full Data Enrichment** ([ai-functions.js:480-592](ai-functions.js#L480-L592)):
+   - Returns structured JSON with all missing fields
+   - Category selection from predefined list (Learning Management, Content Creation, etc.)
+   - Audience from: Teachers, Students, Staff, Parents
+   - Grade levels based on division context (K-5, 6-8, 9-12, K-12)
+   - Uses Claude Sonnet 4.5 model with 300 max tokens for richer data
+
+**Best Practices:**
+- Run "Find Missing Fields" first to identify scope
+- Use "Enrich Missing Descriptions" for quick description fixes
+- Use "Refresh All Missing Data" for comprehensive cleanup
+- Monitor Apps Script execution logs for API errors: `npm run logs`
+- Enrichment limits prevent quota exhaustion (10-15 apps per run)
+- Re-run as needed for large datasets
+
+**Requirements:**
+- `CLAUDE_API_KEY` must be set in Script Properties
+- Sheet must have proper column headers (case-sensitive)
+- Only processes apps where `Active` = TRUE
+
+**Error Handling:**
+- API errors logged to Apps Script Logger
+- Failed enrichments skip to next app
+- Immediate flush to sheet after each successful enrichment
+- User-friendly error alerts in Google Sheets UI
+
+**For complete data management workflow and troubleshooting, see [DATA_MANAGEMENT.md](DATA_MANAGEMENT.md).**
+
+### Automatic Logging System
+
+The dashboard includes automatic logging for audit trails and analytics.
+
+**Update Logs Sheet** ([data-management.js:553-600](data-management.js#L553-L600)):
+- Auto-created when first enrichment operation runs
+- Tracks: Timestamp, Operation, App Name, Row, Field, Old Value, New Value
+- Provides complete audit trail of all data changes
+- Silent failure to prevent disrupting enrichment operations
+
+**AI Chat Analytics Sheet** ([ai-functions.js:799-838](ai-functions.js#L799-L838)):
+- Auto-created when first AI query is processed
+- Logs: Timestamp, User Query, Apps Recommended, Response Length, Query Type
+- Auto-categorizes queries: General, Recommendation Request, Grade-Specific, Subject-Specific
+- Enables pattern analysis to identify missing apps
+
+**App Name Extraction** ([ai-functions.js:843-852](ai-functions.js#L843-L852)):
+- Extracts app names from AI responses using markdown pattern matching
+- Identifies apps mentioned in bold (**App Name**)
+- Returns comma-separated list of up to 5 apps or count if more
+- Used for "Apps Recommended" field in analytics
+
+**Integration Points:**
+- `logDataUpdate()` called in `enrichMissingDescriptions()` at line 835
+- `logDataUpdate()` called in `enrichAllMissingData()` at lines 921, 925, 929, 933
+- `logAIQuery()` called in `queryGeminiAPI()` at line 196
+- `logAIQuery()` called in `queryClaudeAPI()` at line 270
+
+**Usage:**
+- Logging happens automatically - no user action required
+- View logs by opening "Update Logs" or "AI Chat Analytics" sheets
+- Run "Analyze AI Chat Patterns" from menu for insights
+- Use logs to track changes, identify trends, and discover missing apps
+
+---
+
+## 📺 Digital Signage Display
+
+### Overview
+The **Digital Signage** feature provides a full-screen, auto-advancing slideshow designed for display on digital signage boards throughout the school.
+
+**Access:** Add `?page=signage` to your web app URL
+```
+https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?page=signage
+```
+
+### Key Features
+- **Auto-advancing slideshow** - 12-second intervals between slides
+- **Multiple slide types** - Welcome, Stats, Enterprise Apps, What's New, Spotlights, Division Apps
+- **Auto-refresh** - Fetches fresh data every 5 minutes
+- **SAS branded** - Uses official colors, fonts, and styling
+- **Full-screen optimized** - Designed for visibility from a distance
+- **Smooth animations** - Professional transitions and visual effects
+
+### Slide Types
+1. **Welcome Slide** - SAS branding and introduction
+2. **Stats Overview** - Key metrics with visual stat cards
+3. **Enterprise Apps** - Premium gold-styled core tools showcase
+4. **What's New** - Recently added apps (last 30 days) with red theme
+5. **App Spotlights** - Featured apps with detailed information
+6. **Division Apps** - Elementary, Middle, and High School app showcases
+
+### Configuration
+Edit settings in [signage.html](signage.html) around line 500:
+```javascript
+// Location: signage.html in <script> section
+const SLIDE_DURATION = 12000;           // Duration per slide in milliseconds (default: 12 seconds)
+const REFRESH_INTERVAL = 300000;        // Data refresh interval in milliseconds (default: 5 minutes)
+const NEW_APP_THRESHOLD_DAYS = 30;      // Days to consider app "new" (default: 30 days)
+const MAX_APPS_PER_SLIDE = 6;           // Maximum number of apps per slide (default: 6)
+```
+
+**Customization Tips:**
+- Increase `SLIDE_DURATION` for slower pace (e.g., 15000 = 15 seconds)
+- Decrease `REFRESH_INTERVAL` for more frequent updates (warning: uses quota)
+- Adjust `MAX_APPS_PER_SLIDE` based on screen size (4-8 recommended)
+
+### Use Cases
+- **Main entrance** - Welcome visitors and showcase tools
+- **Library** - Highlight educational resources
+- **Teacher lounges** - Keep staff informed
+- **Cafeteria** - Engage students during breaks
+- **Division offices** - Show division-specific apps
+
+**See [SIGNAGE.md](SIGNAGE.md) for complete documentation, setup instructions, and customization options.**
+
+---
+
+## 📋 Phase 5: Future Features
+See [UPCOMING_FEATURES.md](UPCOMING_FEATURES.md) for planned advanced features:
+- User favorites/bookmarks (with AI-suggested collections)
+- Ratings and reviews
+- Usage analytics
+- Dark mode
+- Mobile PWA
+- Conversation history persistence
+- Multi-language AI support
+- Google Workspace SSO integration
+
+---
+
+**Key Development Principles:**
+1. Test locally with `index.html` before deploying
+2. All business logic changes should update division/department categorization rules
+3. Never hardcode configuration - always use Script Properties (including API keys)
+4. Google Sheets column names are case-sensitive and must match exactly
+5. Always provide clickable file references using `[filename:line](path#Lline)` format
+6. **AI Provider Usage:**
+   - Gemini: User-facing recommendations (requires `GEMINI_API_KEY`)
+   - Claude: Admin data enrichment and validation (requires `CLAUDE_API_KEY`)
+7. Data management operations should ONLY use Claude API to prevent accidental user-triggered writes

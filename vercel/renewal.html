@@ -307,6 +307,11 @@
       border-left-color: var(--sas-red);
     }
 
+    .stat-card.primary {
+      border-left-color: var(--sas-blue);
+      background: #eff6ff;
+    }
+
     .stat-card.success {
       border-left-color: #10b981;
     }
@@ -322,6 +327,101 @@
       font-size: 0.875rem;
       color: #666;
       margin-top: 4px;
+    }
+
+    .stat-sublabel {
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* Cost Breakdown Section */
+    .cost-breakdown {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .breakdown-section h4 {
+      margin: 0 0 12px 0;
+      color: #374151;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .breakdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .breakdown-item {
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .breakdown-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .breakdown-name {
+      font-weight: 600;
+      color: #111827;
+      font-size: 0.875rem;
+    }
+
+    .breakdown-total {
+      font-weight: 700;
+      color: var(--sas-blue);
+      font-size: 0.875rem;
+    }
+
+    .breakdown-bar-container {
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .breakdown-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--sas-blue), #3b82f6);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .breakdown-details {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .breakdown-renewed {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .breakdown-none {
+      color: #9ca3af;
     }
 
     /* Filter Section */
@@ -1272,14 +1372,340 @@
       border-radius: 4px;
     }
 
+    /* ============================================================ */
+    /* NEW FEATURES - DATA TABLE ENHANCEMENTS */
+    /* ============================================================ */
+
+    /* Secondary filter bar */
+    .filter-bar-secondary {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    /* View Toggle Buttons */
+    .btn-group {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .btn-toggle {
+      padding: 8px 16px;
+      border: none;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      font-size: 0.875rem;
+      color: #374151;
+    }
+
+    .btn-toggle:not(:last-child) {
+      border-right: 1px solid #d1d5db;
+    }
+
+    .btn-toggle:hover {
+      background: #f9fafb;
+    }
+
+    .btn-toggle.active {
+      background: var(--sas-blue);
+      color: white;
+    }
+
+    /* Table View Styles */
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-top: 16px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .data-table th {
+      background: #f9fafb;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e5e7eb;
+      white-space: nowrap;
+      color: #374151;
+    }
+
+    .data-table th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .data-table th.sortable:hover {
+      background: #f3f4f6;
+    }
+
+    .data-table th.active {
+      background: #dbeafe;
+      color: var(--sas-blue);
+    }
+
+    .data-table .sort-arrow {
+      margin-left: 4px;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .data-table td {
+      padding: 12px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    .data-table tbody tr.selected {
+      background: #dbeafe;
+    }
+
+    .table-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .table-product {
+      font-weight: 500;
+      color: #111827;
+    }
+
+    .table-cost {
+      font-weight: 600;
+      color: var(--sas-blue);
+    }
+
+    .table-actions {
+      white-space: nowrap;
+    }
+
+    .btn-group-compact {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-xs {
+      padding: 4px 8px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      font-weight: 500;
+    }
+
+    .btn-xs:hover {
+      opacity: 0.85;
+    }
+
+    .btn-success { background: #10b981; color: white; }
+    .btn-warning { background: #f59e0b; color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-info { background: #3b82f6; color: white; }
+
+    /* Cost Range Slider */
+    .cost-range-filter {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 220px;
+    }
+
+    .cost-range-filter label {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .cost-range-filter input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e5e7eb;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .cost-range-filter input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--sas-blue);
+      cursor: pointer;
+    }
+
+    .cost-range-filter input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--sas-blue);
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Comparison View */
+    .comparison-container {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 16px;
+    }
+
+    .comparison-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .comparison-header h3 {
+      margin: 0;
+      color: #111827;
+      font-size: 1.25rem;
+    }
+
+    .comparison-grid {
+      overflow-x: auto;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    .comparison-table thead th {
+      background: var(--sas-blue);
+      color: white;
+      font-weight: 600;
+    }
+
+    .comparison-table .metric-label {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    /* Badge */
+    .badge {
+      background: #ef4444;
+      color: white;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 11px;
+      margin-left: 4px;
+      font-weight: 600;
+    }
+
+    /* Dropdown */
+    .dropdown {
+      position: relative;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin-top: 4px;
+      min-width: 150px;
+      z-index: 1000;
+    }
+
+    .dropdown-menu.active {
+      display: block;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 10px 16px;
+      color: #374151;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .dropdown-menu a:hover {
+      background: #f9fafb;
+    }
+
+    .dropdown-menu a:first-child {
+      border-radius: 6px 6px 0 0;
+    }
+
+    .dropdown-menu a:last-child {
+      border-radius: 0 0 6px 6px;
+    }
+
+    /* Secondary button for actions */
+    .btn-secondary.active {
+      background: var(--sas-blue);
+      color: white;
+    }
+
+    /* Spinner animation for AI loading */
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+
     /* Responsive updates */
     @media (max-width: 768px) {
+      .filter-bar, .filter-bar-secondary {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
       .view-controls {
         flex-direction: column;
         align-items: stretch;
       }
 
       .cost-range-filter {
+        min-width: auto;
+        width: 100%;
+      }
+
+      .btn-group {
+        width: 100%;
+      }
+
+      .btn-secondary {
+        flex: 1;
         min-width: auto;
       }
 
@@ -1298,6 +1724,16 @@
 
       .comparison-grid {
         grid-template-columns: 1fr;
+      }
+
+      .comparison-table {
+        min-width: 600px;
+      }
+
+      .comparison-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
       }
     }
   </style>
@@ -1373,6 +1809,7 @@
 
     <!-- Filter Section -->
     <section class="filter-section">
+      <!-- Row 1: Search and Filters -->
       <div class="filter-bar">
         <div class="search-wrapper">
           <i data-lucide="search" class="search-icon" style="width: 16px; height: 16px;"></i>
@@ -1419,7 +1856,59 @@
           </select>
         </div>
       </div>
+
+      <!-- Row 2: View Controls and Actions -->
+      <div class="filter-bar filter-bar-secondary">
+        <!-- View Mode Toggle -->
+        <div class="btn-group">
+          <button class="btn-toggle active" id="view-card" onclick="setViewMode('card')">
+            <i data-lucide="layout-grid" style="width: 16px; height: 16px;"></i> Cards
+          </button>
+          <button class="btn-toggle" id="view-table" onclick="setViewMode('table')">
+            <i data-lucide="table-2" style="width: 16px; height: 16px;"></i> Table
+          </button>
+        </div>
+
+        <!-- Cost Range Filter -->
+        <div class="cost-range-filter">
+          <label style="font-size: 0.875rem; color: #6b7280; margin-bottom: 4px;">
+            Cost: <span id="cost-range-display" style="color: #1a2d58; font-weight: 600;">$0 - $100k+</span>
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="range" id="cost-min" min="0" max="100000" step="1000" value="0" style="flex: 1;">
+            <input type="range" id="cost-max" min="0" max="100000" step="1000" value="100000" style="flex: 1;">
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <button class="btn-secondary" id="compare-toggle" onclick="toggleCompareMode()">
+          <i data-lucide="git-compare" style="width: 16px; height: 16px;"></i> Compare
+          <span id="compare-count" class="badge" style="display:none">0</span>
+        </button>
+
+        <button class="btn-secondary" onclick="showComparison()">
+          <i data-lucide="columns" style="width: 16px; height: 16px;"></i> View Comparison
+        </button>
+
+        <button class="btn-secondary" id="ai-optimize" onclick="toggleAIPanel()">
+          <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> AI Optimize
+        </button>
+
+        <div class="dropdown">
+          <button class="btn-secondary" onclick="toggleExportMenu()">
+            <i data-lucide="download" style="width: 16px; height: 16px;"></i> Export ▼
+          </button>
+          <div class="dropdown-menu" id="export-menu">
+            <a onclick="exportReport('csv')">Export as CSV</a>
+            <a onclick="exportReport('excel')">Export as Excel</a>
+            <a onclick="exportReport('pdf')">Export as PDF</a>
+          </div>
+        </div>
+      </div>
     </section>
+
+    <!-- AI Panel -->
+    <div id="ai-panel" style="display: none;"></div>
 
     <!-- Timeline Section -->
     <section class="timeline-section" id="timeline-section">
@@ -1476,6 +1965,57 @@
     let allApps = [];
     let filteredApps = [];
     let isAuthenticated = false;
+
+    // ============================================================
+    // DATA TABLE STATE
+    // ============================================================
+    const dataTable = {
+      // View configuration
+      viewMode: 'card',              // 'card' | 'table' | 'comparison'
+      previousViewMode: 'card',      // Track previous view for back navigation
+
+      // Sort state
+      sortColumn: 'renewalDate',     // Column to sort by
+      sortDirection: 'asc',          // 'asc' | 'desc'
+
+      // Selection state
+      selectedApps: new Set(),       // App product names
+      compareMode: false,            // Enable comparison checkboxes
+
+      // Renewal decisions tracking
+      renewalDecisions: {},          // { productName: 'renew' | 'modify' | 'retire' }
+
+      // Filter state (additional to existing filters)
+      costRange: {
+        min: 0,
+        max: 100000,
+        currentMin: 0,
+        currentMax: 100000
+      },
+
+      // AI state
+      aiPanel: {
+        visible: false,
+        loading: false,
+        recommendations: null,
+        provider: 'claude' // AI provider: 'claude' | 'gemini' (configurable)
+      },
+
+      // Column definitions for table view
+      columns: [
+        { id: 'select', label: '', sortable: false, width: '40px' },
+        { id: 'logo', label: '', sortable: false, width: '60px' },
+        { id: 'product', label: 'App Name', sortable: true, width: 'auto' },
+        { id: 'division', label: 'Division', sortable: true, width: '120px' },
+        { id: 'department', label: 'Department', sortable: true, width: '150px' },
+        { id: 'spend', label: 'Annual Cost', sortable: true, width: '120px' },
+        { id: 'licenses', label: 'Licenses', sortable: true, width: '100px' },
+        { id: 'licenseType', label: 'Type', sortable: true, width: '100px' },
+        { id: 'renewalDate', label: 'Renewal Date', sortable: true, width: '130px' },
+        { id: 'status', label: 'Status', sortable: false, width: '100px' },
+        { id: 'actions', label: 'Actions', sortable: false, width: '150px' }
+      ]
+    };
 
     // ============================================================
     // INITIALIZATION
@@ -1602,27 +2142,101 @@
           .withFailureHandler(handleDataError)
           .getDashboardData();
       } else {
-        // Vercel environment - always fetch fresh data from Apps Script
-        fetch('/api/data')
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
+        // Vercel environment - two-stage loading for performance
+        // Stage 1: Load minimal data from Edge Config (fast)
+        // Stage 2: Load detailed data from Apps Script (background)
+        loadTwoStageData();
+      }
+    }
+
+    // Two-stage data loading for optimal performance
+    async function loadTwoStageData() {
+      try {
+        // Stage 1: Load minimal data from Edge Config (very fast)
+        console.log('[Stage 1] Loading minimal data from Edge Config...');
+        const minimalResponse = await fetch('/api/renewal-data');
+
+        if (!minimalResponse.ok) {
+          throw new Error(`Failed to load minimal data: ${minimalResponse.status}`);
+        }
+
+        const minimalData = await minimalResponse.json();
+        const dataSource = minimalResponse.headers.get('X-Data-Source') || 'unknown';
+        console.log(`[Stage 1] Loaded minimal data from: ${dataSource}`);
+
+        // Immediately render with minimal data (filters, search, basic display)
+        appData = minimalData;
+        allApps = getAllApps();
+        filteredApps = [...allApps];
+
+        // Show the UI with minimal data (fast initial paint)
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('timeline-section').style.display = 'block';
+
+        // Render what we can with minimal data
+        renderStats(); // Will show 0 costs until details load
+        applyFilters();
+
+        console.log(`[Stage 1] Rendered ${allApps.length} apps with minimal data`);
+
+        // Stage 2: Load detailed data in background
+        console.log('[Stage 2] Loading detailed data from Apps Script...');
+        loadDetailedData(allApps.map(app => app.product));
+
+      } catch (error) {
+        console.error('Error in two-stage loading:', error);
+        // Fallback to mock data for local testing
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log('Using mock data for local testing');
+          setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
+        } else {
+          handleDataError('Failed to load renewal data: ' + error.message);
+        }
+      }
+    }
+
+    // Load detailed app data from Apps Script
+    async function loadDetailedData(productNames) {
+      try {
+        const response = await fetch('/api/renewal-details', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            products: productNames
           })
-          .then(data => {
-            handleDataLoaded(JSON.stringify(data));
-          })
-          .catch(error => {
-            console.error('Error loading data:', error);
-            // Fallback to mock data for local testing
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-              console.log('Using mock data for local testing');
-              setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
-            } else {
-              handleDataError('Failed to load renewal data: ' + error.message);
-            }
-          });
+        });
+
+        if (!response.ok) {
+          console.error('Failed to load detailed data:', response.status);
+          return; // Don't fail - just continue with minimal data
+        }
+
+        const result = await response.json();
+        console.log(`[Stage 2] Loaded details for ${result.count} apps`);
+
+        // Merge detailed data into existing apps
+        allApps.forEach(app => {
+          if (result.apps[app.product]) {
+            Object.assign(app, result.apps[app.product]);
+          }
+        });
+
+        // Re-initialize cost range now that we have cost data
+        initializeCostRange();
+
+        // Update stats with real cost data
+        renderStats();
+
+        // Re-render to show detailed fields (logos, descriptions, etc.)
+        applyFilters();
+
+        console.log('[Stage 2] Detailed data loaded and merged successfully');
+
+      } catch (error) {
+        console.error('Error loading detailed data:', error);
+        // Don't fail - continue with minimal data
       }
     }
 
@@ -1637,6 +2251,9 @@
         // Flatten all apps into a single array
         allApps = getAllApps();
         filteredApps = [...allApps];
+
+        // Initialize cost range filter
+        initializeCostRange();
 
         renderStats();
         applyFilters();
@@ -1689,39 +2306,137 @@
     // ============================================================
     // STATS RENDERING
     // ============================================================
+    // ============================================================
+    // COST CALCULATIONS
+    // ============================================================
+
+    function calculateCosts() {
+      const costs = {
+        overall: { total: 0, renewed: 0, count: 0, renewedCount: 0 },
+        byDivision: {},
+        byDepartment: {},
+        bySubject: {},
+        byBudget: {}
+      };
+
+      // Process each app
+      filteredApps.forEach(app => {
+        const cost = parseCost(app.spend);
+        const isRenewed = dataTable.renewalDecisions?.[app.product] === 'renew';
+
+        // Overall totals
+        costs.overall.total += cost;
+        costs.overall.count++;
+        if (isRenewed) {
+          costs.overall.renewed += cost;
+          costs.overall.renewedCount++;
+        }
+
+        // By Division
+        const divisions = getDivisionsList(app.division);
+        divisions.forEach(div => {
+          if (!costs.byDivision[div]) {
+            costs.byDivision[div] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+          }
+          costs.byDivision[div].total += cost;
+          costs.byDivision[div].count++;
+          if (isRenewed) {
+            costs.byDivision[div].renewed += cost;
+            costs.byDivision[div].renewedCount++;
+          }
+        });
+
+        // By Department
+        const dept = app.department || 'Uncategorized';
+        if (!costs.byDepartment[dept]) {
+          costs.byDepartment[dept] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+        }
+        costs.byDepartment[dept].total += cost;
+        costs.byDepartment[dept].count++;
+        if (isRenewed) {
+          costs.byDepartment[dept].renewed += cost;
+          costs.byDepartment[dept].renewedCount++;
+        }
+
+        // By Subject
+        const subjects = (app.subjects || app.subject || '').split(',').map(s => s.trim()).filter(s => s);
+        subjects.forEach(subj => {
+          if (!costs.bySubject[subj]) {
+            costs.bySubject[subj] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+          }
+          costs.bySubject[subj].total += cost;
+          costs.bySubject[subj].count++;
+          if (isRenewed) {
+            costs.bySubject[subj].renewed += cost;
+            costs.bySubject[subj].renewedCount++;
+          }
+        });
+
+        // By Budget
+        const budget = app.budget || 'Uncategorized';
+        if (!costs.byBudget[budget]) {
+          costs.byBudget[budget] = { total: 0, renewed: 0, count: 0, renewedCount: 0 };
+        }
+        costs.byBudget[budget].total += cost;
+        costs.byBudget[budget].count++;
+        if (isRenewed) {
+          costs.byBudget[budget].renewed += cost;
+          costs.byBudget[budget].renewedCount++;
+        }
+      });
+
+      return costs;
+    }
+
+    function getDivisionsList(division) {
+      const div = (division || '').toLowerCase();
+      const divisions = [];
+
+      if (div.includes('whole') || div.includes('school-wide')) {
+        divisions.push('Whole School');
+      }
+      if (div.includes('elementary')) {
+        divisions.push('Elementary');
+      }
+      if (div.includes('middle')) {
+        divisions.push('Middle School');
+      }
+      if (div.includes('high')) {
+        divisions.push('High School');
+      }
+
+      return divisions.length > 0 ? divisions : ['General'];
+    }
+
     function renderStats() {
       const now = new Date();
+      const costs = calculateCosts();
 
-      // Calculate stats
-      const overdue = allApps.filter(app => {
+      // Calculate renewal timeline stats
+      const overdue = filteredApps.filter(app => {
         if (!app.renewalDate) return false;
         const date = new Date(app.renewalDate);
         return date < now;
       }).length;
 
-      const next30 = allApps.filter(app => {
+      const next30 = filteredApps.filter(app => {
         if (!app.renewalDate) return false;
         const date = new Date(app.renewalDate);
         const diff = (date - now) / (1000 * 60 * 60 * 24);
         return diff >= 0 && diff <= 30;
       }).length;
 
-      const next90 = allApps.filter(app => {
+      const next90 = filteredApps.filter(app => {
         if (!app.renewalDate) return false;
         const date = new Date(app.renewalDate);
         const diff = (date - now) / (1000 * 60 * 60 * 24);
         return diff > 30 && diff <= 90;
       }).length;
 
-      const noDate = allApps.filter(app => !app.renewalDate).length;
-
-      const totalSpend = allApps.reduce((sum, app) => {
-        if (app.spend === 'Free' || app.spend === 'N/A') return sum;
-        const value = parseFloat(app.spend);
-        return sum + (isNaN(value) ? 0 : value);
-      }, 0);
-
-      const totalLicenses = allApps.reduce((sum, app) => sum + (app.licenses || 0), 0);
+      const savings = costs.overall.total - costs.overall.renewed;
+      const savingsPercent = costs.overall.total > 0
+        ? ((savings / costs.overall.total) * 100).toFixed(1)
+        : 0;
 
       document.getElementById('stats-grid').innerHTML = `
         <div class="stat-card danger">
@@ -1737,16 +2452,142 @@
           <div class="stat-label">Due in 31-90 Days</div>
         </div>
         <div class="stat-card success">
-          <div class="stat-value">${allApps.length}</div>
+          <div class="stat-value">${filteredApps.length}</div>
           <div class="stat-label">Total Subscriptions</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">$${formatNumber(totalSpend)}</div>
-          <div class="stat-label">Total Annual Spend</div>
+          <div class="stat-value">$${formatNumber(costs.overall.total)}</div>
+          <div class="stat-label">Total Annual Cost</div>
+          <div class="stat-sublabel">${costs.overall.count} apps</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value">${formatNumber(totalLicenses)}</div>
-          <div class="stat-label">Total Licenses</div>
+        <div class="stat-card ${costs.overall.renewedCount > 0 ? 'primary' : ''}">
+          <div class="stat-value">$${formatNumber(costs.overall.renewed)}</div>
+          <div class="stat-label">Renewal Cost</div>
+          <div class="stat-sublabel">${costs.overall.renewedCount} apps marked to renew</div>
+        </div>
+        ${costs.overall.renewedCount > 0 ? `
+          <div class="stat-card ${savings > 0 ? 'success' : 'warning'}">
+            <div class="stat-value">$${formatNumber(savings)}</div>
+            <div class="stat-label">${savings >= 0 ? 'Potential Savings' : 'Over Budget'}</div>
+            <div class="stat-sublabel">${savingsPercent}% ${savings >= 0 ? 'reduction' : 'increase'}</div>
+          </div>
+        ` : ''}
+      `;
+
+      // Render cost breakdown if there are renewal decisions
+      if (costs.overall.renewedCount > 0) {
+        renderCostBreakdown(costs);
+      } else {
+        const breakdownEl = document.getElementById('cost-breakdown');
+        if (breakdownEl) breakdownEl.style.display = 'none';
+      }
+    }
+
+    function renderCostBreakdown(costs) {
+      let breakdownEl = document.getElementById('cost-breakdown');
+
+      if (!breakdownEl) {
+        // Create breakdown section if it doesn't exist
+        const statsSection = document.querySelector('.stats-section');
+        breakdownEl = document.createElement('div');
+        breakdownEl.id = 'cost-breakdown';
+        breakdownEl.className = 'cost-breakdown';
+        statsSection.appendChild(breakdownEl);
+      }
+
+      breakdownEl.style.display = 'block';
+
+      // Get top items by cost
+      const topDivisions = Object.entries(costs.byDivision)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5);
+
+      const topDepartments = Object.entries(costs.byDepartment)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5);
+
+      const topBudgets = Object.entries(costs.byBudget)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5);
+
+      breakdownEl.innerHTML = `
+        <h3 style="margin: 0 0 16px 0; color: #111827; font-size: 1.125rem;">Cost Breakdown</h3>
+
+        <div class="breakdown-grid">
+          <div class="breakdown-section">
+            <h4>By Division</h4>
+            <div class="breakdown-list">
+              ${topDivisions.map(([name, data]) => `
+                <div class="breakdown-item">
+                  <div class="breakdown-item-header">
+                    <span class="breakdown-name">${name}</span>
+                    <span class="breakdown-total">$${formatNumber(data.total)}</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar" style="width: ${(data.total / costs.overall.total * 100).toFixed(1)}%"></div>
+                  </div>
+                  <div class="breakdown-details">
+                    <span>${data.count} apps</span>
+                    ${data.renewedCount > 0 ? `
+                      <span class="breakdown-renewed">
+                        ${data.renewedCount} renewed ($${formatNumber(data.renewed)})
+                      </span>
+                    ` : '<span class="breakdown-none">None renewed</span>'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="breakdown-section">
+            <h4>By Department</h4>
+            <div class="breakdown-list">
+              ${topDepartments.map(([name, data]) => `
+                <div class="breakdown-item">
+                  <div class="breakdown-item-header">
+                    <span class="breakdown-name">${name}</span>
+                    <span class="breakdown-total">$${formatNumber(data.total)}</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar" style="width: ${(data.total / costs.overall.total * 100).toFixed(1)}%"></div>
+                  </div>
+                  <div class="breakdown-details">
+                    <span>${data.count} apps</span>
+                    ${data.renewedCount > 0 ? `
+                      <span class="breakdown-renewed">
+                        ${data.renewedCount} renewed ($${formatNumber(data.renewed)})
+                      </span>
+                    ` : '<span class="breakdown-none">None renewed</span>'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="breakdown-section">
+            <h4>By Budget Owner</h4>
+            <div class="breakdown-list">
+              ${topBudgets.map(([name, data]) => `
+                <div class="breakdown-item">
+                  <div class="breakdown-item-header">
+                    <span class="breakdown-name">${name}</span>
+                    <span class="breakdown-total">$${formatNumber(data.total)}</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar" style="width: ${(data.total / costs.overall.total * 100).toFixed(1)}%"></div>
+                  </div>
+                  <div class="breakdown-details">
+                    <span>${data.count} apps</span>
+                    ${data.renewedCount > 0 ? `
+                      <span class="breakdown-renewed">
+                        ${data.renewedCount} renewed ($${formatNumber(data.renewed)})
+                      </span>
+                    ` : '<span class="breakdown-none">None renewed</span>'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
         </div>
       `;
     }
@@ -1813,6 +2654,14 @@
           if (app.budget !== budget) return false;
         }
 
+        // Cost range filter
+        if (dataTable.costRange.currentMin > 0 || dataTable.costRange.currentMax < dataTable.costRange.max) {
+          const cost = parseCost(app.spend);
+          if (cost < dataTable.costRange.currentMin || cost > dataTable.costRange.currentMax) {
+            return false;
+          }
+        }
+
         return true;
       });
 
@@ -1834,21 +2683,94 @@
         }
       });
 
-      renderTimeline();
+      renderDataTable();
     }
 
-    function parseCost(spend) {
-      if (spend === 'Free' || spend === 'N/A') return 0;
-      const value = parseFloat(spend);
-      return isNaN(value) ? 0 : value;
+    // Cost range slider functions
+    function initializeCostRange() {
+      // Calculate min/max from all apps
+      const costs = allApps.map(app => parseCost(app.spend)).filter(c => c > 0);
+      if (costs.length > 0) {
+        dataTable.costRange.max = Math.max(...costs);
+        dataTable.costRange.currentMax = dataTable.costRange.max;
+      }
+
+      // Set slider max
+      const costMaxSlider = document.getElementById('cost-max');
+      if (costMaxSlider) {
+        costMaxSlider.max = dataTable.costRange.max;
+        costMaxSlider.value = dataTable.costRange.max;
+      }
+
+      // Add event listeners
+      const costMinSlider = document.getElementById('cost-min');
+      const costMaxSlider2 = document.getElementById('cost-max');
+
+      if (costMinSlider) {
+        costMinSlider.addEventListener('input', updateCostRange);
+      }
+      if (costMaxSlider2) {
+        costMaxSlider2.addEventListener('input', updateCostRange);
+      }
+    }
+
+    function updateCostRange() {
+      const min = parseInt(document.getElementById('cost-min')?.value || 0);
+      const max = parseInt(document.getElementById('cost-max')?.value || 100000);
+
+      // Ensure min doesn't exceed max
+      dataTable.costRange.currentMin = Math.min(min, max);
+      dataTable.costRange.currentMax = Math.max(min, max);
+
+      // Update display
+      const display = document.getElementById('cost-range-display');
+      if (display) {
+        const minFormatted = dataTable.costRange.currentMin === 0 ? '$0' : `$${formatNumber(dataTable.costRange.currentMin)}`;
+        const maxFormatted = dataTable.costRange.currentMax >= dataTable.costRange.max ? `$${formatNumber(Math.floor(dataTable.costRange.max/1000))}k+` : `$${formatNumber(dataTable.costRange.currentMax)}`;
+        display.textContent = `${minFormatted} - ${maxFormatted}`;
+      }
+
+      // Re-filter
+      applyFilters();
     }
 
     // ============================================================
     // TIMELINE RENDERING
     // ============================================================
-    function renderTimeline() {
-      const now = new Date();
+    // ============================================================
+    // UNIFIED RENDERING SYSTEM
+    // ============================================================
+
+    function renderDataTable() {
       const container = document.getElementById('timeline-content');
+
+      // Render based on view mode
+      let html = '';
+      switch (dataTable.viewMode) {
+        case 'card':
+          html = renderCardView();
+          break;
+        case 'table':
+          html = renderTableView();
+          break;
+        case 'comparison':
+          html = renderComparisonView();
+          break;
+        default:
+          html = renderCardView();
+      }
+
+      container.innerHTML = html;
+      document.getElementById('apps-count').textContent = `${filteredApps.length} of ${allApps.length} apps`;
+
+      // Initialize Lucide icons
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }
+
+    function renderCardView() {
+      const now = new Date();
 
       // Group apps by timeline category
       const groups = {
@@ -1908,9 +2830,175 @@
         `;
       }
 
-      container.innerHTML = html;
-      document.getElementById('apps-count').textContent = `${filteredApps.length} of ${allApps.length} apps`;
-      lucide.createIcons();
+      return html;
+    }
+
+    function renderTableView() {
+      if (filteredApps.length === 0) {
+        return `
+          <div class="empty-state">
+            <i data-lucide="search-x" class="empty-icon"></i>
+            <h3>No apps found</h3>
+            <p>Try adjusting your filters</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                ${dataTable.columns.map(col => renderColumnHeader(col)).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredApps.map(app => renderTableRow(app)).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderColumnHeader(column) {
+      if (!column.sortable) {
+        return `<th style="width: ${column.width}">${column.label}</th>`;
+      }
+
+      const isActive = dataTable.sortColumn === column.id;
+      const direction = isActive ? dataTable.sortDirection : '';
+      const arrow = isActive ? (direction === 'asc' ? '▲' : '▼') : '';
+
+      return `
+        <th class="sortable ${isActive ? 'active' : ''}"
+            style="width: ${column.width}"
+            onclick="sortByColumn('${column.id}')">
+          ${column.label}
+          <span class="sort-arrow">${arrow}</span>
+        </th>
+      `;
+    }
+
+    function renderTableRow(app) {
+      const selected = dataTable.selectedApps.has(app.product);
+      const status = getRenewalStatus(app.renewalDate);
+
+      return `
+        <tr class="${selected ? 'selected' : ''}">
+          <td>
+            ${dataTable.compareMode ? `
+              <input type="checkbox"
+                     ${selected ? 'checked' : ''}
+                     onchange="toggleAppSelection('${app.product.replace(/'/g, "\\'")}')">
+            ` : ''}
+          </td>
+          <td>
+            <img src="${app.logoUrl || 'https://via.placeholder.com/40'}"
+                 alt="${app.product}"
+                 class="table-logo"
+                 onerror="this.src='https://via.placeholder.com/40';">
+          </td>
+          <td class="table-product">
+            <strong>${app.product}</strong>
+          </td>
+          <td>${getDivisionAbbreviation(app.division)}</td>
+          <td>${app.department || 'N/A'}</td>
+          <td class="table-cost">${app.spend === 'Free' ? 'Free' : (app.spend === 'N/A' ? 'N/A' : `$${formatNumber(parseFloat(app.spend))}`)}</td>
+          <td>${app.licenses || 'N/A'}</td>
+          <td>${app.licenseType || 'N/A'}</td>
+          <td>${app.renewalDate ? formatDate(app.renewalDate) : 'None'}</td>
+          <td>
+            ${status ? `<span class="status-badge status-${status.class}">${status.label}</span>` : ''}
+          </td>
+          <td class="table-actions">
+            <div class="btn-group-compact">
+              <button class="btn-xs btn-success"
+                      onclick="handleAction('renew', '${app.product.replace(/'/g, "\\'")}')"
+                      title="Renew">✓</button>
+              <button class="btn-xs btn-warning"
+                      onclick="handleAction('modify', '${app.product.replace(/'/g, "\\'")}')"
+                      title="Modify">✎</button>
+              <button class="btn-xs btn-danger"
+                      onclick="handleAction('retire', '${app.product.replace(/'/g, "\\'")}')"
+                      title="Retire">✕</button>
+              <button class="btn-xs btn-info"
+                      onclick="showAppDetails('${app.product.replace(/'/g, "\\'")}')"
+                      title="Details">⋯</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function renderComparisonView() {
+      const selectedAppsList = Array.from(dataTable.selectedApps)
+        .map(productName => filteredApps.find(app => app.product === productName))
+        .filter(app => app);
+
+      if (selectedAppsList.length === 0) {
+        return `
+          <div class="empty-state">
+            <i data-lucide="info" class="empty-icon"></i>
+            <h3>No apps selected for comparison</h3>
+            <p>Use "Compare" mode to select apps, then click "View Comparison"</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="comparison-container">
+          <div class="comparison-header">
+            <h3>Comparing ${selectedAppsList.length} Apps</h3>
+            <button class="btn-secondary" onclick="setViewMode('${dataTable.previousViewMode || 'card'}')">
+              ← Back to ${dataTable.previousViewMode || 'card'} view
+            </button>
+          </div>
+          <div class="comparison-grid">
+            ${renderComparisonTable(selectedAppsList)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderComparisonTable(apps) {
+      const metrics = [
+        { label: 'Annual Cost', key: 'spend', format: v => v === 'Free' ? 'Free' : (v === 'N/A' ? 'N/A' : `$${formatNumber(parseFloat(v))}`) },
+        { label: 'Licenses', key: 'licenses', format: v => v || 'N/A' },
+        { label: 'Cost per License', key: null, format: (v, app) => {
+          const cost = parseCost(app.spend);
+          const licenses = parseInt(app.licenses);
+          return licenses > 0 && cost > 0 ? `$${Math.round(cost / licenses)}` : 'N/A';
+        }},
+        { label: 'Renewal Date', key: 'renewalDate', format: v => v ? formatDate(v) : 'None' },
+        { label: 'License Type', key: 'licenseType', format: v => v || 'N/A' },
+        { label: 'Division', key: 'division', format: v => v || 'N/A' },
+        { label: 'Department', key: 'department', format: v => v || 'N/A' },
+        { label: 'SSO', key: 'ssoEnabled', format: v => v ? '✓ Yes' : '✗ No' },
+        { label: 'Mobile App', key: 'mobileApp', format: v => v || 'N/A' }
+      ];
+
+      return `
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              ${apps.map(app => `<th>${app.product}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${metrics.map(metric => `
+              <tr>
+                <td class="metric-label">${metric.label}</td>
+                ${apps.map(app => {
+                  const value = metric.key ? app[metric.key] : null;
+                  const formatted = metric.format(value, app);
+                  return `<td>${formatted}</td>`;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
     function renderAppCard(app) {
@@ -2017,6 +3105,333 @@
       return tags.join('') || '<span class="division-tag ws">General</span>';
     }
 
+    function getDivisionAbbreviation(division) {
+      const div = (division || '').toLowerCase();
+      let abbrevs = [];
+
+      if (div.includes('whole') || div.includes('school-wide')) {
+        abbrevs.push('WS');
+      }
+      if (div.includes('elementary')) {
+        abbrevs.push('ES');
+      }
+      if (div.includes('middle')) {
+        abbrevs.push('MS');
+      }
+      if (div.includes('high')) {
+        abbrevs.push('HS');
+      }
+
+      return abbrevs.join(', ') || 'General';
+    }
+
+    function parseCost(spend) {
+      if (!spend || spend === 'Free' || spend === 'N/A') return 0;
+      const numStr = String(spend).replace(/[$,]/g, '');
+      const num = parseFloat(numStr);
+      return isNaN(num) ? 0 : num;
+    }
+
+    // ============================================================
+    // VIEW MODE & SORTING
+    // ============================================================
+
+    function setViewMode(mode) {
+      if (mode === 'comparison') {
+        // Save previous mode for back navigation
+        dataTable.previousViewMode = dataTable.viewMode;
+      }
+
+      dataTable.viewMode = mode;
+
+      // Update button states
+      document.querySelectorAll('.btn-toggle').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      if (mode === 'card') {
+        document.getElementById('view-card')?.classList.add('active');
+      } else if (mode === 'table') {
+        document.getElementById('view-table')?.classList.add('active');
+      }
+
+      renderDataTable();
+    }
+
+    function sortByColumn(columnId) {
+      // Toggle direction if clicking same column
+      if (dataTable.sortColumn === columnId) {
+        dataTable.sortDirection = dataTable.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        dataTable.sortColumn = columnId;
+        dataTable.sortDirection = 'asc';
+      }
+
+      // Sort the filtered apps
+      filteredApps.sort((a, b) => {
+        let aVal = a[columnId];
+        let bVal = b[columnId];
+
+        // Handle cost sorting
+        if (columnId === 'spend') {
+          aVal = parseCost(aVal);
+          bVal = parseCost(bVal);
+        }
+
+        // Handle date sorting
+        if (columnId === 'renewalDate') {
+          aVal = aVal ? new Date(aVal) : new Date('9999-12-31');
+          bVal = bVal ? new Date(bVal) : new Date('9999-12-31');
+        }
+
+        // Handle string sorting
+        if (typeof aVal === 'string') {
+          aVal = aVal.toLowerCase();
+          bVal = bVal.toLowerCase();
+        }
+
+        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+        return dataTable.sortDirection === 'asc' ? comparison : -comparison;
+      });
+
+      renderDataTable();
+    }
+
+    // ============================================================
+    // COMPARISON MODE
+    // ============================================================
+
+    function toggleCompareMode() {
+      dataTable.compareMode = !dataTable.compareMode;
+
+      // Update button state
+      const btn = document.getElementById('compare-toggle');
+      if (btn) {
+        if (dataTable.compareMode) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      }
+
+      // Clear selections if disabling
+      if (!dataTable.compareMode) {
+        dataTable.selectedApps.clear();
+        updateCompareCount();
+      }
+
+      // Re-render to show/hide checkboxes
+      renderDataTable();
+    }
+
+    function toggleAppSelection(productName) {
+      if (dataTable.selectedApps.has(productName)) {
+        dataTable.selectedApps.delete(productName);
+      } else {
+        dataTable.selectedApps.add(productName);
+      }
+
+      updateCompareCount();
+
+      // Re-render to update checkbox states
+      renderDataTable();
+    }
+
+    function updateCompareCount() {
+      const count = dataTable.selectedApps.size;
+      const badge = document.getElementById('compare-count');
+
+      if (badge) {
+        if (count > 0) {
+          badge.textContent = count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    }
+
+    function showComparison() {
+      if (dataTable.selectedApps.size < 2) {
+        alert('Please select at least 2 apps to compare');
+        return;
+      }
+
+      setViewMode('comparison');
+    }
+
+    // ============================================================
+    // EXPORT FUNCTIONS
+    // ============================================================
+
+    function toggleExportMenu() {
+      const menu = document.getElementById('export-menu');
+      if (menu) {
+        menu.classList.toggle('active');
+      }
+    }
+
+    function exportReport(format) {
+      // Close menu
+      const menu = document.getElementById('export-menu');
+      if (menu) {
+        menu.classList.remove('active');
+      }
+
+      switch (format) {
+        case 'csv':
+          exportCSV();
+          break;
+        case 'excel':
+          exportCSV(); // Same as CSV, browsers handle Excel opening
+          break;
+        case 'pdf':
+          window.print(); // Use print dialog for PDF
+          break;
+      }
+    }
+
+    function exportCSV() {
+      const headers = ['App Name', 'Division', 'Department', 'Cost', 'Licenses',
+                       'License Type', 'Renewal Date', 'Status', 'SSO', 'Mobile'];
+
+      const rows = filteredApps.map(app => [
+        app.product,
+        app.division,
+        app.department || '',
+        app.spend,
+        app.licenses || '',
+        app.licenseType || '',
+        app.renewalDate || '',
+        getRenewalStatus(app.renewalDate)?.label || '',
+        app.ssoEnabled ? 'Yes' : 'No',
+        app.mobileApp || ''
+      ]);
+
+      const csv = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+
+      downloadFile(csv, 'renewal-report.csv', 'text/csv');
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================================
+    // AI OPTIMIZATION PANEL
+    // ============================================================
+
+    function toggleAIPanel() {
+      dataTable.aiPanel.visible = !dataTable.aiPanel.visible;
+
+      const panel = document.getElementById('ai-panel');
+      if (panel) {
+        if (dataTable.aiPanel.visible) {
+          panel.style.display = 'block';
+          if (!dataTable.aiPanel.recommendations) {
+            getAIRecommendations();
+          } else {
+            renderAIPanel();
+          }
+        } else {
+          panel.style.display = 'none';
+        }
+      }
+    }
+
+    async function getAIRecommendations() {
+      dataTable.aiPanel.loading = true;
+      renderAIPanel();
+
+      try {
+        const response = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api: 'ai',
+            query: 'Analyze these apps for budget optimization opportunities. Look for duplicates, underutilized licenses, and cost-saving alternatives. Provide specific recommendations with estimated savings.',
+            appsData: JSON.stringify(filteredApps.slice(0, 20)), // Limit to 20 apps for AI processing
+            provider: dataTable.aiPanel.provider // Configurable: 'claude' (default) or 'gemini'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('AI service unavailable');
+        }
+
+        const result = await response.json();
+        dataTable.aiPanel.recommendations = {
+          summary: result.response || 'No recommendations available',
+          items: [] // Parse items if needed
+        };
+
+      } catch (error) {
+        dataTable.aiPanel.recommendations = {
+          error: 'Failed to get AI recommendations: ' + error.message
+        };
+      } finally {
+        dataTable.aiPanel.loading = false;
+        renderAIPanel();
+      }
+    }
+
+    function renderAIPanel() {
+      const panel = document.getElementById('ai-panel');
+      if (!panel) return;
+
+      if (dataTable.aiPanel.loading) {
+        panel.innerHTML = `
+          <div class="ai-loading" style="text-align: center; padding: 24px;">
+            <i data-lucide="loader" class="spin" style="width: 32px; height: 32px; margin: 0 auto;"></i>
+            <p style="margin-top: 12px; color: #6b7280;">Analyzing apps for optimization opportunities...</p>
+          </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+      }
+
+      if (dataTable.aiPanel.recommendations?.error) {
+        panel.innerHTML = `
+          <div class="ai-error" style="padding: 24px; background: #fee2e2; border-radius: 8px;">
+            <p style="color: #991b1b; margin: 0;">${dataTable.aiPanel.recommendations.error}</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (!dataTable.aiPanel.recommendations) {
+        panel.innerHTML = `
+          <div class="ai-empty" style="padding: 24px; text-align: center; color: #6b7280;">
+            <p style="margin: 0;">Click "AI Optimize" to get budget optimization recommendations</p>
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="ai-recommendations" style="background: white; border-radius: 8px; padding: 24px; border-left: 4px solid #9c27b0;">
+          <h3 style="margin-top: 0; color: #9c27b0; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="sparkles" style="width: 20px; height: 20px;"></i>
+            AI Budget Optimization
+          </h3>
+          <div style="color: #374151; line-height: 1.6;">
+            ${dataTable.aiPanel.recommendations.summary}
+          </div>
+        </div>
+      `;
+
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
     // ============================================================
     // ACTIONS
     // ============================================================
@@ -2061,6 +3476,12 @@
         if (!response.ok || result.error) {
           throw new Error(result.message || 'Failed to save action');
         }
+
+        // Track the renewal decision locally
+        dataTable.renewalDecisions[productName] = action;
+
+        // Update stats to show new costs
+        renderStats();
 
         alert(`✓ ${productName} has been marked for "${actionLabels[action]}".\n\nThe Technology & Innovation team will be notified.`);
 

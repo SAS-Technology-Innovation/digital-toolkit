@@ -21,13 +21,12 @@
  * @constant {Object}
  */
 const AI_MODELS = {
-  /** Claude model for user-facing chat (higher quality, slower) */
-  CLAUDE_CHAT: 'claude-sonnet-4-5-20250929',
-  /** Claude model for fast operations like enrichment (faster, cheaper) */
+  /** Claude model - using Haiku (smallest/fastest) for all operations */
   CLAUDE_FAST: 'claude-3-5-haiku-20241022',
-  /** Claude model for analytics dashboard queries */
-  CLAUDE_ANALYTICS: 'claude-sonnet-4-20250514',
-  /** Gemini model for user-facing chat */
+  /** Legacy aliases for backward compatibility - all use Haiku now */
+  CLAUDE_CHAT: 'claude-3-5-haiku-20241022',
+  CLAUDE_ANALYTICS: 'claude-3-5-haiku-20241022',
+  /** Gemini model for user-facing chat (when Claude not available) */
   GEMINI_CHAT: 'gemini-2.0-flash-exp'
 };
 
