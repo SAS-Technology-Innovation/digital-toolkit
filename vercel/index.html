@@ -18,7 +18,7 @@
  * - AI-powered search toggle for natural language queries
  * - Floating AI chat bubble for app recommendations
  * - App detail modal with comprehensive information
- * - "What's New" section for recently added apps (last 30 days)
+ * - "What's New" section for recently added apps (last 60 days)
  * - Responsive design with CSS Grid
  *
  * External Dependencies:
@@ -2141,7 +2141,7 @@
             <i data-lucide="sparkles"></i>
             What's New
           </h2>
-          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <p class="whats-new-subtitle">Recently added apps in the last 60 days</p>
           <div id="wholeSchool-new-apps" class="whats-new-grid"></div>
         </div>
 
@@ -2266,7 +2266,7 @@
             <i data-lucide="sparkles"></i>
             What's New
           </h2>
-          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <p class="whats-new-subtitle">Recently added apps in the last 60 days</p>
           <div id="elementary-new-apps" class="whats-new-grid"></div>
         </div>
 
@@ -2293,7 +2293,7 @@
             <i data-lucide="sparkles"></i>
             What's New
           </h2>
-          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <p class="whats-new-subtitle">Recently added apps in the last 60 days</p>
           <div id="middleSchool-new-apps" class="whats-new-grid"></div>
         </div>
 
@@ -2320,7 +2320,7 @@
             <i data-lucide="sparkles"></i>
             What's New
           </h2>
-          <p class="whats-new-subtitle">Recently added apps in the last 30 days</p>
+          <p class="whats-new-subtitle">Recently added apps in the last 60 days</p>
           <div id="highSchool-new-apps" class="whats-new-grid"></div>
         </div>
 
@@ -2561,8 +2561,8 @@
           const logoHTML = logoUrl ?
             `<div class="app-logo"><img src="${logoUrl}" alt="${app.product} logo" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : '';
 
-          // Check if app is new (added in last 30 days)
-          const isNew = app.dateAdded && isWithinDays(app.dateAdded, 30);
+          // Check if app is new (added in last 60 days)
+          const isNew = app.dateAdded && isWithinDays(app.dateAdded, 60);
           const newBadge = isNew ? '<span class="new-badge">NEW</span>' : '';
 
           return `
@@ -2628,9 +2628,9 @@
           const whatsNewContainer = document.getElementById(`${division}-whats-new`);
           const whatsNewAppsContainer = document.getElementById(`${division}-new-apps`);
           if (whatsNewContainer && whatsNewAppsContainer) {
-            // Filter apps added in last 30 days from all apps in this division
+            // Filter apps added in last 60 days from all apps in this division
             const newApps = (divisionData.apps || []).filter(app =>
-              app.dateAdded && isWithinDays(app.dateAdded, 30)
+              app.dateAdded && isWithinDays(app.dateAdded, 60)
             );
 
             if (newApps.length > 0) {

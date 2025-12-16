@@ -13,14 +13,14 @@
  * - Welcome Slide: SAS branding and introduction
  * - Stats Overview: Key metrics with animated stat cards
  * - Enterprise Apps: Premium gold-styled core tools showcase
- * - What's New: Recently added apps (last 30 days) with red theme
+ * - What's New: Recently added apps (last 60 days) with red theme
  * - App Spotlights: Featured apps with detailed information
  * - Division Apps: Elementary, Middle, and High School app showcases
  *
  * Configuration (in <script> section):
  * - SLIDE_DURATION: Duration per slide in ms (default: 12000 = 12 seconds)
  * - REFRESH_INTERVAL: Data refresh interval in ms (default: 300000 = 5 minutes)
- * - NEW_APP_THRESHOLD_DAYS: Days to consider app "new" (default: 30)
+ * - NEW_APP_THRESHOLD_DAYS: Days to consider app "new" (default: 60)
  * - MAX_APPS_PER_SLIDE: Maximum apps per slide (default: 6)
  *
  * External Dependencies:
@@ -965,7 +965,7 @@
     // ============================================================
     const SLIDE_DURATION = 10000; // 10 seconds per slide (increased for readability)
     const REFRESH_INTERVAL = 300000; // Refresh data every 5 minutes
-    const NEW_APP_THRESHOLD_DAYS = 30; // Apps added in last 30 days are "new"
+    const NEW_APP_THRESHOLD_DAYS = 60; // Apps added in last 60 days are "new"
     const MAX_APPS_PER_SLIDE = 4; // Reduced for cleaner display
     const MAX_SPOTLIGHT_APPS = 3; // Limit spotlight slides to reduce length
 
