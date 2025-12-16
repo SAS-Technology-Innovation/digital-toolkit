@@ -1,0 +1,9 @@
+{
+  "name": "digital-toolkit-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vercel deployment for SAS Digital Toolkit Dashboard",
+  "scripts": {
+    "build": "node scripts/build-vercel.js"
+  }
+}
