@@ -6,6 +6,12 @@ vercel.json
 # Ignore legacy public directory
 public/**
 
+# Ignore HTML files that belong to Vercel deployment only
+# (Apps Script should only have analytics-dashboard.html and csv-upload-dialog.html)
+index.html
+signage.html
+renewal.html
+
 # Ignore node/npm files
 node_modules/**
 package.json
