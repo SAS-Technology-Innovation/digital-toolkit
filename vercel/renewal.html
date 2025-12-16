@@ -1602,17 +1602,11 @@
           .withFailureHandler(handleDataError)
           .getDashboardData();
       } else {
-        // Vercel environment - try Edge Config first, fallback to Apps Script
-        fetch('/api/renewal-data')
+        // Vercel environment - always fetch fresh data from Apps Script
+        fetch('/api/data')
           .then(response => {
             if (!response.ok) {
-              // Edge Config not populated, try Apps Script
-              console.log('Edge Config not available, trying Apps Script...');
-              return fetch('/api/data')
-                .then(r => {
-                  if (!r.ok) throw new Error(`Apps Script error: ${r.status}`);
-                  return r.json();
-                });
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
           })
@@ -1621,9 +1615,13 @@
           })
           .catch(error => {
             console.error('Error loading data:', error);
-            // Final fallback to mock data
-            console.log('Using mock data fallback');
-            setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
+            // Fallback to mock data for local testing
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('Using mock data for local testing');
+              setTimeout(() => handleDataLoaded(JSON.stringify(getMockData())), 1000);
+            } else {
+              handleDataError('Failed to load renewal data: ' + error.message);
+            }
           });
       }
     }
@@ -2021,7 +2019,7 @@
     // ============================================================
     // ACTIONS
     // ============================================================
-    function handleAction(action, productName) {
+    async function handleAction(action, productName) {
       const app = allApps.find(a => a.product === productName);
       if (!app) return;
 
@@ -2031,12 +2029,55 @@
         retire: 'Retire'
       };
 
-      // For now, show a simple confirmation
-      const confirmed = confirm(`Mark "${productName}" for ${actionLabels[action]}?\n\nNote: This action will be logged for the renewal review process.`);
+      // Get optional notes from user
+      const notes = prompt(`Mark "${productName}" for ${actionLabels[action]}\n\nOptional notes:`, '');
 
-      if (confirmed) {
-        // In a full implementation, this would save to the spreadsheet
-        alert(`${productName} has been marked for "${actionLabels[action]}".\n\nThe Technology & Innovation team will be notified.`);
+      if (notes === null) return; // User cancelled
+
+      try {
+        // Show loading state
+        const originalButton = event?.target;
+        if (originalButton) {
+          originalButton.disabled = true;
+          originalButton.textContent = 'Saving...';
+        }
+
+        // Save action to Google Sheets via Apps Script
+        const response = await fetch('/api/save-renewal-action', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            product: productName,
+            action: action,
+            notes: notes
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || result.error) {
+          throw new Error(result.message || 'Failed to save action');
+        }
+
+        alert(`✓ ${productName} has been marked for "${actionLabels[action]}".\n\nThe Technology & Innovation team will be notified.`);
+
+        // Reset button
+        if (originalButton) {
+          originalButton.disabled = false;
+          originalButton.textContent = actionLabels[action];
+        }
+
+      } catch (error) {
+        console.error('Error saving action:', error);
+        alert(`Failed to save action: ${error.message}\n\nPlease try again or contact IT support.`);
+
+        // Reset button
+        if (event?.target) {
+          event.target.disabled = false;
+          event.target.textContent = actionLabels[action];
+        }
       }
     }
 
