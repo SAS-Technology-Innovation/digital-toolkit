@@ -48,7 +48,5 @@ jobs:
     - name: Create .clasp.json from secret
       run: echo '{"scriptId":"${{ secrets.APPS_SCRIPT_ID }}","rootDir":"."}' > .clasp.json
 
-    - name: Push and update Apps Script deployment
-      run: |
-        clasp push --force
-        clasp update-deployment ${{ secrets.APPS_SCRIPT_DEPLOYMENT_ID }} --description "Updated from GitHub Actions - $(git rev-parse --short HEAD)"
+    - name: Push Apps Script code
+      run: clasp push --force
