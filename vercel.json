@@ -4,6 +4,12 @@
   "rootDirectory": "vercel",
   "buildCommand": "npm run build",
   "outputDirectory": "public",
+  "crons": [
+    {
+      "path": "/api/refresh-renewal-data",
+      "schedule": "0 0 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/signage",
