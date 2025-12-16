@@ -3,6 +3,9 @@ vercel/**
 vercel.json
 .vercel/**
 
+# Ignore legacy public directory
+public/**
+
 # Ignore node/npm files
 node_modules/**
 package.json
