@@ -1083,6 +1083,25 @@
       height: 18px;
     }
 
+    .footer-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .footer-button.secondary {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .footer-button.secondary:hover {
+      background: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
     /* App Request Section */
     .app-request-section {
       background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -2377,10 +2396,20 @@
       <p class="footer-text">
         © <span id="footer-year"></span> Singapore American School | For support, contact <a href="mailto:edtech@sas.edu.sg" class="footer-link">edtech@sas.edu.sg</a>
       </p>
-      <a href="/signage" class="footer-button" aria-label="View Digital Signage Display">
-        <i data-lucide="monitor"></i>
-        View Digital Signage
-      </a>
+      <div class="footer-buttons">
+        <a href="/signage" class="footer-button" aria-label="View Digital Signage Display">
+          <i data-lucide="monitor"></i>
+          Signage
+        </a>
+        <a href="/status" class="footer-button secondary" aria-label="View System Status">
+          <i data-lucide="activity"></i>
+          Status
+        </a>
+        <a href="/renewal" class="footer-button secondary" aria-label="View Renewals">
+          <i data-lucide="calendar-clock"></i>
+          Renewals
+        </a>
+      </div>
     </footer>
 
   </div>
