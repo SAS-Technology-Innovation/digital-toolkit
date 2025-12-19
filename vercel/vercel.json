@@ -1,14 +1,18 @@
 {
   "crons": [
     {
-      "path": "/api/refresh-renewal-data",
-      "schedule": "0 0 * * *"
+      "path": "/api/refresh-status",
+      "schedule": "0 6 * * *"
     }
   ],
   "rewrites": [
     {
       "source": "/renewal",
       "destination": "/renewal.html"
+    },
+    {
+      "source": "/status",
+      "destination": "/status.html"
     }
   ],
   "headers": [
