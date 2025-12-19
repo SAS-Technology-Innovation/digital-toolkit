@@ -236,7 +236,7 @@ Auto-deploys on push to `main`. Requires repository secrets:
 
 ### Vercel Deployment (Primary Frontend)
 
-The dashboard is deployed to Vercel for fast global CDN distribution and Edge Config caching.
+The dashboard is deployed to Vercel for fast global CDN distribution.
 
 **Setup:**
 
@@ -247,14 +247,28 @@ The dashboard is deployed to Vercel for fast global CDN distribution and Edge Co
    - `FRONTEND_KEY`: Same key as Apps Script
    - `APPS_SCRIPT_URL`: Your Apps Script web app URL
    - `RENEWAL_PASSWORD`: Password for renewal page
-   - `EDGE_CONFIG`: Edge Config connection string (optional)
+   - `EDGE_CONFIG`: Edge Config connection string (for status page)
+   - `EDGE_CONFIG_ID`: Edge Config ID (for status updates)
+   - `VERCEL_TOKEN`: Vercel API token (for status updates)
+   - `CRON_SECRET`: Secret for cron job authentication
 
 **Architecture:**
 
 - Vercel serves static HTML + Edge/Serverless functions
-- Two-stage data loading: Edge Config (minimal) → Apps Script (detailed)
+- All pages fetch data directly from Apps Script via `/api/data` or `/api/renewal-data`
 - API functions proxy requests to Apps Script with `FRONTEND_KEY` authentication
 - Apps Script remains the single source of truth for data
+- Edge Config is used exclusively for the **Status Page** (storing app operational status)
+
+**Status Page (`/status`):**
+
+The Status Page monitors application availability and displays real-time operational status.
+
+- **Cron Job**: `/api/refresh-status` runs daily at 6 AM UTC to check all app URLs
+- **Edge Config Storage**: Stores status as `1` (up) or `0` (down) for each application
+- **Status API**: `/api/status` reads status data from Edge Config
+- **Manual Refresh**: Button on status page to manually trigger a status check
+- **Features**: Search, filter by status (operational/down), auto-refresh every 60 seconds
 
 See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment instructions.
 
