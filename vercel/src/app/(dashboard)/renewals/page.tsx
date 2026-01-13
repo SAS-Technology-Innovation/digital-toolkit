@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   DollarSign,
@@ -12,8 +12,9 @@ import {
   Info,
   Download,
   Search,
-  ArrowUpDown,
   MoreHorizontal,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 // Types
 interface RenewalApp {
@@ -54,79 +65,20 @@ interface RenewalApp {
   annualCost: number;
   licenses: number;
   licenseType: string;
-  status: "urgent" | "upcoming" | "overdue" | "active";
+  status: "urgent" | "upcoming" | "overdue" | "active" | "retired";
   division: string;
   utilization: number;
 }
 
-// Mock data
-const mockRenewals: RenewalApp[] = [
-  {
-    id: "1",
-    product: "Adobe Creative Cloud",
-    vendor: "Adobe",
-    category: "Creative",
-    renewalDate: "2024-02-15",
-    annualCost: 25000,
-    licenses: 150,
-    licenseType: "Site License",
-    status: "urgent",
-    division: "Whole School",
-    utilization: 85,
-  },
-  {
-    id: "2",
-    product: "Canva for Education",
-    vendor: "Canva",
-    category: "Creative",
-    renewalDate: "2024-03-01",
-    annualCost: 0,
-    licenses: 500,
-    licenseType: "Free",
-    status: "upcoming",
-    division: "Whole School",
-    utilization: 92,
-  },
-  {
-    id: "3",
-    product: "Zoom Education",
-    vendor: "Zoom",
-    category: "Communication",
-    renewalDate: "2024-04-15",
-    annualCost: 15000,
-    licenses: 200,
-    licenseType: "Enterprise",
-    status: "active",
-    division: "Whole School",
-    utilization: 78,
-  },
-  {
-    id: "4",
-    product: "Turnitin",
-    vendor: "Turnitin",
-    category: "Assessment",
-    renewalDate: "2024-01-30",
-    annualCost: 8500,
-    licenses: 100,
-    licenseType: "Per User",
-    status: "overdue",
-    division: "High School",
-    utilization: 65,
-  },
-  {
-    id: "5",
-    product: "Seesaw",
-    vendor: "Seesaw Learning",
-    category: "Portfolio",
-    renewalDate: "2024-05-01",
-    annualCost: 12000,
-    licenses: 300,
-    licenseType: "School License",
-    status: "active",
-    division: "Elementary",
-    utilization: 95,
-  },
-];
+interface RenewalData {
+  apps: RenewalApp[];
+  summary: {
+    totalApps: number;
+    totalAnnualCost: number;
+    urgentCount: number;
+    avgUtilization: number;
+  };
+}
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -136,6 +88,8 @@ function getStatusColor(status: string) {
       return "default";
     case "upcoming":
       return "secondary";
+    case "retired":
+      return "outline";
     default:
       return "outline";
   }
@@ -152,6 +106,7 @@ function formatCurrency(amount: number) {
 }
 
 function formatDate(dateString: string) {
+  if (!dateString) return "N/A";
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -160,11 +115,44 @@ function formatDate(dateString: string) {
 }
 
 export default function RenewalsPage() {
+  const [data, setData] = useState<RenewalData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
-  const filteredApps = mockRenewals.filter((app) => {
+  // Modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedApp, setSelectedApp] = useState<RenewalApp | null>(null);
+  const [editForm, setEditForm] = useState({
+    renewalDate: "",
+    annualCost: 0,
+    licenses: 0,
+    utilization: 0,
+  });
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Fetch data
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/renewal-data");
+      const result = await response.json();
+      setData(result);
+    } catch (error) {
+      console.error("Failed to fetch renewal data:", error);
+      toast.error("Failed to load renewal data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Filter apps
+  const filteredApps = data?.apps.filter((app) => {
     const matchesSearch =
       !searchQuery ||
       app.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -173,14 +161,113 @@ export default function RenewalsPage() {
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
 
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
 
+  // Calculate stats from filtered apps
   const totalCost = filteredApps.reduce((sum, app) => sum + app.annualCost, 0);
   const urgentCount = filteredApps.filter((a) => a.status === "urgent" || a.status === "overdue").length;
   const totalLicenses = filteredApps.reduce((sum, app) => sum + app.licenses, 0);
-  const avgUtilization = Math.round(
-    filteredApps.reduce((sum, app) => sum + app.utilization, 0) / filteredApps.length
-  );
+  const avgUtilization = filteredApps.length > 0
+    ? Math.round(filteredApps.reduce((sum, app) => sum + app.utilization, 0) / filteredApps.length)
+    : 0;
+
+  // Action handlers
+  const handleRenew = async (app: RenewalApp) => {
+    setActionLoading(true);
+    try {
+      // Set renewal date to 1 year from now
+      const newRenewalDate = new Date();
+      newRenewalDate.setFullYear(newRenewalDate.getFullYear() + 1);
+
+      const response = await fetch(`/api/apps/${app.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          renewal_date: newRenewalDate.toISOString().split("T")[0],
+          status: "active",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to renew");
+
+      toast.success(`${app.product} renewed successfully`);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Failed to renew:", error);
+      toast.error("Failed to renew app");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleModify = (app: RenewalApp) => {
+    setSelectedApp(app);
+    setEditForm({
+      renewalDate: app.renewalDate,
+      annualCost: app.annualCost,
+      licenses: app.licenses,
+      utilization: app.utilization,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleSaveModify = async () => {
+    if (!selectedApp) return;
+
+    setActionLoading(true);
+    try {
+      const response = await fetch(`/api/apps/${selectedApp.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          renewal_date: editForm.renewalDate,
+          annual_cost: editForm.annualCost,
+          licenses: editForm.licenses,
+          utilization: editForm.utilization,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update");
+
+      toast.success(`${selectedApp.product} updated successfully`);
+      setEditModalOpen(false);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Failed to update:", error);
+      toast.error("Failed to update app");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRetire = async (app: RenewalApp) => {
+    if (!confirm(`Are you sure you want to retire ${app.product}?`)) return;
+
+    setActionLoading(true);
+    try {
+      const response = await fetch(`/api/apps/${app.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to retire");
+
+      toast.success(`${app.product} retired successfully`);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Failed to retire:", error);
+      toast.error("Failed to retire app");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -195,6 +282,10 @@ export default function RenewalsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={fetchData} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Export Report
@@ -212,7 +303,7 @@ export default function RenewalsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalCost)}</div>
             <p className="text-xs text-muted-foreground">
-              +2.5% from last year
+              {filteredApps.length} subscriptions
             </p>
           </CardContent>
         </Card>
@@ -341,18 +432,18 @@ export default function RenewalsPage() {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" disabled={actionLoading}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleRenew(app)}>
                           <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                          Renew
+                          Renew (1 Year)
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleModify(app)}>
                           <Edit className="mr-2 h-4 w-4 text-yellow-600" />
                           Modify
                         </DropdownMenuItem>
@@ -361,7 +452,10 @@ export default function RenewalsPage() {
                           Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleRetire(app)}
+                        >
                           <XCircle className="mr-2 h-4 w-4" />
                           Retire
                         </DropdownMenuItem>
@@ -408,11 +502,22 @@ export default function RenewalsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => handleRenew(app)}
+                    disabled={actionLoading}
+                  >
                     <CheckCircle className="mr-1 h-3 w-3" />
                     Renew
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleModify(app)}
+                    disabled={actionLoading}
+                  >
                     <Edit className="mr-1 h-3 w-3" />
                     Modify
                   </Button>
@@ -428,6 +533,79 @@ export default function RenewalsPage() {
           <p className="text-muted-foreground">No renewals found matching your criteria.</p>
         </div>
       )}
+
+      {/* Edit Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modify {selectedApp?.product}</DialogTitle>
+            <DialogDescription>
+              Update subscription details. Changes will sync to Google Sheets.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="renewalDate" className="text-right">
+                Renewal Date
+              </Label>
+              <Input
+                id="renewalDate"
+                type="date"
+                value={editForm.renewalDate}
+                onChange={(e) => setEditForm({ ...editForm, renewalDate: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="annualCost" className="text-right">
+                Annual Cost
+              </Label>
+              <Input
+                id="annualCost"
+                type="number"
+                value={editForm.annualCost}
+                onChange={(e) => setEditForm({ ...editForm, annualCost: Number(e.target.value) })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="licenses" className="text-right">
+                Licenses
+              </Label>
+              <Input
+                id="licenses"
+                type="number"
+                value={editForm.licenses}
+                onChange={(e) => setEditForm({ ...editForm, licenses: Number(e.target.value) })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="utilization" className="text-right">
+                Utilization %
+              </Label>
+              <Input
+                id="utilization"
+                type="number"
+                min={0}
+                max={100}
+                value={editForm.utilization}
+                onChange={(e) => setEditForm({ ...editForm, utilization: Number(e.target.value) })}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveModify} disabled={actionLoading}>
+              {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

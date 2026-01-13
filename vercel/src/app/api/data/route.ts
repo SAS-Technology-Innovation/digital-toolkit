@@ -1,12 +1,130 @@
 import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 /**
  * API Route: /api/data
- * Proxies requests to Google Apps Script backend with FRONTEND_KEY authentication
- * Falls back to mock data if environment variables are not configured
+ * Fetches app data from Supabase and formats it for the dashboard.
+ * Falls back to mock data if Supabase is not configured.
  */
 
-// Mock data for development/demo
+interface SupabaseApp {
+  id: string;
+  product: string;
+  description: string | null;
+  category: string | null;
+  subject: string | null;
+  department: string | null;
+  division: string | null;
+  audience: string[] | null;
+  website: string | null;
+  tutorial_link: string | null;
+  logo_url: string | null;
+  sso_enabled: boolean;
+  mobile_app: boolean;
+  grade_levels: string | null;
+  is_new: boolean;
+  vendor: string | null;
+  license_type: string | null;
+  renewal_date: string | null;
+  annual_cost: number | null;
+  licenses: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DashboardApp {
+  product: string;
+  description: string;
+  category: string;
+  subject: string;
+  department: string;
+  division: string;
+  audience: string;
+  website: string;
+  tutorialLink: string;
+  logoUrl: string;
+  ssoEnabled: boolean;
+  mobileApp: string;
+  gradeLevels: string;
+  licenseType: string;
+  renewalDate: string;
+  spend: number | string;
+  dateAdded: string;
+  enterprise: boolean;
+  isWholeSchool?: boolean;
+}
+
+/**
+ * Transform Supabase app to dashboard format
+ */
+function transformToDashboard(app: SupabaseApp): DashboardApp {
+  return {
+    product: app.product,
+    description: app.description || "",
+    category: app.category || "N/A",
+    subject: app.subject || "N/A",
+    department: app.department || "N/A",
+    division: app.division || "N/A",
+    audience: app.audience?.join(", ") || "",
+    website: app.website || "#",
+    tutorialLink: app.tutorial_link || "",
+    logoUrl: app.logo_url || "",
+    ssoEnabled: app.sso_enabled,
+    mobileApp: app.mobile_app ? "Yes" : "No",
+    gradeLevels: app.grade_levels || "N/A",
+    licenseType: app.license_type || "N/A",
+    renewalDate: app.renewal_date || "",
+    spend: app.annual_cost === 0 ? "Free" : (app.annual_cost || "N/A"),
+    dateAdded: app.created_at,
+    enterprise: app.is_new, // Using is_new flag for enterprise status
+  };
+}
+
+/**
+ * Check if license type indicates "everyone" access
+ */
+function isEveryoneLicense(licenseType: string): boolean {
+  const lt = licenseType.toLowerCase();
+  return lt.includes("site") || lt.includes("school") || lt.includes("enterprise") || lt.includes("unlimited");
+}
+
+/**
+ * Parse division string to determine which divisions an app belongs to
+ */
+function parseDivisions(divisionStr: string): { es: boolean; ms: boolean; hs: boolean; wholeSchool: boolean } {
+  const div = divisionStr.toLowerCase();
+  return {
+    es: div.includes("elementary") || div.includes("es"),
+    ms: div.includes("middle") || div.includes("ms"),
+    hs: div.includes("high") || div.includes("hs"),
+    wholeSchool: div.includes("whole") || div.includes("all"),
+  };
+}
+
+/**
+ * Determine if an app is effectively whole school
+ */
+function isEffectivelyWholeSchool(app: DashboardApp): boolean {
+  const licenseType = app.licenseType.toLowerCase();
+  const department = app.department.toLowerCase();
+  const divisions = parseDivisions(app.division);
+
+  // Site/School/Enterprise/Unlimited licenses are whole school
+  if (isEveryoneLicense(app.licenseType)) return true;
+
+  // School Operations department is whole school
+  if (department === "school operations") return true;
+
+  // Explicitly marked as whole school
+  if (divisions.wholeSchool) return true;
+
+  // Present in all three divisions
+  if (divisions.es && divisions.ms && divisions.hs) return true;
+
+  return false;
+}
+
+// Mock data for when Supabase is not configured
 const mockData = {
   wholeSchool: {
     name: "Whole School",
@@ -43,341 +161,129 @@ const mockData = {
         mobileApp: "Yes",
         gradeLevels: "K-12",
       },
-      {
-        product: "Zoom",
-        website: "https://zoom.us",
-        renewalDate: "2024-04-15",
-        spend: 15000,
-        dateAdded: "2022-03-01",
-        division: "Whole School",
-        enterprise: true,
-        licenseType: "Enterprise",
-        category: "Communication",
-        audience: "Teachers, Students, Staff, Parents",
-        description: "Video conferencing platform for virtual meetings, classes, and events.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-12",
-      },
-      {
-        product: "Canva for Education",
-        website: "https://canva.com/education",
-        renewalDate: "2024-09-01",
-        spend: 0,
-        dateAdded: "2023-10-01",
-        division: "Whole School",
-        licenseType: "Site License",
-        category: "Creative",
-        audience: "Teachers, Students",
-        description: "Design platform for creating presentations, posters, and visual content.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-12",
-      },
-      {
-        product: "ManageBac",
-        website: "https://managebac.com",
-        renewalDate: "2024-07-01",
-        spend: 28000,
-        dateAdded: "2023-05-15",
-        division: "Whole School",
-        licenseType: "Site License",
-        category: "Administration",
-        audience: "Teachers, Staff",
-        description: "Curriculum planning and reporting platform for IB schools.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-12",
-      },
     ],
   },
-  elementary: {
-    name: "Elementary",
-    apps: [
-      {
-        product: "Seesaw",
-        website: "https://web.seesaw.me",
-        renewalDate: "2024-05-01",
-        spend: 12000,
-        dateAdded: "2024-01-05",
-        division: "Elementary",
-        licenseType: "School License",
-        category: "Portfolio",
-        audience: "Teachers, Students, Parents",
-        description: "Student-driven digital portfolio and parent communication platform.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-5",
-      },
-      {
-        product: "Epic!",
-        website: "https://getepic.com",
-        renewalDate: "2024-07-15",
-        spend: 3500,
-        dateAdded: "2023-08-20",
-        division: "Elementary",
-        licenseType: "Site License",
-        category: "Reading",
-        audience: "Teachers, Students",
-        description: "Digital library with over 40,000 books for children aged 12 and under.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-5",
-      },
-      {
-        product: "Lexia Core5",
-        website: "https://lexialearning.com",
-        renewalDate: "2024-08-01",
-        spend: 9500,
-        dateAdded: "2023-09-01",
-        division: "Elementary",
-        licenseType: "Site License",
-        category: "Reading",
-        audience: "Teachers, Students",
-        description: "Adaptive literacy program for phonics, fluency, and comprehension.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-5",
-      },
-      {
-        product: "Kodable",
-        website: "https://kodable.com",
-        renewalDate: "2024-06-01",
-        spend: 2400,
-        dateAdded: "2023-11-01",
-        division: "Elementary",
-        licenseType: "School License",
-        category: "Coding",
-        audience: "Teachers, Students",
-        description: "Self-directed coding curriculum for elementary students.",
-        ssoEnabled: false,
-        mobileApp: "Yes",
-        gradeLevels: "K-5",
-      },
-      {
-        product: "IXL Math",
-        website: "https://ixl.com",
-        renewalDate: "2024-04-15",
-        spend: 4200,
-        dateAdded: "2024-01-01",
-        division: "Elementary",
-        licenseType: "Individual",
-        category: "Math",
-        department: "Math",
-        audience: "Teachers, Students",
-        description: "Personalized math practice with comprehensive skill coverage.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-5",
-      },
-    ],
-  },
-  middleSchool: {
-    name: "Middle School",
-    apps: [
-      {
-        product: "Desmos",
-        website: "https://desmos.com",
-        renewalDate: "2024-09-01",
-        spend: 0,
-        dateAdded: "2023-09-01",
-        division: "Middle School",
-        licenseType: "Site License",
-        category: "Math",
-        audience: "Teachers, Students",
-        description: "Interactive graphing calculator and math activities for visualization.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "6-8",
-      },
-      {
-        product: "BrainPOP",
-        website: "https://brainpop.com",
-        renewalDate: "2024-07-01",
-        spend: 8500,
-        dateAdded: "2023-08-15",
-        division: "Middle School",
-        licenseType: "School License",
-        category: "Learning",
-        audience: "Teachers, Students",
-        description: "Animated educational content covering science, math, history, and more.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "6-8",
-      },
-      {
-        product: "NoRedInk",
-        website: "https://noredink.com",
-        renewalDate: "2024-06-15",
-        spend: 3200,
-        dateAdded: "2024-01-10",
-        division: "Middle School",
-        licenseType: "Site License",
-        category: "English",
-        audience: "Teachers, Students",
-        description: "Adaptive grammar and writing practice platform.",
-        ssoEnabled: true,
-        mobileApp: "No",
-        gradeLevels: "6-8",
-      },
-      {
-        product: "Quizlet",
-        website: "https://quizlet.com",
-        renewalDate: "2024-03-15",
-        spend: 2400,
-        dateAdded: "2023-11-15",
-        division: "Middle School",
-        licenseType: "Individual",
-        category: "Study Tools",
-        department: "Social Studies",
-        audience: "Students",
-        description: "Digital flashcards and study games for learning vocabulary and concepts.",
-      },
-    ],
-  },
-  highSchool: {
-    name: "High School",
-    apps: [
-      {
-        product: "Turnitin",
-        website: "https://turnitin.com",
-        renewalDate: "2024-02-28",
-        spend: 8500,
-        dateAdded: "2022-08-01",
-        division: "High School",
-        licenseType: "Site License",
-        category: "Assessment",
-        audience: "Teachers, Students",
-        description: "Plagiarism detection and writing feedback tool for academic integrity.",
-        ssoEnabled: true,
-        mobileApp: "No",
-        gradeLevels: "9-12",
-      },
-      {
-        product: "Adobe Creative Cloud",
-        website: "https://adobe.com",
-        renewalDate: "2024-02-15",
-        spend: 25000,
-        dateAdded: "2023-02-01",
-        division: "High School",
-        licenseType: "Site License",
-        category: "Creative",
-        audience: "Teachers, Students",
-        description: "Professional creative tools including Photoshop, Illustrator, and Premiere Pro.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "9-12",
-      },
-      {
-        product: "Naviance",
-        website: "https://naviance.com",
-        renewalDate: "2024-05-01",
-        spend: 12000,
-        dateAdded: "2023-03-15",
-        division: "High School",
-        licenseType: "School License",
-        category: "College & Career",
-        audience: "Teachers, Students, Parents",
-        description: "College and career readiness platform with planning tools and assessments.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "9-12",
-      },
-      {
-        product: "AP Classroom",
-        website: "https://apcentral.collegeboard.org",
-        renewalDate: "2024-08-01",
-        spend: 0,
-        dateAdded: "2023-09-01",
-        division: "High School",
-        licenseType: "Site License",
-        category: "AP Courses",
-        audience: "Teachers, Students",
-        description: "Official College Board resources for AP course instruction and practice.",
-        ssoEnabled: false,
-        mobileApp: "No",
-        gradeLevels: "10-12",
-      },
-      {
-        product: "GarageBand",
-        website: "https://apple.com/garageband",
-        renewalDate: "2024-12-01",
-        spend: 0,
-        dateAdded: "2024-01-05",
-        division: "High School",
-        licenseType: "Individual",
-        category: "Music",
-        department: "Arts",
-        audience: "Students",
-        description: "Music creation studio for recording and mixing audio.",
-        mobileApp: "Yes",
-      },
-    ],
-  },
+  elementary: { name: "Elementary", apps: [] },
+  middleSchool: { name: "Middle School", apps: [] },
+  highSchool: { name: "High School", apps: [] },
 };
 
 export async function GET() {
-  const FRONTEND_KEY = process.env.FRONTEND_KEY;
-  const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
-
-  // If environment variables are not set, return mock data
-  if (!FRONTEND_KEY || !APPS_SCRIPT_URL) {
-    console.log("Using mock data (env vars not configured)");
-    return NextResponse.json(mockData, {
-      headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
-      },
-    });
-  }
-
   try {
-    // Build the Apps Script API URL
-    const apiUrl = `${APPS_SCRIPT_URL}?api=data&key=${encodeURIComponent(FRONTEND_KEY)}`;
-
-    // Fetch data from Apps Script
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    });
-
-    const responseText = await response.text();
-
-    // Try to parse as JSON
-    let data;
+    // Try to create Supabase client
+    let supabase;
     try {
-      data = JSON.parse(responseText);
-    } catch {
-      console.error("Failed to parse response as JSON");
+      supabase = await createServerSupabaseClient();
+    } catch (err) {
+      console.log("Supabase not configured, using mock data");
       return NextResponse.json(mockData, {
-        headers: {
-          "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
-        },
+        headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
       });
     }
 
-    if (data.error) {
-      console.error("Apps Script error:", data);
+    // Fetch all apps from Supabase
+    const { data: apps, error } = await supabase
+      .from("apps")
+      .select("*")
+      .order("product", { ascending: true });
+
+    if (error) {
+      console.error("Supabase error:", error);
       return NextResponse.json(mockData, {
-        headers: {
-          "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
-        },
+        headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
       });
     }
 
-    return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
+    if (!apps || apps.length === 0) {
+      console.log("No apps in Supabase, using mock data");
+      return NextResponse.json(mockData, {
+        headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
+      });
+    }
+
+    // Transform apps to dashboard format
+    const dashboardApps = (apps as SupabaseApp[]).map(transformToDashboard);
+
+    // Group apps by division
+    const divisionData: {
+      wholeSchool: DashboardApp[];
+      elementary: DashboardApp[];
+      middleSchool: DashboardApp[];
+      highSchool: DashboardApp[];
+    } = {
+      wholeSchool: [],
+      elementary: [],
+      middleSchool: [],
+      highSchool: [],
+    };
+
+    for (const app of dashboardApps) {
+      const divisions = parseDivisions(app.division);
+      const appIsWholeSchool = isEffectivelyWholeSchool(app);
+
+      app.isWholeSchool = appIsWholeSchool;
+
+      if (appIsWholeSchool) {
+        divisionData.wholeSchool.push(app);
+      } else {
+        if (divisions.es) divisionData.elementary.push(app);
+        if (divisions.ms) divisionData.middleSchool.push(app);
+        if (divisions.hs) divisionData.highSchool.push(app);
+      }
+    }
+
+    // Process each division to extract enterprise and everyone apps
+    function processDivisionApps(apps: DashboardApp[], isWholeSchoolTab: boolean) {
+      apps.sort((a, b) => a.product.localeCompare(b.product));
+
+      const enterpriseApps = isWholeSchoolTab ? apps.filter((app) => app.enterprise === true) : [];
+
+      const everyoneApps = apps.filter((app) => {
+        if (app.enterprise) return false;
+        if (!isWholeSchoolTab && app.isWholeSchool) return false;
+        return isEveryoneLicense(app.licenseType);
+      });
+
+      return {
+        apps,
+        enterpriseApps,
+        everyoneApps,
+      };
+    }
+
+    const result = {
+      wholeSchool: {
+        name: "Whole School",
+        ...processDivisionApps(divisionData.wholeSchool, true),
       },
+      elementary: {
+        name: "Elementary",
+        ...processDivisionApps(divisionData.elementary, false),
+      },
+      middleSchool: {
+        name: "Middle School",
+        ...processDivisionApps(divisionData.middleSchool, false),
+      },
+      highSchool: {
+        name: "High School",
+        ...processDivisionApps(divisionData.highSchool, false),
+      },
+      stats: {
+        totalApps: dashboardApps.length,
+        wholeSchoolCount: divisionData.wholeSchool.length,
+        elementaryCount: divisionData.elementary.length,
+        middleSchoolCount: divisionData.middleSchool.length,
+        highSchoolCount: divisionData.highSchool.length,
+      },
+    };
+
+    return NextResponse.json(result, {
+      headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=30" },
     });
   } catch (error) {
-    console.error("Error fetching from Apps Script:", error);
+    console.error("Error fetching data:", error);
     return NextResponse.json(mockData, {
-      headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
-      },
+      headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
     });
   }
 }
