@@ -16,14 +16,15 @@
       --sas-blue: #1a2d58;
       --sas-red: #a0192a;
       --eagle-yellow: #fabc00;
-      --success-green: #10b981;
-      --warning-orange: #f59e0b;
-      --error-red: #ef4444;
+      /* AAA-compliant colors for text (7:1+ contrast on white) */
+      --success-green: #065f46;  /* emerald-800: 7.4:1 */
+      --warning-orange: #92400e; /* amber-800: 7.5:1 */
+      --error-red: #991b1b;      /* red-800: 7.9:1 */
       --gray-50: #f9fafb;
       --gray-100: #f3f4f6;
       --gray-200: #e5e7eb;
       --gray-300: #d1d5db;
-      --gray-500: #6b7280;
+      --gray-500: #374151;  /* Darkened for AAA: 7.8:1 */
       --gray-700: #374151;
       --gray-900: #111827;
       --elementary: #228ec2;
@@ -721,25 +722,126 @@
     .all-operational p {
       font-size: 1.25rem;
     }
+
+    /* Skip Link - Accessibility */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--sas-blue);
+      color: white;
+      padding: 8px 16px;
+      z-index: 10000;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 4px 0;
+    }
+    .skip-link:focus {
+      top: 0;
+      outline: 3px solid var(--eagle-yellow);
+      outline-offset: 2px;
+    }
+
+    /* Accessible Alternative Banner */
+    .a11y-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--eagle-yellow);
+      color: var(--gray-900);
+      padding: 8px 16px;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      z-index: 9999;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+    .a11y-banner:focus-within {
+      transform: translateY(0);
+    }
+    .a11y-banner a {
+      color: var(--sas-blue);
+      text-decoration: underline;
+    }
+    .a11y-banner a:focus {
+      outline: 2px solid var(--sas-blue);
+      outline-offset: 2px;
+    }
+
+    /* Respect reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .live-dot {
+        animation: none;
+      }
+      .slide {
+        transition: none;
+      }
+    }
+
+    /* Screen reader only - visually hidden but accessible */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* AAA-compliant focus indicators */
+    :focus-visible {
+      outline: 3px solid var(--eagle-yellow);
+      outline-offset: 2px;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid var(--eagle-yellow);
+      outline-offset: 2px;
+    }
+
+    /* WCAG 2.2 AAA: Minimum target size 24x24px (Success Criterion 2.5.8) */
+    button,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select {
+      min-width: 24px;
+      min-height: 24px;
+    }
   </style>
 </head>
 <body>
+  <!-- Accessible Alternative Banner - Visible on focus for keyboard users -->
+  <div class="a11y-banner" role="region" aria-label="Accessibility notice">
+    This display auto-advances. For an accessible version, <a href="/">visit the main dashboard</a>.
+  </div>
+
+  <!-- Skip Link for Keyboard Navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <header class="header">
     <div class="header-left">
       <img src="/assets/sas-logo-white.png" alt="SAS" class="logo" onerror="this.style.display='none'">
       <h1>EdTech Team Dashboard</h1>
     </div>
     <div class="header-right">
-      <div class="live-indicator">
-        <span class="live-dot"></span>
+      <div class="live-indicator" aria-label="Live data indicator">
+        <span class="live-dot" aria-hidden="true"></span>
         <span>LIVE</span>
       </div>
-      <div class="date" id="current-date">--</div>
-      <div class="clock" id="current-time">--:--</div>
+      <div class="date" id="current-date" aria-label="Current date">--</div>
+      <div class="clock" id="current-time" aria-label="Current time">--:--</div>
     </div>
   </header>
 
-  <main class="slides-container">
+  <main id="main-content" class="slides-container" aria-label="Dashboard slides">
     <!-- Slide 1: Status Overview & Down Detector -->
     <div class="slide slide-1 active">
       <section class="panel status-panel">

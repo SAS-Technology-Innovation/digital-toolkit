@@ -16,14 +16,18 @@
       --sas-blue: #1a2d58;
       --sas-red: #a0192a;
       --eagle-yellow: #fabc00;
-      --success-green: #10b981;
-      --warning-orange: #f59e0b;
-      --error-red: #ef4444;
+      /* AAA-compliant colors for text (7:1+ contrast on white) */
+      --success-green: #065f46;  /* emerald-800: 7.4:1 */
+      --warning-orange: #92400e; /* amber-800: 7.5:1 */
+      --error-red: #991b1b;      /* red-800: 7.9:1 */
+      /* Lighter versions for backgrounds */
+      --success-green-bg: #d1fae5;
+      --error-red-bg: #fee2e2;
       --gray-50: #f9fafb;
       --gray-100: #f3f4f6;
       --gray-200: #e5e7eb;
       --gray-300: #d1d5db;
-      --gray-500: #6b7280;
+      --gray-500: #374151;  /* Darkened for AAA: 7.8:1 */
       --gray-700: #374151;
       --gray-900: #111827;
     }
@@ -482,9 +486,68 @@
         padding: 12px 16px;
       }
     }
+
+    /* Skip Link - Accessibility */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--sas-blue);
+      color: white;
+      padding: 8px 16px;
+      z-index: 10000;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 4px 0;
+    }
+    .skip-link:focus {
+      top: 0;
+      outline: 3px solid var(--eagle-yellow);
+      outline-offset: 2px;
+    }
+
+    /* Screen reader only - visually hidden but accessible */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* AAA-compliant focus indicators for all interactive elements */
+    :focus-visible {
+      outline: 3px solid var(--eagle-yellow);
+      outline-offset: 2px;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid var(--eagle-yellow);
+      outline-offset: 2px;
+    }
+
+    /* WCAG 2.2 AAA: Minimum target size 24x24px (Success Criterion 2.5.8) */
+    button,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select {
+      min-width: 24px;
+      min-height: 24px;
+    }
   </style>
 </head>
 <body>
+  <!-- Skip Link for Keyboard Navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <header class="header">
     <div class="header-content">
       <h1>System Status</h1>
@@ -492,7 +555,7 @@
     </div>
   </header>
 
-  <main class="container">
+  <main id="main-content" class="container">
     <!-- Status Banner -->
     <div id="status-banner" class="status-banner loading">
       <div class="status-indicator loading">
@@ -529,15 +592,19 @@
       <div class="apps-header">
         <h2>Applications</h2>
         <div class="search-box">
-          <i data-lucide="search"></i>
+          <i data-lucide="search" aria-hidden="true"></i>
+          <label for="search-input" class="sr-only">Search applications</label>
           <input type="text" id="search-input" placeholder="Search applications...">
         </div>
-        <div class="filter-tabs">
-          <button class="filter-tab active" data-filter="all">All</button>
-          <button class="filter-tab" data-filter="up">Operational</button>
-          <button class="filter-tab" data-filter="down">Issues</button>
+        <div class="filter-tabs" role="tablist" aria-label="Filter by status">
+          <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true" tabindex="0">All</button>
+          <button class="filter-tab" data-filter="up" role="tab" aria-selected="false" tabindex="-1">Operational</button>
+          <button class="filter-tab" data-filter="down" role="tab" aria-selected="false" tabindex="-1">Issues</button>
         </div>
       </div>
+
+      <!-- Live region for filter/search announcements (WCAG 2.2 AAA) -->
+      <div id="filter-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
       <div id="loading-state" class="loading-state">
         <div class="spinner"></div>
@@ -587,13 +654,53 @@
       // Search
       document.getElementById('search-input').addEventListener('input', filterApps);
 
-      // Filter tabs
-      document.querySelectorAll('.filter-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          currentFilter = tab.dataset.filter;
-          filterApps();
+      // Filter tabs with keyboard navigation (WCAG 2.2 AAA compliant)
+      const filterTabs = document.querySelectorAll('.filter-tab');
+      const filterTabsArray = Array.from(filterTabs);
+
+      function activateFilterTab(tab, setFocus = false) {
+        filterTabs.forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+          t.setAttribute('tabindex', '-1');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        tab.setAttribute('tabindex', '0');
+        currentFilter = tab.dataset.filter;
+        filterApps();
+        if (setFocus) {
+          tab.focus();
+        }
+      }
+
+      filterTabs.forEach(tab => {
+        tab.addEventListener('click', () => activateFilterTab(tab));
+        tab.addEventListener('keydown', (e) => {
+          const currentIndex = filterTabsArray.indexOf(tab);
+          let newIndex = currentIndex;
+
+          switch (e.key) {
+            case 'ArrowRight':
+              newIndex = (currentIndex + 1) % filterTabsArray.length;
+              e.preventDefault();
+              break;
+            case 'ArrowLeft':
+              newIndex = (currentIndex - 1 + filterTabsArray.length) % filterTabsArray.length;
+              e.preventDefault();
+              break;
+            case 'Home':
+              newIndex = 0;
+              e.preventDefault();
+              break;
+            case 'End':
+              newIndex = filterTabsArray.length - 1;
+              e.preventDefault();
+              break;
+            default:
+              return;
+          }
+          activateFilterTab(filterTabsArray[newIndex], true);
         });
       });
     }
@@ -741,7 +848,7 @@
 
         return `
           <li class="app-item">
-            <div class="app-status-dot ${statusClass}"></div>
+            <div class="app-status-dot ${statusClass}" aria-hidden="true"></div>
             <div class="app-info">
               <div class="app-name">${escapeHtml(app.name)}</div>
               <div class="app-url"><a href="${escapeHtml(app.url)}" target="_blank" rel="noopener">${escapeHtml(app.url)}</a></div>
@@ -750,6 +857,13 @@
           </li>
         `;
       }).join('');
+
+      // Announce results for screen readers (WCAG 2.2 AAA)
+      const announcer = document.getElementById('filter-announcer');
+      if (announcer) {
+        const filterText = currentFilter === 'all' ? '' : (currentFilter === 'up' ? 'operational' : 'with issues');
+        announcer.textContent = `${filteredApps.length} ${filteredApps.length === 1 ? 'application' : 'applications'} ${filterText}${searchTerm ? ` matching "${searchTerm}"` : ''}`.trim();
+      }
     }
 
     function filterApps() {

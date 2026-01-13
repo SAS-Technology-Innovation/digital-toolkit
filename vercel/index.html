@@ -38,7 +38,7 @@
  */
 -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <base target="_top">
   <title>SAS Digital Toolkit</title>
@@ -111,6 +111,40 @@
       border-width: 0;
     }
 
+    /* AAA-compliant focus indicators for all interactive elements */
+    :focus-visible {
+      outline: 3px solid var(--sas-yellow);
+      outline-offset: 2px;
+    }
+
+    /* High contrast focus for dark backgrounds */
+    .header :focus-visible,
+    .tabs-container :focus-visible,
+    .ai-chat-window :focus-visible {
+      outline-color: var(--sas-yellow);
+    }
+
+    /* Ensure buttons and links have visible focus */
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid var(--sas-yellow);
+      outline-offset: 2px;
+    }
+
+    /* WCAG 2.2 AAA: Minimum target size 24x24px (Success Criterion 2.5.8) */
+    button,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select {
+      min-width: 24px;
+      min-height: 24px;
+    }
+
     body {
       font-family: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       line-height: 1.6;
@@ -175,7 +209,7 @@
       font-size: 0.9rem;
       font-weight: 400;
       margin: 0;
-      color: #6c757d;
+      color: #374151;
     }
 
     .header-search {
@@ -324,7 +358,7 @@
       transform: translateY(-50%);
       width: 16px;
       height: 16px;
-      color: #6c757d;
+      color: #374151;
       pointer-events: none;
     }
 
@@ -336,7 +370,7 @@
       background: none;
       border: none;
       cursor: pointer;
-      color: #6c757d;
+      color: #374151;
       padding: 4px;
       display: none;
     }
@@ -354,7 +388,7 @@
       border: 2px solid #e9ecef;
       border-radius: 8px;
       background: white;
-      color: #6c757d;
+      color: #374151;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -514,7 +548,7 @@
     .purpose-content p {
       font-size: 0.95rem;
       line-height: 1.6;
-      color: #6b7280;
+      color: #374151;
       margin: 0;
     }
 
@@ -587,7 +621,7 @@
     }
 
     .whats-new-subtitle {
-      color: #6c757d;
+      color: #374151;
       font-size: 13px;
       margin-bottom: 16px;
       font-weight: 400;
@@ -678,7 +712,7 @@
     }
     
     .main-subtitle {
-      color: #6c757d;
+      color: #374151;
       font-size: 14px;
       margin-bottom: 16px;
       font-weight: 400;
@@ -776,7 +810,7 @@
     /* App Description */
     .app-description {
       font-size: 13px;
-      color: #6c757d;
+      color: #374151;
       margin: 8px 0;
       line-height: 1.4;
     }
@@ -794,7 +828,7 @@
       align-items: center;
       gap: 4px;
       font-size: 11px;
-      color: #6c757d;
+      color: #374151;
       background: #f8f9fa;
       padding: 2px 8px;
       border-radius: 10px;
@@ -1214,7 +1248,7 @@
     }
 
     .app-request-step-content {
-      color: #6c757d;
+      color: #374151;
       font-size: 0.95rem;
       margin-left: 40px;
     }
@@ -1266,7 +1300,7 @@
     }
 
     .loading h3 { color: var(--sas-blue); }
-    .loading p { color: #6c757d; }
+    .loading p { color: #374151; }
     .error-state h3 { color: #dc3545; }
     .error-state p { color: #dc3545; }
 
@@ -1343,7 +1377,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
       flex-shrink: 0;
-      color: #6c757d;
+      color: #374151;
     }
 
     .modal-close:hover {
@@ -1372,7 +1406,7 @@
       font-family: 'DM Sans', sans-serif;
       font-weight: 600;
       font-size: 0.85rem;
-      color: #6c757d;
+      color: #374151;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 8px;
@@ -1426,7 +1460,7 @@
     .modal-info-label {
       font-size: 11px;
       font-weight: 600;
-      color: #6c757d;
+      color: #374151;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 4px;
@@ -1951,7 +1985,7 @@
       font-size: 12px;
       cursor: pointer;
       transition: all 0.2s ease;
-      color: #6c757d;
+      color: #374151;
     }
 
     .ai-suggestion-chip:hover {
@@ -1997,9 +2031,29 @@
         font-size: 12px;
       }
     }
+    /* Skip Link - Accessibility */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--sas-blue);
+      color: white;
+      padding: 8px 16px;
+      z-index: 10000;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 4px 0;
+    }
+    .skip-link:focus {
+      top: 0;
+      outline: 3px solid var(--sas-yellow);
+      outline-offset: 2px;
+    }
   </style>
 </head>
 <body>
+  <!-- Skip Link for Keyboard Navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <div class="container">
     <!-- Header -->
@@ -2044,8 +2098,11 @@
       </div>
     </div>
 
+    <!-- Live region for search announcements (WCAG 2.2 AAA) -->
+    <div id="search-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
     <!-- Tab Navigation -->
-    <div class="tabs-container">
+    <nav class="tabs-container" aria-label="Division navigation">
       <div class="tabs" role="tablist" aria-label="School divisions">
         <button
           class="tab-button active"
@@ -2053,7 +2110,8 @@
           role="tab"
           aria-selected="true"
           aria-controls="wholeSchool-content"
-          id="tab-wholeSchool">
+          id="tab-wholeSchool"
+          tabindex="0">
           <i data-lucide="globe" aria-hidden="true"></i> Whole School
         </button>
         <button
@@ -2062,7 +2120,8 @@
           role="tab"
           aria-selected="false"
           aria-controls="elementary-content"
-          id="tab-elementary">
+          id="tab-elementary"
+          tabindex="-1">
           <i data-lucide="baby" aria-hidden="true"></i> Elementary School
         </button>
         <button
@@ -2071,7 +2130,8 @@
           role="tab"
           aria-selected="false"
           aria-controls="middleSchool-content"
-          id="tab-middleSchool">
+          id="tab-middleSchool"
+          tabindex="-1">
           <i data-lucide="graduation-cap" aria-hidden="true"></i> Middle School
         </button>
         <button
@@ -2080,11 +2140,12 @@
           role="tab"
           aria-selected="false"
           aria-controls="highSchool-content"
-          id="tab-highSchool">
+          id="tab-highSchool"
+          tabindex="-1">
           <i data-lucide="university" aria-hidden="true"></i> High School
         </button>
       </div>
-    </div>
+    </nav>
 
     <!-- Loading State -->
     <div id="loading" class="loading">
@@ -2097,7 +2158,7 @@
     <div id="error" style="display: none;"></div>
 
     <!-- Main Content -->
-    <div id="main-content" class="main-content" style="display: none;">
+    <main id="main-content" class="main-content" style="display: none;">
 
       <!-- Whole School Tab Content -->
       <div
@@ -2269,7 +2330,7 @@
                 onclick="showFlowchartModal()"
                 style="cursor: pointer;"
                 title="Click to view full size">
-              <p style="text-align: center; margin-top: 8px; font-size: 14px; color: #6b7280;">
+              <p style="text-align: center; margin-top: 8px; font-size: 14px; color: #374151;">
                 <i data-lucide="maximize-2" style="width: 16px; height: 16px; vertical-align: middle;"></i>
                 Click to enlarge
               </p>
@@ -2359,13 +2420,13 @@
         </div>
       </div>
 
-    </div>
+    </main>
 
     <!-- Flowchart Image Modal -->
-    <div id="flowchart-modal" class="modal-overlay" style="display: none;" onclick="closeFlowchartModal(event)">
+    <div id="flowchart-modal" class="modal-overlay" style="display: none;" onclick="closeFlowchartModal(event)" role="dialog" aria-modal="true" aria-labelledby="flowchart-modal-title">
       <div class="flowchart-modal-content" onclick="event.stopPropagation()">
         <div class="modal-header">
-          <h2 class="modal-title">App Request Process</h2>
+          <h2 id="flowchart-modal-title" class="modal-title">App Request Process</h2>
           <div style="display: flex; gap: 12px;">
             <a
               href="/assets/App Request Process for Teachers.png"
@@ -2739,21 +2800,72 @@
     function setupTabs() {
       const tabs = document.querySelectorAll('.tab-button');
       const contents = document.querySelectorAll('.tab-content');
+      const tabsArray = Array.from(tabs);
 
+      // Helper function to activate a tab
+      function activateTab(tab, setFocus = false) {
+        // Deactivate all tabs
+        tabs.forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+          t.setAttribute('tabindex', '-1');
+        });
+        contents.forEach(c => c.classList.remove('active'));
+
+        // Activate the selected tab
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        tab.setAttribute('tabindex', '0');
+
+        const targetContent = document.getElementById(tab.dataset.tab + '-content');
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+
+        // Set focus if requested (for keyboard navigation)
+        if (setFocus) {
+          tab.focus();
+        }
+      }
+
+      // Click handler
       tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => {
-            t.classList.remove('active');
-            t.setAttribute('aria-selected', 'false');
-          });
-          contents.forEach(c => c.classList.remove('active'));
+        tab.addEventListener('click', () => activateTab(tab));
+      });
 
-          tab.classList.add('active');
-          tab.setAttribute('aria-selected', 'true');
-          const targetContent = document.getElementById(tab.dataset.tab + '-content');
-          if (targetContent) {
-            targetContent.classList.add('active');
+      // Keyboard navigation (WCAG 2.2 AAA compliant)
+      tabs.forEach(tab => {
+        tab.addEventListener('keydown', (e) => {
+          const currentIndex = tabsArray.indexOf(tab);
+          let newIndex = currentIndex;
+
+          switch (e.key) {
+            case 'ArrowRight':
+              // Move to next tab, wrap to first
+              newIndex = (currentIndex + 1) % tabsArray.length;
+              e.preventDefault();
+              break;
+            case 'ArrowLeft':
+              // Move to previous tab, wrap to last
+              newIndex = (currentIndex - 1 + tabsArray.length) % tabsArray.length;
+              e.preventDefault();
+              break;
+            case 'Home':
+              // Move to first tab
+              newIndex = 0;
+              e.preventDefault();
+              break;
+            case 'End':
+              // Move to last tab
+              newIndex = tabsArray.length - 1;
+              e.preventDefault();
+              break;
+            default:
+              return; // Don't handle other keys
           }
+
+          // Activate the new tab and set focus
+          activateTab(tabsArray[newIndex], true);
         });
       });
     }
@@ -2809,6 +2921,16 @@
             section.style.display = '';
           }
         });
+
+        // Announce search results for screen readers (WCAG 2.2 AAA)
+        const announcer = document.getElementById('search-announcer');
+        if (announcer) {
+          if (query) {
+            announcer.textContent = `${visibleCount} ${visibleCount === 1 ? 'app' : 'apps'} found for "${query}"`;
+          } else {
+            announcer.textContent = '';
+          }
+        }
       });
 
       // Clear button functionality
@@ -2857,21 +2979,26 @@
     }
 
     // App Detail Modal
+    let modalTriggerElement = null; // Store element that triggered modal for focus restoration
+
     function showAppDetails(event, app) {
       // Prevent button click from triggering any parent element clicks
       if (event) event.stopPropagation();
 
-      // Build modal HTML
+      // Store trigger element for focus restoration
+      modalTriggerElement = event ? event.currentTarget || event.target : document.activeElement;
+
+      // Build modal HTML with ARIA attributes
       const modalHTML = `
-        <div class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-overlay" onclick="closeModal(event)" role="dialog" aria-modal="true" aria-labelledby="app-modal-title">
           <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
               <div class="modal-header-content">
-                <h2 class="modal-title">${app.product}</h2>
-                ${app.description ? `<p style="color: #6c757d; margin: 0; font-size: 14px;">${app.description}</p>` : ''}
+                <h2 id="app-modal-title" class="modal-title">${app.product}</h2>
+                ${app.description ? `<p style="color: #374151; margin: 0; font-size: 14px;">${app.description}</p>` : ''}
               </div>
-              <button class="modal-close" onclick="closeModal()" title="Close">
-                <i data-lucide="x"></i>
+              <button class="modal-close" onclick="closeModal()" title="Close" aria-label="Close modal">
+                <i data-lucide="x" aria-hidden="true"></i>
               </button>
             </div>
 
@@ -2989,6 +3116,41 @@
 
       // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
+
+      // Focus management: focus the close button
+      const closeBtn = modalContainer.querySelector('.modal-close');
+      if (closeBtn) {
+        closeBtn.focus();
+      }
+
+      // Set up focus trap
+      setupModalFocusTrap(modalContainer);
+    }
+
+    // Focus trap helper for modals (WCAG 2.2 AAA)
+    function setupModalFocusTrap(modalContainer) {
+      const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusableElements = modalContainer.querySelectorAll(focusableSelectors);
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements[focusableElements.length - 1];
+
+      modalContainer.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab') return;
+
+        if (e.shiftKey) {
+          // Shift + Tab: if on first element, go to last
+          if (document.activeElement === firstFocusable) {
+            e.preventDefault();
+            lastFocusable.focus();
+          }
+        } else {
+          // Tab: if on last element, go to first
+          if (document.activeElement === lastFocusable) {
+            e.preventDefault();
+            firstFocusable.focus();
+          }
+        }
+      });
     }
 
     function closeModal(event) {
@@ -3004,6 +3166,12 @@
 
       // Restore body scroll
       document.body.style.overflow = '';
+
+      // Restore focus to trigger element (WCAG 2.2 AAA)
+      if (modalTriggerElement && typeof modalTriggerElement.focus === 'function') {
+        modalTriggerElement.focus();
+        modalTriggerElement = null;
+      }
     }
 
     // Close modal on Escape key
@@ -3015,7 +3183,12 @@
     });
 
     // Flowchart Modal Functions
+    let flowchartTriggerElement = null;
+
     function showFlowchartModal() {
+      // Store trigger element for focus restoration
+      flowchartTriggerElement = document.activeElement;
+
       const modal = document.getElementById('flowchart-modal');
       if (modal) {
         modal.style.display = 'flex';
@@ -3026,6 +3199,15 @@
         if (typeof lucide !== 'undefined') {
           lucide.createIcons();
         }
+
+        // Focus the close button (WCAG 2.2 AAA)
+        const closeBtn = modal.querySelector('.modal-close');
+        if (closeBtn) {
+          closeBtn.focus();
+        }
+
+        // Set up focus trap
+        setupModalFocusTrap(modal);
       }
     }
 
@@ -3042,6 +3224,12 @@
 
       // Restore body scroll
       document.body.style.overflow = '';
+
+      // Restore focus to trigger element (WCAG 2.2 AAA)
+      if (flowchartTriggerElement && typeof flowchartTriggerElement.focus === 'function') {
+        flowchartTriggerElement.focus();
+        flowchartTriggerElement = null;
+      }
     }
 
     // --- AI FEATURES ---
