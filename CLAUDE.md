@@ -4,678 +4,419 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🎯 Project Overview
 
-The **SAS Digital Toolkit Dashboard** is a Google Apps Script web application that displays educational applications for Singapore American School. Apps are categorized by school divisions with smart filtering and department grouping.
+The **SAS Digital Toolkit** is a full-stack web application for managing and showcasing educational applications at Singapore American School. The frontend is built with Next.js 16 and deployed to Vercel, while the backend uses Google Apps Script to read from Google Sheets.
 
-### Core Components
+### Architecture
 
-- **[Code.js](Code.js)**: Google Apps Script backend (reads from Google Sheets, processes data)
-- **[index.html](index.html)**: Single-page frontend with embedded CSS/JS
-- **[signage.html](signage.html)**: Digital signage slideshow display (access via `?page=signage`)
-- **[appsscript.json](appsscript.json)**: Google Apps Script configuration
-- **[package.json](package.json)**: npm scripts for clasp-based deployment
-
-## 🏗️ Architecture & Critical Business Logic
-
-### Data Flow
 ```
-Google Sheets → Apps Script Backend → JSON API → Frontend Dashboard → User Interface
+┌─────────────────────────────────────────────────────────────┐
+│                     Vercel (Frontend)                        │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              Next.js 16 App Router                   │    │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐            │    │
+│  │  │Dashboard │ │App Catalog│ │  Admin   │  ...       │    │
+│  │  └──────────┘ └──────────┘ └──────────┘            │    │
+│  │  ┌──────────────────────────────────────┐          │    │
+│  │  │        Supabase Auth (Magic Links)    │          │    │
+│  │  └──────────────────────────────────────┘          │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                           │                                  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              API Routes (/api/*)                     │    │
+│  │  /api/data  /api/ai  /api/sync  /api/status         │    │
+│  └─────────────────────────────────────────────────────┘    │
+└──────────────────────────────┼──────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│                Google Apps Script (Backend)                   │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Code.js → getDashboardData(), queryAI(), etc.         │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                           │                                  │
+│                           ▼                                  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              Google Sheets (Data Source)              │   │
+│  └──────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Division Assignment Logic (Code.js)
+### Tech Stack
 
-Apps are categorized based on these business rules in [Code.js:304-410](Code.js#L304-L410) and [utilities.js:270-289](utilities.js#L270-L289):
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16 with App Router, TypeScript |
+| Styling | Tailwind CSS v4, Shadcn/UI components |
+| Authentication | Supabase Auth (Magic Links) |
+| Database | Supabase (PostgreSQL), Google Sheets |
+| AI | Claude API (via Apps Script proxy) |
+| Deployment | Vercel |
+| Backend API | Google Apps Script |
+
+## 📁 Project Structure
+
+```
+digital-toolkit/
+├── vercel/                      # Next.js frontend application
+│   ├── src/
+│   │   ├── app/                 # Next.js App Router pages
+│   │   │   ├── (dashboard)/     # Dashboard route group (with sidebar)
+│   │   │   │   ├── page.tsx     # Main dashboard (/)
+│   │   │   │   ├── apps/        # App catalog (/apps)
+│   │   │   │   ├── admin/       # Admin panel (/admin) - protected
+│   │   │   │   ├── analytics/   # Analytics (/analytics)
+│   │   │   │   ├── renewals/    # Renewals (/renewals)
+│   │   │   │   ├── requests/    # Request form (/requests)
+│   │   │   │   ├── status/      # Status page (/status)
+│   │   │   │   └── layout.tsx   # Dashboard layout with sidebar
+│   │   │   ├── api/             # API routes
+│   │   │   │   ├── ai/route.ts  # AI chat endpoint
+│   │   │   │   ├── data/route.ts # Apps data endpoint
+│   │   │   │   ├── renewal-data/route.ts
+│   │   │   │   ├── status/route.ts
+│   │   │   │   └── sync/route.ts # Supabase sync
+│   │   │   ├── auth/callback/   # Magic link callback
+│   │   │   ├── login/           # Login page
+│   │   │   ├── signage/         # Signage display (no sidebar)
+│   │   │   └── layout.tsx       # Root layout
+│   │   ├── components/          # React components
+│   │   │   ├── ui/              # Shadcn/UI components
+│   │   │   │   ├── audience-badge.tsx   # Color-coded audience tags
+│   │   │   │   ├── category-badge.tsx   # Color-coded category tags
+│   │   │   │   ├── division-section.tsx # Division containers
+│   │   │   │   └── ...          # Other Shadcn components
+│   │   │   ├── app-card.tsx     # App card component
+│   │   │   ├── app-detail-modal.tsx
+│   │   │   ├── app-sidebar.tsx  # Navigation sidebar
+│   │   │   └── dashboard-search.tsx
+│   │   ├── lib/                 # Utilities
+│   │   │   ├── auth/            # Auth context
+│   │   │   │   └── auth-context.tsx
+│   │   │   ├── supabase/        # Supabase clients
+│   │   │   │   ├── client.ts    # Browser client
+│   │   │   │   └── server.ts    # Server client
+│   │   │   └── utils.ts         # Helper functions
+│   │   ├── hooks/               # Custom React hooks
+│   │   └── middleware.ts        # Auth middleware
+│   ├── public/assets/           # Static assets (logos, images)
+│   ├── supabase/                # Supabase config
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── next.config.ts
+│   └── components.json          # Shadcn/UI config
+├── appsscript/                  # Google Apps Script backend
+│   ├── Code.js                  # Main entry point
+│   ├── ai-functions.js          # AI integrations
+│   ├── utilities.js             # Helper functions
+│   ├── data-management.js       # Data enrichment
+│   └── appsscript.json          # Apps Script config
+├── docs/                        # Documentation
+└── README.md
+```
+
+## 🔐 Authentication System
+
+### Overview
+- **Provider**: Supabase Auth
+- **Method**: Magic Links (passwordless email)
+- **Domain Restriction**: `@sas.edu.sg` emails only
+- **Protected Routes**: `/admin` requires authentication
+
+### Key Files
+
+**[vercel/src/lib/auth/auth-context.tsx](vercel/src/lib/auth/auth-context.tsx)**
+```typescript
+// Auth context provides user state and auth methods
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
+}
+```
+
+**[vercel/src/middleware.ts](vercel/src/middleware.ts)**
+- Refreshes session on every request
+- Protects `/admin` routes (redirects to `/login`)
+- Redirects authenticated users from `/login` to home
+
+**[vercel/src/app/auth/callback/route.ts](vercel/src/app/auth/callback/route.ts)**
+- Handles magic link verification
+- Exchanges code for session
+- Redirects to requested page or home
+
+**[vercel/src/app/login/page.tsx](vercel/src/app/login/page.tsx)**
+- Login form with @sas.edu.sg validation
+- Shows success message after sending magic link
+- Uses Suspense for useSearchParams
+
+### Auth Flow
+```
+User enters email → Validate @sas.edu.sg domain → Send magic link
+       ↓
+User clicks link → /auth/callback → Exchange code for session → Redirect
+```
+
+## 🎨 UI Components
+
+### Shadcn/UI Integration
+Components are installed via `npx shadcn@latest add [component]` and stored in `src/components/ui/`.
+
+### Custom Components
+
+**Color-Coded Badge Components:**
+
+| Component | Purpose | Colors |
+|-----------|---------|--------|
+| `AudienceBadge` | Shows target audience | Teachers=green, Students=yellow, Parents=pink, Staff=purple |
+| `CategoryBadge` | Shows app category | Learning Management=blue, Content Creation=green, etc. |
+| `DivisionSection` | Division containers | Elementary=#228ec2, Middle=#a0192a, High=#1a2d58 |
+
+**App Components:**
+- `AppCard` - Displays app info with badges, logos, and actions
+- `AppDetailModal` - Full app details in modal dialog
+- `AppSidebar` - Navigation with user display and sign out
+- `DashboardSearch` - Search bar with filters
+
+### SAS Brand Colors
+
+```css
+/* In Tailwind config or CSS */
+--sas-blue: #1a2d58;      /* Primary Blue */
+--sas-red: #a0192a;       /* SAS Red */
+--sas-yellow: #fabc00;    /* Eagle Yellow */
+--elementary: #228ec2;    /* Elementary Blue */
+```
+
+## 🔌 API Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/data` | GET | Fetch apps data (proxies to Apps Script) |
+| `/api/ai` | POST | AI chat completion |
+| `/api/renewal-data` | GET | Fetch renewal data |
+| `/api/status` | GET | Fetch app status |
+| `/api/sync` | POST | Sync data with Supabase |
+
+### Data Structure
+
+The `/api/data` route returns division-based data:
+
+```typescript
+interface DashboardData {
+  wholeSchool: {
+    enterprise: App[];
+    everyone: App[];
+    departments: Record<string, App[]>;
+  };
+  elementary: { /* same structure */ };
+  middleSchool: { /* same structure */ };
+  highSchool: { /* same structure */ };
+}
+```
+
+## 🏗️ Business Logic
+
+### Division Assignment
+
+Apps are categorized based on these rules:
 
 **Three-Tier Hierarchy:**
 
-1. **Enterprise Apps** (ONLY on Whole School tab):
-   - `Enterprise` column = TRUE checkbox
-   - Highest priority, premium styling
-   - Official SAS-approved core tools
+1. **Enterprise Apps** (Whole School only):
+   - `enterprise` column = TRUE
+   - Premium gold styling
 
 2. **Apps Everyone Can Use**:
-   - **Whole School tab**: Site/School/Enterprise/Unlimited licenses (non-Enterprise checkbox)
-   - **Division tabs**: ONLY division-specific "everyone" apps (excludes whole school apps)
-   - Site/School/Enterprise/Unlimited license types + NOT whole school
+   - Site/School/Enterprise/Unlimited licenses
+   - Division tabs show only division-specific apps
 
 3. **Department-Specific Apps**:
-   - Individual licenses or apps not in above categories
+   - Individual licenses
    - Grouped by department with counts
-   - Filtered to exclude invalid department names
 
-**Whole School Determination**:
+**Whole School Determination:**
 ```javascript
-// An app is "Whole School" if it meets ANY of these:
-const isEffectivelyWholeSchool =
+const isWholeSchool =
   licenseType.includes('site') ||
   licenseType.includes('school') ||
   licenseType.includes('enterprise') ||
   licenseType.includes('unlimited') ||
   department === 'school operations' ||
-  department === 'school-wide' ||
-  division.includes('school-wide') ||
   division.includes('whole school') ||
-  (hasElementary && hasMiddle && hasHigh); // All 3 divisions listed
+  (hasElementary && hasMiddle && hasHigh);
 ```
-
-**Key Rules:**
-- Enterprise apps NEVER appear on division tabs (Elementary/Middle/High)
-- Whole school apps do NOT appear in division tabs' "Everyone" section
-- Division tabs only show division-specific apps + department apps
-
-## 💻 Google Apps Script Environment
-
-### Critical Constraints
-- **No Node.js modules**: All dependencies via CDN (Tailwind CSS, Lucide Icons)
-- **No build process**: Everything embedded in HTML/JS files
-- **Backend-Frontend communication**: Must use `google.script.run` pattern
-- **Configuration**: Uses Script Properties (not hardcoded values)
-
-### Backend Pattern (Code.js)
-```javascript
-// Configuration via Script Properties (not in code)
-const scriptProperties = PropertiesService.getScriptProperties();
-const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
-const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
-
-// Always wrap in try-catch
-function getDashboardData() {
-  try {
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    // ... processing
-    return JSON.stringify(result);
-  } catch (error) {
-    Logger.log('Error: ' + error.message);
-    return JSON.stringify({ error: error.message });
-  }
-}
-```
-
-### Frontend Pattern (index.html)
-```javascript
-// Environment detection for local testing vs deployed
-if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
-  google.script.run
-    .withSuccessHandler(renderDashboard)
-    .withFailureHandler(showError)
-    .getDashboardData();
-} else {
-  renderDashboard(JSON.stringify(mockData)); // Local testing
-}
-```
-
-### Expected Google Sheets Structure
-**Required columns in exact order** (all lowercase):
-1. `active`: Boolean (TRUE/FALSE) - only TRUE apps processed
-2. `product_name`: String - app name
-3. `division`: String - "SAS Elementary School", "SAS Middle School", "SAS High School", "Whole School", or combinations
-4. `grade_levels`: String - comma-separated individual grades from multi-select dropdown: "Pre-K, Kindergarten, Grade 1, Grade 2" (valid values: Pre-K, Kindergarten, Grade 1-12)
-5. `department`: String - department name (filters out division names)
-6. `subjects`: String - subject tags/categorization
-7. `enterprise`: Boolean (TRUE/FALSE) - **Enterprise checkbox (core SAS tools)**
-8. `budget`: String - "Office Of Learning", "IT Operations", "Communications", "Business Office" (exact capitalization for validation)
-9. `audience`: String - comma-separated: "Staff, Teachers, Students, Parents"
-10. `license_type`: String - "Site Licence" (British), "Inidividual" (typo intentional for validation), "Division License", "Free"
-11. `licence_count`: Number - number of licenses
-12. `value`: Number/String - cost/spend information
-13. `date_added`: Date - when app was added (YYYY-MM-DD)
-14. `renewal_date`: Date - subscription renewal date (YYYY-MM-DD)
-15. `category`: String - for tagging
-16. `website`: String - app URL
-17. `description`: String - 1-2 sentence app description
-18. `support_email`: String - support contact email
-19. `tutorial_link`: String - training/help URL
-20. `mobile_app`: String - "Yes", "No", or "iOS/Android"
-21. `sso_enabled`: Boolean (TRUE/FALSE) - single sign-on available
-22. `logo_url`: String - app logo/icon URL
-
-**Important Notes:**
-- All column names are **lowercase** (changed from mixed case)
-- `grade_levels` is in **4th position** (after division, before department)
-- Grade levels format changed from ranges (e.g., "K-5") to **comma-separated individual grades** (e.g., "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5" for Elementary apps)
-- Grade levels are **automatically inferred** during CSV import using Gemini API or rule-based logic from the division field
-- Data validation supports **multi-select dropdown** with comma-separated individual grade values
-- Valid individual grades: Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6, Grade 7, Grade 8, Grade 9, Grade 10, Grade 11, Grade 12
-- `license_type` uses intentional typo "Inidividual" and British spelling "Site Licence" to match existing Google Sheets data validation
-- `budget` field uses specific capitalization "Office Of Learning" (capital O in "Of") for validation compatibility
-
-**Backwards Compatibility:**
-- Code.js supports both old (capitalized) and new (lowercase) column names for smooth migration
-- data-management.js CSV import handles both formats automatically
-
-**See [expected-data-template.csv](expected-data-template.csv) for example data.**
 
 ## 🚀 Development Commands
 
-### Setup (First Time)
-```bash
-# Clone the Apps Script project (creates .clasp.json)
-npx @google/clasp clone "YOUR_SCRIPT_ID"
+### Frontend (Next.js)
 
-# Login to Google
-npm run login
+```bash
+cd vercel
+
+# Development
+npm run dev          # Start dev server with Turbopack
+npm run build        # Production build
+npm run lint         # Run ESLint
+npm run start        # Start production server
+
+# Shadcn/UI
+npx shadcn@latest add [component]  # Add new component
 ```
 
-### Daily Development
+### Backend (Apps Script)
+
 ```bash
-npm run push      # Push code changes to Apps Script
-npm run deploy    # Create new deployment
-npm run logs      # View execution logs
-npm run open      # Open Apps Script editor
-npm run pull      # Pull latest from cloud
+cd appsscript
+
+npm run login        # Authenticate with Google
+npm run push         # Push code to Apps Script
+npm run pull         # Pull code from Apps Script
+npm run deploy       # Create new deployment
+npm run logs         # View execution logs
+npm run open         # Open in browser
 ```
 
-### Testing Strategy
-- **Frontend only**: Open `index.html` locally (uses mock data)
-- **Full integration**: Deploy to Apps Script and test with real Google Sheets
+## ⚙️ Environment Variables
 
-### Python Development Scripts
+### Vercel (Frontend)
 
-**⚠️ These scripts are for LOCAL DEVELOPMENT ONLY - not used in production.**
+Create `.env.local` in `/vercel`:
 
-Production data management happens through the Google Sheets interface via Apps Script.
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_anon_key
+SUPABASE_SECRET_KEY=your_service_role_key
 
-#### merge-csvs.py
-**Purpose**: Merge EdTech Impact subscription data with existing Google Sheet data
+# Apps Script Backend
+APPS_SCRIPT_URL=your_apps_script_url
+FRONTEND_KEY=your_frontend_key
 
-**Workflow**:
-1. Download fresh `EdTech_Impact.csv` from EdTech Impact platform
-2. Export current Google Sheet as CSV (e.g., `SAS Digital Toolkit (MASTER) - Apps.csv`)
-3. Run: `python3 merge-csvs.py`
-4. Imports `merged-import-data.csv` into Google Sheets
-5. **Delete all CSV files** (contain sensitive data - see `.gitignore`)
+# AI
+ANTHROPIC_API_KEY=your_claude_api_key
+```
 
-**What it does**:
-- Syncs `active` status (TRUE if in EdTech Impact, FALSE if not)
-- Updates subscription fields: `licence_count`, `renewal_date`, `division`, `license_type`
-- **Preserves protected fields**: `department`, `subjects`, `enterprise` (never overwrites)
-- **Infers missing grade_levels** using rule-based logic from division field
-- Normalizes data validation fields (`budget`, `license_type`) to match Google Sheets validation
+### Apps Script (Backend)
 
-**Grade Level Inference**:
-- Uses division field to determine applicable grades
-- Elementary → "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
-- Middle School → "Grade 6, Grade 7, Grade 8"
-- High School → "Grade 9, Grade 10, Grade 11, Grade 12"
-- Multiple divisions → combined grade list
-- Only fills in **empty** grade_levels (preserves existing values)
+Set via Project Settings → Script Properties:
 
-**Output**: `merged-import-data.csv` with all lowercase column headers
+| Property | Description |
+|----------|-------------|
+| `SPREADSHEET_ID` | Google Sheets ID |
+| `SHEET_NAME` | Sheet name (e.g., "Apps") |
+| `FRONTEND_KEY` | Shared secret for API auth |
+| `GEMINI_API_KEY` | For user-facing AI features |
+| `CLAUDE_API_KEY` | For admin data enrichment |
 
-#### Other Utility Scripts
-- `sync-active-apps.py` - Simple active status sync (deprecated - use merge-csvs.py)
-- `fix-license-types.py` - Utility to fix license type validation mismatches
+## 🗄️ Google Sheets Structure
 
-**Important**: Always delete temporary CSV files after import - they contain sensitive school data and are excluded via `.gitignore`.
+Required columns (lowercase):
 
-## 🔧 Configuration
-
-### Script Properties Setup
-Configuration is **NOT in code**. Set via Apps Script Editor:
-1. Open project: `npm run open`
-2. Go to **Project Settings (⚙️) > Script Properties**
-3. Add required properties:
-   - `SPREADSHEET_ID`: Your Google Sheets ID (required)
-   - `SHEET_NAME`: Your sheet name (required)
-   - `GEMINI_API_KEY`: Gemini API key for user-facing AI features (required for AI chat)
-   - `CLAUDE_API_KEY`: Claude API key for admin data management (optional, for data enrichment only)
-
-### GitHub Actions Deployment
-Auto-deploys on push to `main`. Requires repository secrets:
-
-**For Apps Script Deployment (deploy.yml):**
-
-1. **`CLASP_CREDENTIALS`**: Run `npm run login`, then `cat ~/.config/clasp/.clasprc.json` and copy entire JSON
-2. **`APPS_SCRIPT_ID`**: Find in Apps Script Editor → Project Settings → IDs
-3. **`APPS_SCRIPT_DEPLOYMENT_ID`**: Find in Deploy → Manage deployments → Copy deployment ID
-
-**For Claude Code Integration (claude.yml, claude-code-review.yml):**
-
-- **`CLAUDE_CODE_OAUTH_TOKEN`**: OAuth token for Claude Code GitHub Action (get from Anthropic)
-
-**Note**: `.clasp.json` is NOT in repo. Created locally via `npx @google/clasp clone` or dynamically in GitHub Actions.
-
-### Vercel Deployment (Primary Frontend)
-
-The dashboard is deployed to Vercel for fast global CDN distribution.
-
-**Setup:**
-
-1. Set `FRONTEND_KEY` in Apps Script Properties
-2. Deploy Apps Script: `npm run push && npm run deploy`
-3. Deploy to Vercel (automatic via GitHub integration)
-4. Environment variables required:
-   - `FRONTEND_KEY`: Same key as Apps Script
-   - `APPS_SCRIPT_URL`: Your Apps Script web app URL
-   - `RENEWAL_PASSWORD`: Password for renewal page
-   - `EDGE_CONFIG`: Edge Config connection string (for status page)
-   - `EDGE_CONFIG_ID`: Edge Config ID (for status updates)
-   - `VERCEL_TOKEN`: Vercel API token (for status updates)
-   - `CRON_SECRET`: Secret for cron job authentication
-
-**Architecture:**
-
-- Vercel serves static HTML + Edge/Serverless functions
-- All pages fetch data directly from Apps Script via `/api/data` or `/api/renewal-data`
-- API functions proxy requests to Apps Script with `FRONTEND_KEY` authentication
-- Apps Script remains the single source of truth for data
-- Edge Config is used exclusively for the **Status Page** (storing app operational status)
-
-**Status Page (`/status`):**
-
-The Status Page monitors application availability and displays real-time operational status.
-
-- **Cron Job**: `/api/refresh-status` runs daily at 6 AM UTC to check all app URLs
-- **Edge Config Storage**: Stores status as `1` (up) or `0` (down) for each application
-- **Status API**: `/api/status` reads status data from Edge Config
-- **Manual Refresh**: Button on status page to manually trigger a status check
-- **Features**: Search, filter by status (operational/down), auto-refresh every 60 seconds
-
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment instructions.
+1. `active` - Boolean (TRUE/FALSE)
+2. `product_name` - String
+3. `division` - String (SAS Elementary School, etc.)
+4. `grade_levels` - String (Pre-K, Kindergarten, Grade 1, ...)
+5. `department` - String
+6. `subjects` - String
+7. `enterprise` - Boolean
+8. `budget` - String (Office Of Learning, IT Operations, ...)
+9. `audience` - String (Teachers, Students, Parents, Staff)
+10. `license_type` - String (Site Licence, Individual, ...)
+11. `licence_count` - Number
+12. `value` - Number (annual cost)
+13. `date_added` - Date (YYYY-MM-DD)
+14. `renewal_date` - Date (YYYY-MM-DD)
+15. `category` - String
+16. `website` - String (URL)
+17. `description` - String
+18. `support_email` - String
+19. `tutorial_link` - String (URL)
+20. `mobile_app` - String (Yes, No, iOS/Android)
+21. `sso_enabled` - Boolean
+22. `logo_url` - String (URL)
 
 ## ⚠️ Common Issues
 
-### Configuration Errors
-- **"Configuration error: SPREADSHEET_ID not set"**: Set Script Properties (see above)
-- **"Script not found"**: Check `.clasp.json` has correct scriptId (local) or `APPS_SCRIPT_ID` secret (GitHub Actions)
-- **Permission denied**: Run `npm run login` and verify Google Sheets access
+### Next.js
 
-### Business Logic Issues
-
-- **Apps in wrong division**: Check division string matching logic in [utilities.js:237-289](utilities.js#L237-L289)
-- **Division names appearing as departments**: Verify department filtering array matches actual division names
-- **Missing apps**: Ensure `Active` column is TRUE (case-insensitive)
-
-### Deployment Issues
-- **GitHub Actions "No credentials found"**: `CLASP_CREDENTIALS` secret must contain complete, valid JSON
-- **OAuth scope error**: Ensure `appsscript.json` includes `spreadsheets.readonly` scope
-
-## 🎨 Design Patterns & New Features
-
-### Three-Section Layout (per tab)
-1. **Enterprise Apps** (Whole School only): Premium gold styling, "Official SAS Core Tools"
-2. **Apps Everyone Can Use**: Blue/standard styling, site/school licenses
-3. **Department Apps**: Grouped by department with icons and counts
-
-### UI Components (index.html)
-- **Search Bar**: Global search across all fields (sticky, filters in real-time)
-- **Enterprise Section**: Premium gold gradient with border, award icon
-- **Tab Navigation**: Division-based tabs with color coding
-- **App Cards**: Enhanced with descriptions, audience tags, SSO/Mobile badges
-- **Audience Tags**: Color-coded (Staff=purple, Teachers=green, Students=yellow, Parents=pink)
-- **Meta Badges**: SSO (green), Mobile (blue) indicators
-- **Department Grouping**: Collapsible cards with app counts and icons
-- **Responsive Grid**: CSS Grid with `repeat(auto-fit, minmax(280px, 1fr))`
-
-### Search Functionality
-- Searches across: product name, category, subject, department, audience
-- Real-time filtering (hides non-matching cards)
-- Clear button to reset search
-- Hides empty sections when searching
-
-### Icon Assignment Logic
-Department icons auto-assigned based on keywords:
-- Technology/IT → Monitor
-- English/Language → Book
-- Math → Calculator
-- Science → Flask
-- Arts/Music → Palette
-- PE/Athletics → Activity
-
-## 🚀 Phase 3 Features (Recently Implemented)
-
-### Enhanced App Cards
-**Visual Enhancements:**
-- **App Logos**: Displays `logo_url` field with error handling (60x60px, top of card)
-- **Grade Level Badges**: Shows `grade_levels` with graduation cap icon (yellow badge)
-- **"NEW" Badge**: Animated badge for apps added in last 30 days (red gradient, top-right corner)
-- **Description Display**: Shows app descriptions from `description` field
-- **Action Buttons**: Tutorial link button (if `tutorial_link` exists) and Details button
-
-**Code Location:** [index.html:1221-1281](index.html#L1221-L1281) - `createAppCard()` function
-
-### App Detail Modal
-Interactive modal popup with comprehensive app information:
-- **Trigger**: "Details" button on app cards
-- **Content**: Full app details, description, license info, features, renewal date
-- **Actions**: Visit Website, View Tutorial buttons
-- **UX**: Click outside or press ESC to close, prevents body scroll
-
-**Code Location:** [index.html:1403-1557](index.html#L1403-L1557) - `showAppDetails()` and `closeModal()` functions
-
-**CSS Styles:** [index.html:741-960](index.html#L741-L960)
-
-### What's New Section
-Dynamic section showing recently added apps:
-- **Display Logic**: Only shows if apps added in last 30 days exist
-- **Placement**: Top of each division tab (before Enterprise/Everyone sections)
-- **Styling**: SAS Red themed container with gradient border
-- **Date Check**: Uses `isWithinDays()` helper to filter by `date_added` field
-
-**Code Location:**
-- HTML: Each division tab has `<div id="{division}-whats-new">` container
-- JS: [index.html:1320-1335](index.html#L1320-L1335) in `renderDivisionContent()`
-- CSS: [index.html:269-318](index.html#L269-L318)
-
-### SAS Brand Implementation
-**Colors Applied:**
-- Primary: SAS Blue (#1a2d58), SAS Red (#a0192a), Eagle Yellow (#fabc00)
-- Division colors: Elementary (#228ec2), Middle (#a0192a), High (#1a2d58)
-- Typography: Bebas Neue (headings), DM Sans (body text)
-
-**CSS Variables:** [index.html:12-30](index.html#L12-L30)
-
-### Date Handling
-**Helper Function**: `isWithinDays(dateString, days)`
-- Checks if `date_added` is within specified number of days
-- Used for "NEW" badge and "What's New" section
-- Handles invalid dates gracefully
-
-**Code Location:** [index.html:1284-1295](index.html#L1284-L1295)
-
-### Search Enhancements
-**Search Fields**: Now includes audience field in search
-- Searches: product name, category, subject, department, **audience**
-- Real-time filtering with section hiding for empty results
-
-**Code Location:** [index.html:1404-1453](index.html#L1404-L1453) - `setupSearch()` function
-
-### Data Attributes for Search
-All app cards include searchable data attributes:
-- `data-product`, `data-category`, `data-subject`, `data-department`, `data-audience`
-- Enables efficient client-side filtering
-
-**Implementation:** [index.html:1262](index.html#L1262) in `createAppCard()`
-
-## 🤖 Phase 4: AI-Powered Search & Recommendations
-
-### Dual AI Provider Integration (Implemented)
-The dashboard features **intelligent natural language search** with support for two AI providers:
-
-**AI Provider Roles:**
-- **Gemini (Production)**: Read-only queries, app recommendations, user-facing chat (default)
-- **Claude (Admin)**: Data enrichment, validation, and write operations for sheet management
-
-**User-Facing Features:**
-- **AI Toggle in Search Bar**: Click "AI" button to enable natural language queries
-- **Floating Chat Bubble**: Bottom-right corner bot icon for instant AI assistance
-- **Smart Recommendations**: Ask questions like "What can I use for collaborative writing with 8th graders?"
-- **Contextual Understanding**: AI analyzes grade levels, subjects, SSO, mobile support, and audience
-
-**Admin Features (Claude Only):**
-- **Data Enrichment**: Automatically generate missing descriptions
-- **Column Validation**: Detect and fill missing required fields
-- **Content Quality**: Ensure all apps have complete metadata
-- **Sheet Menu Integration**: Custom menu in Google Sheets for easy data management
-
-**Key Files:**
-
-- [ai-functions.js:81-196](ai-functions.js#L81-L196) - `queryAI()` main entry point
-- [ai-functions.js:210-273](ai-functions.js#L210-L273) - `queryGeminiAPI()` function
-- [ai-functions.js:287-355](ai-functions.js#L287-L355) - `queryClaudeAPI()` function
-- [index.html:3035-3165](index.html#L3035-L3165) - AI chat interface and message handling
-- [AI_FEATURES.md](AI_FEATURES.md) - Complete AI features documentation
-
-**Setup Required:**
-1. **For Gemini (Required for users)**:
-   - Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - Add to Script Properties: `GEMINI_API_KEY` = your key
-
-2. **For Claude (Optional, admin only)**:
-   - Get API key from [Anthropic Console](https://console.anthropic.com/)
-   - Add to Script Properties: `CLAUDE_API_KEY` = your key
-
-**How It Works:**
-```
-User Query → queryAI(query, appsData, provider) → Gemini/Claude API
-→ Contextual Prompt + Apps Database → AI Response
-→ Smart Recommendations → Display in Chat
+**Build Error: useSearchParams() requires Suspense**
+```tsx
+// Wrap component using useSearchParams in Suspense
+<Suspense fallback={<Loading />}>
+  <ComponentUsingSearchParams />
+</Suspense>
 ```
 
-**API Provider Selection:**
-- Default: Gemini (faster, free tier available, user-facing)
-- Admin tools: Claude (better for structured data operations)
-- Configurable via `provider` parameter in `queryAI(query, data, provider)`
+**rawData.slice is not a function (Admin page)**
+- `/api/data` returns division-based object, not array
+- Flatten apps from all divisions before processing
 
-**See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.**
+### Authentication
 
----
+**Magic link not working**
+- Check Supabase Auth → URL Configuration → Site URL
+- Verify redirect URL matches `/auth/callback`
 
-## 🔧 Data Management & Quality Control
+**Protected route not redirecting**
+- Check middleware.ts is in `src/` root
+- Verify matcher config includes route
 
-### CSV/XLSX Import from EdTech Impact
+### API
 
-**Primary Data Source:** EdTech Impact platform exports
+**CORS error**
+- API routes proxy to Apps Script with FRONTEND_KEY
+- Check key matches in both environments
 
-The Digital Toolkit supports **automatic import and transformation** of app data from EdTech Impact CSV/XLSX exports.
+**Empty data response**
+- Verify APPS_SCRIPT_URL is correct deployment URL
+- Check Apps Script logs: `npm run logs`
 
-**Quick Workflow:**
-1. Export CSV/XLSX from EdTech Impact platform
-2. Go to **🤖 Digital Toolkit Admin → 📤 Upload CSV Data**
-3. Select update mode (Add & Update recommended)
-4. Upload file - system auto-detects EdTech Impact format
-5. Review statistics and verify import
+## 🧪 Testing Locally
 
-**Expected EdTech Impact Export Format:**
-```
-Product, Cancel by, Renews on, Price, Budget, Notes, Licences, Length, Source, Schools, Decision, Status
-```
+1. **Frontend only** (uses API):
+   ```bash
+   cd vercel
+   npm run dev
+   ```
 
-**Key Transformations:**
-- `Schools` → `Division` ("SAS Elementary School, SAS Middle School" → "Elementary, Middle")
-- `Price` → `value` (`[object Object]` → 0 = Free)
-- `Budget` → `Department` (IT Operations, Office of Learning, etc.)
-- `Status` → `Active` (boolean → TRUE/FALSE)
-- `Licences` → Infers `License Type` (>100 = Site, 1-100 = Individual, 0 = Unlimited)
+2. **With mock data**: Create mock data in component for offline dev
 
-**Auto-Populated Fields:**
-- `Enterprise`: FALSE (default)
-- `audience`: "Teachers, Staff"
-- `grade_levels`: Inferred from division using Gemini API or rule-based logic
-  - Elementary: "Pre-K, Kindergarten, Grade 1, Grade 2, Grade 3, Grade 4, Grade 5"
-  - Middle School: "Grade 6, Grade 7, Grade 8"
-  - High School: "Grade 9, Grade 10, Grade 11, Grade 12"
-  - Multiple divisions: combined grade list
-- `category`: "Apps" (default)
+3. **Full integration**: Deploy Apps Script and set `APPS_SCRIPT_URL`
 
-**See [EDTECH_IMPACT_IMPORT.md](EDTECH_IMPACT_IMPORT.md) for complete import guide.**
+## 📝 Code Patterns
 
-**See [XLSX_IMPORT.md](XLSX_IMPORT.md) for technical XLSX/CSV processing details.**
+### Adding a New Page
 
-### Google Sheets Admin Menu
-When you open the Google Sheets containing your app data, a custom menu "🤖 Digital Toolkit Admin" appears with data management tools.
+1. Create page in `src/app/(dashboard)/[route]/page.tsx`
+2. Add to navigation in `src/components/app-sidebar.tsx`
+3. Add route protection in `middleware.ts` if needed
 
-**Menu Functions** (requires `CLAUDE_API_KEY` for AI features):
+### Adding a New API Route
 
-1. **📊 Validate Data** ([data-management.js:38-95](data-management.js#L38-L95))
-   - Checks all active apps for required fields
-   - Reports missing: product_name, description, Division, Department, Category, Website
-   - Shows up to 20 issues with row numbers
-   - Logs full validation report to Apps Script Logger
+1. Create `src/app/api/[route]/route.ts`
+2. Export GET/POST handlers:
+   ```typescript
+   export async function GET(request: Request) {
+     // Handle request
+     return Response.json(data);
+   }
+   ```
 
-2. **🔍 Find Missing Fields** ([data-management.js:115-250](data-management.js#L115-L250))
-   - Generates comprehensive report of missing data
-   - Tracks: descriptions, categories, audience, grade levels, logos
-   - Shows first 5 apps missing each field type
-   - Reports total counts for each missing field type
+### Adding a New Component
 
-3. **✨ Enrich Missing Descriptions** ([data-management.js:269-385](data-management.js#L269-L385))
-   - Uses Claude AI to generate descriptions for apps missing them
-   - Processes up to 10 apps per run (rate limiting)
-   - Generates 1-2 sentence educational descriptions
-   - Automatically saves to sheet with immediate flushing
-
-4. **🔄 Refresh All Missing Data** ([data-management.js:399-550](data-management.js#L399-L550))
-   - Comprehensive data enrichment for ALL missing fields
-   - Fills in: descriptions, categories, audience, grade levels
-   - Processes up to 15 apps per run (quota protection)
-   - Uses intelligent prompts based on division, subject, website
-   - Includes 1-second rate limiting between requests
-
-5. **📈 Analyze AI Chat Patterns** ([ai-functions.js:857-927](ai-functions.js#L857-L927))
-   - Analyzes user AI chat interactions to identify missing apps
-   - Reports query types, top keywords, and recent queries
-   - Helps discover gaps in app database based on search patterns
-   - Requires "AI Chat Analytics" sheet with logged queries
-
-6. **🧪 Test Claude Connection** ([ai-functions.js:1102-1207](ai-functions.js#L1102-L1207))
-   - Validates `CLAUDE_API_KEY` configuration
-   - Tests Claude API connectivity with sample description generation
-   - Displays actual API response (first 200 characters)
-   - User-friendly success/failure alerts
-
-7. **🧪 Test Gemini Connection** ([ai-functions.js:997-1096](ai-functions.js#L997-L1096))
-   - Validates `GEMINI_API_KEY` configuration
-   - Tests Gemini API connectivity with simple prompt
-   - Confirms API key validity and working status
-   - Clear error messages with troubleshooting guidance
-
-### Data Enrichment Process
-
-**How Claude AI Enrichment Works:**
-
-1. **Description Generation** ([ai-functions.js:381-436](ai-functions.js#L381-L436)):
-   - Analyzes: app name, category, subject, website
-   - Generates factual, non-promotional 1-2 sentence descriptions
-   - Tailored for international school educators
-   - Uses Claude Sonnet 4.5 model with 150 max tokens
-
-2. **Full Data Enrichment** ([ai-functions.js:480-592](ai-functions.js#L480-L592)):
-   - Returns structured JSON with all missing fields
-   - Category selection from predefined list (Learning Management, Content Creation, etc.)
-   - Audience from: Teachers, Students, Staff, Parents
-   - Grade levels based on division context (K-5, 6-8, 9-12, K-12)
-   - Uses Claude Sonnet 4.5 model with 300 max tokens for richer data
-
-**Best Practices:**
-- Run "Find Missing Fields" first to identify scope
-- Use "Enrich Missing Descriptions" for quick description fixes
-- Use "Refresh All Missing Data" for comprehensive cleanup
-- Monitor Apps Script execution logs for API errors: `npm run logs`
-- Enrichment limits prevent quota exhaustion (10-15 apps per run)
-- Re-run as needed for large datasets
-
-**Requirements:**
-- `CLAUDE_API_KEY` must be set in Script Properties
-- Sheet must have proper column headers (case-sensitive)
-- Only processes apps where `Active` = TRUE
-
-**Error Handling:**
-- API errors logged to Apps Script Logger
-- Failed enrichments skip to next app
-- Immediate flush to sheet after each successful enrichment
-- User-friendly error alerts in Google Sheets UI
-
-**For complete data management workflow and troubleshooting, see [DATA_MANAGEMENT.md](DATA_MANAGEMENT.md).**
-
-### Automatic Logging System
-
-The dashboard includes automatic logging for audit trails and analytics.
-
-**Update Logs Sheet** ([data-management.js:553-600](data-management.js#L553-L600)):
-- Auto-created when first enrichment operation runs
-- Tracks: Timestamp, Operation, App Name, Row, Field, Old Value, New Value
-- Provides complete audit trail of all data changes
-- Silent failure to prevent disrupting enrichment operations
-
-**AI Chat Analytics Sheet** ([ai-functions.js:799-838](ai-functions.js#L799-L838)):
-- Auto-created when first AI query is processed
-- Logs: Timestamp, User Query, Apps Recommended, Response Length, Query Type
-- Auto-categorizes queries: General, Recommendation Request, Grade-Specific, Subject-Specific
-- Enables pattern analysis to identify missing apps
-
-**App Name Extraction** ([ai-functions.js:843-852](ai-functions.js#L843-L852)):
-- Extracts app names from AI responses using markdown pattern matching
-- Identifies apps mentioned in bold (**App Name**)
-- Returns comma-separated list of up to 5 apps or count if more
-- Used for "Apps Recommended" field in analytics
-
-**Integration Points:**
-- `logDataUpdate()` called in `enrichMissingDescriptions()` at line 835
-- `logDataUpdate()` called in `enrichAllMissingData()` at lines 921, 925, 929, 933
-- `logAIQuery()` called in `queryGeminiAPI()` at line 196
-- `logAIQuery()` called in `queryClaudeAPI()` at line 270
-
-**Usage:**
-- Logging happens automatically - no user action required
-- View logs by opening "Update Logs" or "AI Chat Analytics" sheets
-- Run "Analyze AI Chat Patterns" from menu for insights
-- Use logs to track changes, identify trends, and discover missing apps
-
----
-
-## 📺 Digital Signage Display
-
-### Overview
-The **Digital Signage** feature provides a full-screen, auto-advancing slideshow designed for display on digital signage boards throughout the school.
-
-**Access:** Add `?page=signage` to your web app URL
-```
-https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?page=signage
-```
-
-### Key Features
-- **Auto-advancing slideshow** - 12-second intervals between slides
-- **Multiple slide types** - Welcome, Stats, Enterprise Apps, What's New, Spotlights, Division Apps
-- **Auto-refresh** - Fetches fresh data every 5 minutes
-- **SAS branded** - Uses official colors, fonts, and styling
-- **Full-screen optimized** - Designed for visibility from a distance
-- **Smooth animations** - Professional transitions and visual effects
-
-### Slide Types
-1. **Welcome Slide** - SAS branding and introduction
-2. **Stats Overview** - Key metrics with visual stat cards
-3. **Enterprise Apps** - Premium gold-styled core tools showcase
-4. **What's New** - Recently added apps (last 30 days) with red theme
-5. **App Spotlights** - Featured apps with detailed information
-6. **Division Apps** - Elementary, Middle, and High School app showcases
-
-### Configuration
-Edit settings in [signage.html](signage.html) around line 500:
-```javascript
-// Location: signage.html in <script> section
-const SLIDE_DURATION = 12000;           // Duration per slide in milliseconds (default: 12 seconds)
-const REFRESH_INTERVAL = 300000;        // Data refresh interval in milliseconds (default: 5 minutes)
-const NEW_APP_THRESHOLD_DAYS = 30;      // Days to consider app "new" (default: 30 days)
-const MAX_APPS_PER_SLIDE = 6;           // Maximum number of apps per slide (default: 6)
-```
-
-**Customization Tips:**
-- Increase `SLIDE_DURATION` for slower pace (e.g., 15000 = 15 seconds)
-- Decrease `REFRESH_INTERVAL` for more frequent updates (warning: uses quota)
-- Adjust `MAX_APPS_PER_SLIDE` based on screen size (4-8 recommended)
-
-### Use Cases
-- **Main entrance** - Welcome visitors and showcase tools
-- **Library** - Highlight educational resources
-- **Teacher lounges** - Keep staff informed
-- **Cafeteria** - Engage students during breaks
-- **Division offices** - Show division-specific apps
-
----
-
-## 📋 Future Features
-
-Planned enhancements for the Digital Toolkit:
-
-- User favorites/bookmarks (with AI-suggested collections)
-- Ratings and reviews
-- Usage analytics dashboard
-- Dark mode
-- Mobile PWA
-- AI conversation history persistence
-- Multi-language AI support
-- Google Workspace SSO integration
-- Advanced renewal features (comparison mode, bulk actions, AI optimization)
+1. For Shadcn/UI: `npx shadcn@latest add [component]`
+2. For custom: Create in `src/components/`
+3. Follow existing patterns for consistency
 
 ---
 
 **Key Development Principles:**
-1. Test locally with `index.html` before deploying
-2. All business logic changes should update division/department categorization rules
-3. Never hardcode configuration - always use Script Properties (including API keys)
-4. Google Sheets column names are case-sensitive and must match exactly
-5. Always provide clickable file references using `[filename:line](path#Lline)` format
-6. **AI Provider Usage:**
-   - Gemini: User-facing recommendations (requires `GEMINI_API_KEY`)
-   - Claude: Admin data enrichment and validation (requires `CLAUDE_API_KEY`)
-7. Data management operations should ONLY use Claude API to prevent accidental user-triggered writes
+
+1. Use TypeScript for all new code
+2. Follow existing component patterns
+3. Keep API routes thin - logic in Apps Script or lib/
+4. Test auth flows locally before deploying
+5. Use Shadcn/UI for consistency
+6. Keep sensitive data in environment variables

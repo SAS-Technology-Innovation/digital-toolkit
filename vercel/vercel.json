@@ -1,18 +1,9 @@
 {
+  "framework": "nextjs",
   "crons": [
     {
-      "path": "/api/refresh-status",
+      "path": "/api/sync",
       "schedule": "0 6 * * *"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/renewal",
-      "destination": "/renewal.html"
-    },
-    {
-      "source": "/status",
-      "destination": "/status.html"
     }
   ],
   "headers": [

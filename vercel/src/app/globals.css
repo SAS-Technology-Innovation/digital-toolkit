@@ -1,0 +1,187 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* SAS Brand Colors */
+  --color-sas-blue: #1a2d58;
+  --color-sas-red: #a0192a;
+  --color-sas-yellow: #fabc00;
+  --color-sas-gray: #d8dadb;
+  --color-elementary: #228ec2;
+  --color-middle-school: #a0192a;
+  --color-high-school: #1a2d58;
+  --color-admin: #6d6f72;
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* SAS Brand Theme - Light Mode */
+  --background: #ffffff;
+  --foreground: #1a2d58;
+
+  --card: #ffffff;
+  --card-foreground: #1a2d58;
+
+  --popover: #ffffff;
+  --popover-foreground: #1a2d58;
+
+  /* Primary: SAS Blue */
+  --primary: #1a2d58;
+  --primary-foreground: #ffffff;
+
+  /* Secondary: Light gray */
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1a2d58;
+
+  /* Muted */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  /* Accent: Eagle Yellow */
+  --accent: #fabc00;
+  --accent-foreground: #1a2d58;
+
+  /* Destructive: SAS Red */
+  --destructive: #a0192a;
+  --destructive-foreground: #ffffff;
+
+  /* Borders and inputs */
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #fabc00;
+
+  /* Chart colors - SAS branded */
+  --chart-1: #1a2d58;
+  --chart-2: #228ec2;
+  --chart-3: #a0192a;
+  --chart-4: #fabc00;
+  --chart-5: #6d6f72;
+
+  /* Sidebar */
+  --sidebar: #1a2d58;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #fabc00;
+  --sidebar-primary-foreground: #1a2d58;
+  --sidebar-accent: #2a4178;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a4178;
+  --sidebar-ring: #fabc00;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+
+  --primary: #fabc00;
+  --primary-foreground: #1a2d58;
+
+  --secondary: #334155;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #334155;
+  --muted-foreground: #94a3b8;
+
+  --accent: #fabc00;
+  --accent-foreground: #1a2d58;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #334155;
+  --input: #334155;
+  --ring: #fabc00;
+
+  --chart-1: #fabc00;
+  --chart-2: #60a5fa;
+  --chart-3: #f87171;
+  --chart-4: #4ade80;
+  --chart-5: #a78bfa;
+
+  --sidebar: #0f172a;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #fabc00;
+  --sidebar-primary-foreground: #1a2d58;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #334155;
+  --sidebar-ring: #fabc00;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+}
+
+/* SAS Brand Typography */
+.font-heading {
+  font-family: 'Bebas Neue', system-ui, sans-serif;
+  letter-spacing: 0.05em;
+}
+
+/* Status colors for apps */
+.status-operational {
+  @apply bg-emerald-100 text-emerald-800;
+}
+
+.status-issues {
+  @apply bg-red-100 text-red-800;
+}
+
+.status-maintenance {
+  @apply bg-amber-100 text-amber-800;
+}
