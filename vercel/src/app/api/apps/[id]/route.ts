@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { AppUpdate } from "@/lib/supabase/types";
 
 /**
  * GET /api/apps/[id]
@@ -58,10 +59,10 @@ export async function PATCH(
       "notes",
     ];
 
-    const updates: Record<string, unknown> = {};
+    const updates: AppUpdate = {};
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
-        updates[field] = body[field];
+        (updates as Record<string, unknown>)[field] = body[field];
       }
     }
 
@@ -77,7 +78,7 @@ export async function PATCH(
 
     const { data: app, error } = await supabase
       .from("apps")
-      .update(updates)
+      .update(updates as never)
       .eq("id", id)
       .select()
       .single();
@@ -109,12 +110,13 @@ export async function DELETE(
     const supabase = await createServerSupabaseClient();
 
     // Soft delete - set status to 'retired'
+    const retireUpdate: AppUpdate = {
+      status: "retired",
+      updated_at: new Date().toISOString(),
+    };
     const { data: app, error } = await supabase
       .from("apps")
-      .update({
-        status: "retired",
-        updated_at: new Date().toISOString(),
-      })
+      .update(retireUpdate as never)
       .eq("id", id)
       .select()
       .single();
