@@ -1,12 +1,90 @@
 import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 /**
  * API Route: /api/renewal-data
- * Fetches app renewal data from Google Apps Script
- * Falls back to mock data if environment variables are not configured
+ * Fetches app renewal data from Supabase
+ * Falls back to mock data if Supabase is not configured
  */
 
-// Mock data for development/demo
+interface SupabaseApp {
+  id: string;
+  product: string;
+  description: string | null;
+  category: string | null;
+  subject: string | null;
+  department: string | null;
+  division: string | null;
+  audience: string[] | null;
+  website: string | null;
+  sso_enabled: boolean;
+  mobile_app: boolean;
+  grade_levels: string | null;
+  vendor: string | null;
+  license_type: string | null;
+  renewal_date: string | null;
+  annual_cost: number | null;
+  licenses: number | null;
+  utilization: number | null;
+  status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface RenewalApp {
+  id: string;
+  product: string;
+  vendor: string;
+  category: string;
+  renewalDate: string;
+  annualCost: number;
+  licenses: number;
+  licenseType: string;
+  status: "urgent" | "upcoming" | "overdue" | "active" | "retired";
+  division: string;
+  utilization: number;
+}
+
+/**
+ * Calculate renewal status based on renewal date
+ */
+function calculateStatus(renewalDate: string | null): RenewalApp["status"] {
+  if (!renewalDate) return "active";
+
+  const today = new Date();
+  const renewal = new Date(renewalDate);
+  const daysUntilRenewal = Math.ceil(
+    (renewal.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  if (daysUntilRenewal < 0) return "overdue";
+  if (daysUntilRenewal <= 30) return "urgent";
+  if (daysUntilRenewal <= 90) return "upcoming";
+  return "active";
+}
+
+/**
+ * Transform Supabase app to renewal format
+ */
+function transformToRenewal(app: SupabaseApp): RenewalApp {
+  const status = app.status === "retired" ? "retired" : calculateStatus(app.renewal_date);
+
+  return {
+    id: app.id,
+    product: app.product,
+    vendor: app.vendor || "Unknown",
+    category: app.category || "General",
+    renewalDate: app.renewal_date || "",
+    annualCost: app.annual_cost || 0,
+    licenses: app.licenses || 0,
+    licenseType: app.license_type || "Unknown",
+    status,
+    division: app.division || "N/A",
+    utilization: app.utilization || 0,
+  };
+}
+
+// Mock data for when Supabase is not configured
 const mockRenewalData = {
   apps: [
     {
@@ -35,158 +113,94 @@ const mockRenewalData = {
       division: "Whole School",
       utilization: 92,
     },
-    {
-      id: "3",
-      product: "Zoom Education",
-      vendor: "Zoom",
-      category: "Communication",
-      renewalDate: "2024-04-15",
-      annualCost: 15000,
-      licenses: 200,
-      licenseType: "Enterprise",
-      status: "active",
-      division: "Whole School",
-      utilization: 78,
-    },
-    {
-      id: "4",
-      product: "Turnitin",
-      vendor: "Turnitin",
-      category: "Assessment",
-      renewalDate: "2024-01-30",
-      annualCost: 8500,
-      licenses: 100,
-      licenseType: "Per User",
-      status: "overdue",
-      division: "High School",
-      utilization: 65,
-    },
-    {
-      id: "5",
-      product: "Seesaw",
-      vendor: "Seesaw Learning",
-      category: "Portfolio",
-      renewalDate: "2024-05-01",
-      annualCost: 12000,
-      licenses: 300,
-      licenseType: "School License",
-      status: "active",
-      division: "Elementary",
-      utilization: 95,
-    },
-    {
-      id: "6",
-      product: "Canvas LMS",
-      vendor: "Instructure",
-      category: "Learning Management",
-      renewalDate: "2024-08-01",
-      annualCost: 45000,
-      licenses: 2000,
-      licenseType: "Enterprise",
-      status: "active",
-      division: "Whole School",
-      utilization: 88,
-    },
-    {
-      id: "7",
-      product: "Epic!",
-      vendor: "Epic Creations",
-      category: "Reading",
-      renewalDate: "2024-07-15",
-      annualCost: 3500,
-      licenses: 400,
-      licenseType: "Site License",
-      status: "active",
-      division: "Elementary",
-      utilization: 72,
-    },
-    {
-      id: "8",
-      product: "Quizlet",
-      vendor: "Quizlet Inc",
-      category: "Study Tools",
-      renewalDate: "2024-03-15",
-      annualCost: 2400,
-      licenses: 150,
-      licenseType: "Individual",
-      status: "upcoming",
-      division: "Middle School",
-      utilization: 58,
-    },
   ],
   summary: {
-    totalApps: 8,
-    totalAnnualCost: 111400,
-    urgentCount: 2,
-    avgUtilization: 79,
+    totalApps: 2,
+    totalAnnualCost: 25000,
+    urgentCount: 1,
+    avgUtilization: 88,
   },
 };
 
 export async function GET() {
-  const FRONTEND_KEY = process.env.FRONTEND_KEY;
-  const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
-
-  // If environment variables are not set, return mock data
-  if (!FRONTEND_KEY || !APPS_SCRIPT_URL) {
-    console.log("Using mock renewal data (env vars not configured)");
-    return NextResponse.json(mockRenewalData, {
-      headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
-        "X-Data-Source": "mock",
-      },
-    });
-  }
-
   try {
-    // Build the Apps Script API URL
-    const apiUrl = `${APPS_SCRIPT_URL}?api=data&key=${encodeURIComponent(FRONTEND_KEY)}`;
-
-    // Fetch data from Apps Script
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    });
-
-    const responseText = await response.text();
-
-    // Try to parse as JSON
-    let data;
+    // Try to create Supabase client
+    let supabase;
     try {
-      data = JSON.parse(responseText);
-    } catch {
-      console.error("Failed to parse response as JSON");
+      supabase = await createServerSupabaseClient();
+    } catch (err) {
+      console.log("Supabase not configured, using mock data");
       return NextResponse.json(mockRenewalData, {
         headers: {
-          "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
+          "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
+          "X-Data-Source": "mock",
+        },
+      });
+    }
+
+    // Fetch all apps from Supabase
+    const { data: apps, error } = await supabase
+      .from("apps")
+      .select("*")
+      .order("renewal_date", { ascending: true, nullsFirst: false });
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(mockRenewalData, {
+        headers: {
+          "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
           "X-Data-Source": "mock-fallback",
         },
       });
     }
 
-    if (data.error) {
-      console.error("Apps Script error:", data);
+    if (!apps || apps.length === 0) {
+      console.log("No apps in Supabase, using mock data");
       return NextResponse.json(mockRenewalData, {
         headers: {
-          "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
-          "X-Data-Source": "mock-fallback",
+          "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
+          "X-Data-Source": "mock-empty",
         },
       });
     }
 
-    return NextResponse.json(data, {
+    // Transform apps to renewal format
+    const renewalApps = (apps as SupabaseApp[])
+      .filter((app) => app.status !== "retired") // Filter out retired apps by default
+      .map(transformToRenewal);
+
+    // Calculate summary statistics
+    const totalAnnualCost = renewalApps.reduce((sum, app) => sum + app.annualCost, 0);
+    const urgentCount = renewalApps.filter(
+      (a) => a.status === "urgent" || a.status === "overdue"
+    ).length;
+    const avgUtilization = renewalApps.length > 0
+      ? Math.round(
+          renewalApps.reduce((sum, app) => sum + app.utilization, 0) / renewalApps.length
+        )
+      : 0;
+
+    const result = {
+      apps: renewalApps,
+      summary: {
+        totalApps: renewalApps.length,
+        totalAnnualCost,
+        urgentCount,
+        avgUtilization,
+      },
+    };
+
+    return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
-        "X-Data-Source": "apps-script",
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
+        "X-Data-Source": "supabase",
       },
     });
   } catch (error) {
     console.error("Error fetching renewal data:", error);
     return NextResponse.json(mockRenewalData, {
       headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
         "X-Data-Source": "mock-error-fallback",
       },
     });
