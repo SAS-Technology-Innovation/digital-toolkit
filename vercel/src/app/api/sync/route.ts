@@ -12,28 +12,52 @@ interface AppsScriptApp {
   division?: string;
   audience?: string | string[];
   website?: string;
+  // Tutorial link - support both naming conventions
   tutorialLink?: string;
   tutorial_link?: string;
+  // Logo URL - support both naming conventions
   logoUrl?: string;
   logo_url?: string;
+  // SSO enabled - support both naming conventions
   ssoEnabled?: boolean | string;
   sso_enabled?: boolean | string;
+  // Mobile app - support both naming conventions
   mobileApp?: boolean | string;
   mobile_app?: boolean | string;
+  // Grade levels - support both naming conventions
   gradeLevels?: string;
   grade_levels?: string;
+  // Is new - support both naming conventions
   isNew?: boolean | string;
   is_new?: boolean | string;
+  // Vendor
   vendor?: string;
+  // License type - support both naming conventions
   licenseType?: string;
   license_type?: string;
+  // Renewal date - support both naming conventions
   renewalDate?: string;
   renewal_date?: string;
+  // Cost - support multiple naming conventions (Apps Script uses 'spend')
   annualCost?: number | string;
   annual_cost?: number | string;
+  spend?: number | string;
+  // Licenses
   licenses?: number | string;
   utilization?: number | string;
   status?: string;
+  // Enterprise flag from Apps Script
+  enterprise?: boolean | string;
+  // Budget field from Apps Script
+  budget?: string;
+  // Support email from Apps Script
+  supportEmail?: string;
+  support_email?: string;
+  // Date added from Apps Script
+  dateAdded?: string;
+  date_added?: string;
+  // Is whole school flag (set by Apps Script)
+  isWholeSchool?: boolean;
 }
 
 /**
@@ -57,9 +81,14 @@ function transformAppToSupabase(app: AppsScriptApp): AppInsert {
 
   const parseNumber = (val: unknown): number | null => {
     if (val === null || val === undefined || val === "") return null;
+    // Handle "Free" as 0
+    if (typeof val === "string" && val.toLowerCase() === "free") return 0;
     const num = typeof val === "string" ? parseFloat(val.replace(/[,$]/g, "")) : Number(val);
     return isNaN(num) ? null : num;
   };
+
+  // Annual cost: Apps Script returns this as 'spend', also support annualCost and annual_cost
+  const annualCostValue = app.spend ?? app.annualCost ?? app.annual_cost;
 
   return {
     product: app.product,
@@ -69,17 +98,17 @@ function transformAppToSupabase(app: AppsScriptApp): AppInsert {
     department: app.department || null,
     division: app.division || null,
     audience,
-    website: app.website || null,
+    website: app.website === "#" ? null : (app.website || null),
     tutorial_link: app.tutorialLink || app.tutorial_link || null,
     logo_url: app.logoUrl || app.logo_url || null,
     sso_enabled: parseBoolean(app.ssoEnabled ?? app.sso_enabled),
     mobile_app: parseBoolean(app.mobileApp ?? app.mobile_app),
     grade_levels: app.gradeLevels || app.grade_levels || null,
-    is_new: parseBoolean(app.isNew ?? app.is_new),
+    is_new: parseBoolean(app.isNew ?? app.is_new ?? app.enterprise), // enterprise apps could be treated as "new"
     vendor: app.vendor || null,
     license_type: app.licenseType || app.license_type || null,
     renewal_date: app.renewalDate || app.renewal_date || null,
-    annual_cost: parseNumber(app.annualCost ?? app.annual_cost),
+    annual_cost: parseNumber(annualCostValue),
     licenses: parseNumber(app.licenses) as number | null,
     utilization: parseNumber(app.utilization) as number | null,
     status: app.status || null,
@@ -238,10 +267,39 @@ export async function POST(request: Request) {
         throw new Error("Invalid JSON from Apps Script");
       }
 
-      const apps: AppsScriptApp[] = data.apps || data || [];
+      // Extract apps from division-based structure or flat array
+      let apps: AppsScriptApp[] = [];
 
-      if (!Array.isArray(apps) || apps.length === 0) {
-        throw new Error("No apps data received from Apps Script");
+      if (data.apps && Array.isArray(data.apps)) {
+        // Flat array format: { apps: [...] }
+        apps = data.apps;
+      } else if (Array.isArray(data)) {
+        // Direct array format: [...]
+        apps = data;
+      } else if (typeof data === "object" && data !== null) {
+        // Division-based format: { wholeSchool: { apps: [...] }, elementary: { apps: [...] }, ... }
+        const divisions = ["wholeSchool", "elementary", "middleSchool", "highSchool"];
+        const allApps: AppsScriptApp[] = [];
+
+        for (const div of divisions) {
+          const divisionData = data[div];
+          if (divisionData?.apps && Array.isArray(divisionData.apps)) {
+            allApps.push(...divisionData.apps);
+          }
+        }
+
+        // Deduplicate by product name (same app may appear in multiple divisions)
+        const uniqueApps = new Map<string, AppsScriptApp>();
+        for (const app of allApps) {
+          if (app.product && !uniqueApps.has(app.product)) {
+            uniqueApps.set(app.product, app);
+          }
+        }
+        apps = [...uniqueApps.values()];
+      }
+
+      if (apps.length === 0) {
+        throw new Error("No apps data received from Apps Script. Check data format.");
       }
 
       console.log(`Received ${apps.length} apps from Apps Script`);
