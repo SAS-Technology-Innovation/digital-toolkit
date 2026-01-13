@@ -107,7 +107,8 @@ export function AppCard({
         href={app.website || "#"}
         target="_blank"
         rel="noopener noreferrer"
-        className="font-semibold text-primary hover:text-destructive hover:underline block mb-2"
+        className="font-semibold text-primary hover:text-destructive hover:underline block mb-2 truncate"
+        title={app.product}
       >
         {app.product}
       </a>
