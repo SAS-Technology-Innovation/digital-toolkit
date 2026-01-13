@@ -1,50 +1,27 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "version": 2,
-  "rootDirectory": "vercel",
-  "buildCommand": "npm run build",
-  "outputDirectory": "public",
+  "framework": "nextjs",
   "crons": [
     {
-      "path": "/api/refresh-renewal-data",
-      "schedule": "0 0 * * *"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/signage",
-      "destination": "/signage.html"
-    },
-    {
-      "source": "/renewal",
-      "destination": "/renewal.html"
+      "path": "/api/sync",
+      "schedule": "0 6 * * *"
     }
   ],
   "headers": [
     {
-      "source": "/api/data",
+      "source": "/api/(.*)",
       "headers": [
         {
-          "key": "Cache-Control",
-          "value": "s-maxage=300, stale-while-revalidate=60"
-        }
-      ]
-    },
-    {
-      "source": "/api/ai",
-      "headers": [
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
         {
-          "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/api/verify-password",
-      "headers": [
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
         {
-          "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate"
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
         }
       ]
     }
