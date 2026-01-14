@@ -14,7 +14,8 @@ export async function GET(request: Request) {
 
     const supabase = await createServerSupabaseClient();
 
-    let query = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (supabase as any)
       .from("renewal_decisions")
       .select(`
         *,
@@ -76,7 +77,8 @@ export async function POST(request: Request) {
     const supabase = createServiceClient();
 
     // Get all assessments for this app
-    const { data: assessments, error: assessmentsError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: assessments, error: assessmentsError } = await (supabase as any)
       .from("renewal_assessments")
       .select("*")
       .eq("app_id", app_id)
@@ -89,11 +91,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Type assertion for assessments
+    const typedAssessments = (assessments || []) as RenewalAssessment[];
+
     // Calculate aggregated stats
-    const stats = calculateStats(assessments || []);
+    const stats = calculateStats(typedAssessments);
 
     // Check if decision already exists
-    const { data: existing } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existing } = await (supabase as any)
       .from("renewal_decisions")
       .select("id")
       .eq("app_id", app_id)
@@ -103,7 +109,8 @@ export async function POST(request: Request) {
 
     if (existing) {
       // Update existing decision
-      const { data: updated, error: updateError } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updated, error: updateError } = await (supabase as any)
         .from("renewal_decisions")
         .update({
           ...stats,
@@ -119,10 +126,11 @@ export async function POST(request: Request) {
           { status: 500 }
         );
       }
-      decision = updated;
+      decision = updated as RenewalDecision;
     } else {
       // Create new decision
-      const { data: created, error: createError } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: created, error: createError } = await (supabase as any)
         .from("renewal_decisions")
         .insert({
           app_id,
@@ -138,14 +146,15 @@ export async function POST(request: Request) {
           { status: 500 }
         );
       }
-      decision = created;
+      decision = created as RenewalDecision;
     }
 
     // Generate AI summary if requested
-    if (generate_summary && assessments && assessments.length > 0) {
-      const summary = await generateAISummary(assessments, supabase, app_id);
+    if (generate_summary && typedAssessments && typedAssessments.length > 0) {
+      const summary = await generateAISummary(typedAssessments, supabase, app_id);
       if (summary) {
-        const { data: withSummary } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: withSummary } = await (supabase as any)
           .from("renewal_decisions")
           .update({
             ai_summary: summary,
@@ -157,7 +166,7 @@ export async function POST(request: Request) {
           .single();
 
         if (withSummary) {
-          decision = withSummary;
+          decision = withSummary as RenewalDecision;
         }
       }
     }
@@ -214,7 +223,8 @@ async function generateAISummary(
   }
 
   // Get app details
-  const { data: app } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: app } = await (supabase as any)
     .from("apps")
     .select("product, vendor, category, division")
     .eq("id", appId)

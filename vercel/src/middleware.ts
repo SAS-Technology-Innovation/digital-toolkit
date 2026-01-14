@@ -43,7 +43,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protected routes - require authentication
-  const protectedPaths = ["/admin"];
+  // Note: /renewal/submit is public for teachers, but /renewals is admin-only
+  const protectedPaths = ["/admin", "/renewals"];
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );

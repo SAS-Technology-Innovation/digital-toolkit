@@ -14,7 +14,8 @@ export async function GET(
     const supabase = await createServerSupabaseClient();
 
     // Get decision with app details
-    const { data: decision, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: decision, error } = await (supabase as any)
       .from("renewal_decisions")
       .select(`
         *,
@@ -37,15 +38,19 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
+    // Type assertion for decision
+    const typedDecision = decision as { app_id: string; [key: string]: unknown };
+
     // Get all assessments for this app
-    const { data: assessments } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: assessments } = await (supabase as any)
       .from("renewal_assessments")
       .select("*")
-      .eq("app_id", decision.app_id)
+      .eq("app_id", typedDecision.app_id)
       .order("submission_date", { ascending: false });
 
     return NextResponse.json({
-      ...decision,
+      ...typedDecision,
       assessments: assessments || [],
     });
   } catch (error) {
@@ -146,7 +151,8 @@ export async function PATCH(
         }
     }
 
-    const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from("renewal_decisions")
       .update(updates)
       .eq("id", id)
@@ -166,26 +172,31 @@ export async function PATCH(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    // Type assertion for data
+    const typedData = data as { app_id: string; [key: string]: unknown };
+
     // If director made a decision to renew/retire, update the app status
     if (action === "director_decision" && body.final_decision) {
       if (body.final_decision === "retire") {
-        await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
           .from("apps")
           .update({ status: "retired" })
-          .eq("id", data.app_id);
+          .eq("id", typedData.app_id);
       } else if (body.new_renewal_date) {
-        await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
           .from("apps")
           .update({
             renewal_date: body.new_renewal_date,
             annual_cost: body.new_annual_cost || null,
             licenses: body.new_licenses || null,
           })
-          .eq("id", data.app_id);
+          .eq("id", typedData.app_id);
       }
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(typedData);
   } catch (error) {
     console.error("Error updating decision:", error);
     return NextResponse.json(
@@ -207,7 +218,8 @@ export async function DELETE(
     const { id } = await params;
     const supabase = createServiceClient();
 
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
       .from("renewal_decisions")
       .delete()
       .eq("id", id);
