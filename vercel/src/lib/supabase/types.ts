@@ -181,6 +181,98 @@ export interface Database {
           status_page_url?: string | null;
         };
       };
+      renewal_assessments: {
+        Row: {
+          id: string;
+          app_id: string;
+          submitter_email: string;
+          submitter_name: string | null;
+          submission_date: string;
+          status: "submitted" | "in_review" | "approved" | "rejected" | "completed";
+          current_renewal_date: string | null;
+          current_annual_cost: number | null;
+          current_licenses: number | null;
+          usage_frequency: string | null;
+          primary_use_cases: string | null;
+          learning_impact: string | null;
+          workflow_integration: string | null;
+          alternatives_considered: string | null;
+          unique_value: string | null;
+          stakeholder_feedback: string | null;
+          recommendation: "renew" | "renew_with_changes" | "replace" | "retire";
+          justification: string;
+          proposed_changes: string | null;
+          proposed_cost: number | null;
+          proposed_licenses: number | null;
+          admin_notes: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          outcome_notes: string | null;
+          final_decision: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          app_id: string;
+          submitter_email: string;
+          submitter_name?: string | null;
+          submission_date?: string;
+          status?: "submitted" | "in_review" | "approved" | "rejected" | "completed";
+          current_renewal_date?: string | null;
+          current_annual_cost?: number | null;
+          current_licenses?: number | null;
+          usage_frequency?: string | null;
+          primary_use_cases?: string | null;
+          learning_impact?: string | null;
+          workflow_integration?: string | null;
+          alternatives_considered?: string | null;
+          unique_value?: string | null;
+          stakeholder_feedback?: string | null;
+          recommendation: "renew" | "renew_with_changes" | "replace" | "retire";
+          justification: string;
+          proposed_changes?: string | null;
+          proposed_cost?: number | null;
+          proposed_licenses?: number | null;
+          admin_notes?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          outcome_notes?: string | null;
+          final_decision?: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          app_id?: string;
+          submitter_email?: string;
+          submitter_name?: string | null;
+          submission_date?: string;
+          status?: "submitted" | "in_review" | "approved" | "rejected" | "completed";
+          current_renewal_date?: string | null;
+          current_annual_cost?: number | null;
+          current_licenses?: number | null;
+          usage_frequency?: string | null;
+          primary_use_cases?: string | null;
+          learning_impact?: string | null;
+          workflow_integration?: string | null;
+          alternatives_considered?: string | null;
+          unique_value?: string | null;
+          stakeholder_feedback?: string | null;
+          recommendation?: "renew" | "renew_with_changes" | "replace" | "retire";
+          justification?: string;
+          proposed_changes?: string | null;
+          proposed_cost?: number | null;
+          proposed_licenses?: number | null;
+          admin_notes?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          outcome_notes?: string | null;
+          final_decision?: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -191,6 +283,8 @@ export interface Database {
     Enums: {
       app_status_type: "operational" | "issues" | "maintenance";
       sync_status_type: "pending" | "in_progress" | "completed" | "failed";
+      assessment_status: "submitted" | "in_review" | "approved" | "rejected" | "completed";
+      assessment_recommendation: "renew" | "renew_with_changes" | "replace" | "retire";
     };
   };
 }
@@ -204,3 +298,76 @@ export type SyncLog = Database["public"]["Tables"]["sync_logs"]["Row"];
 export type SyncLogInsert = Database["public"]["Tables"]["sync_logs"]["Insert"];
 
 export type AppStatus = Database["public"]["Tables"]["app_status"]["Row"];
+
+// Renewal Assessment types
+export type AssessmentStatus = Database["public"]["Enums"]["assessment_status"];
+export type AssessmentRecommendation = Database["public"]["Enums"]["assessment_recommendation"];
+export type DecisionStatus = "collecting" | "summarizing" | "assessor_review" | "final_review" | "decided" | "implemented";
+
+export type RenewalAssessment = Database["public"]["Tables"]["renewal_assessments"]["Row"];
+export type RenewalAssessmentInsert = Database["public"]["Tables"]["renewal_assessments"]["Insert"];
+export type RenewalAssessmentUpdate = Database["public"]["Tables"]["renewal_assessments"]["Update"];
+
+// Renewal Decision types (aggregates multiple assessments)
+export interface RenewalDecision {
+  id: string;
+  app_id: string;
+  renewal_cycle_year: number;
+  ai_summary: string | null;
+  ai_summary_generated_at: string | null;
+  total_submissions: number;
+  renew_count: number;
+  renew_with_changes_count: number;
+  replace_count: number;
+  retire_count: number;
+  assessor_email: string | null;
+  assessor_name: string | null;
+  assessor_comment: string | null;
+  assessor_recommendation: AssessmentRecommendation | null;
+  assessor_reviewed_at: string | null;
+  approver_email: string | null;
+  approver_name: string | null;
+  approver_comment: string | null;
+  final_decision: AssessmentRecommendation | null;
+  final_decided_at: string | null;
+  new_renewal_date: string | null;
+  new_annual_cost: number | null;
+  new_licenses: number | null;
+  implementation_notes: string | null;
+  status: DecisionStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RenewalDecisionWithApp extends RenewalDecision {
+  apps: {
+    id: string;
+    product: string;
+    vendor: string | null;
+    category: string | null;
+    division: string | null;
+    department: string | null;
+    renewal_date: string | null;
+    annual_cost: number | null;
+    licenses: number | null;
+  };
+  assessments?: RenewalAssessment[];
+}
+
+// Joined type with app details
+export interface RenewalAssessmentWithApp extends RenewalAssessment {
+  apps: {
+    id: string;
+    product: string;
+    vendor: string | null;
+    category: string | null;
+    division: string | null;
+    department: string | null;
+    renewal_date: string | null;
+    annual_cost: number | null;
+    licenses: number | null;
+    license_type: string | null;
+    website: string | null;
+    description: string | null;
+  };
+}
