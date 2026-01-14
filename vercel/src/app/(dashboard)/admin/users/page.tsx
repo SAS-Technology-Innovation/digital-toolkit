@@ -57,7 +57,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { UserProfile, UserRole } from "@/lib/supabase/types";
 
 const ROLES: { value: UserRole; label: string; description: string }[] = [
@@ -125,8 +125,6 @@ export default function AdminUsersPage() {
   });
   const [addingUser, setAddingUser] = useState(false);
 
-  const { toast } = useToast();
-
   // Fetch users
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -178,16 +176,9 @@ export default function AdminUsersPage() {
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? data.user : u))
       );
-      toast({
-        title: "Role updated",
-        description: `User role changed to ${newRole}`,
-      });
+      toast.success(`Role updated to ${newRole}`);
     } catch (err) {
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to update role",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Failed to update role");
     } finally {
       setUpdatingUserId(null);
     }
@@ -212,16 +203,9 @@ export default function AdminUsersPage() {
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? data.user : u))
       );
-      toast({
-        title: isActive ? "User activated" : "User deactivated",
-        description: `User account has been ${isActive ? "activated" : "deactivated"}`,
-      });
+      toast.success(`User ${isActive ? "activated" : "deactivated"}`);
     } catch (err) {
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to update status",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
     } finally {
       setUpdatingUserId(null);
     }
@@ -230,11 +214,7 @@ export default function AdminUsersPage() {
   // Add new user
   const handleAddUser = async () => {
     if (!newUser.email) {
-      toast({
-        title: "Error",
-        description: "Email is required",
-        variant: "destructive",
-      });
+      toast.error("Email is required");
       return;
     }
 
@@ -262,16 +242,9 @@ export default function AdminUsersPage() {
         division: "",
         role: "staff",
       });
-      toast({
-        title: "User created",
-        description: `${data.user.email} has been added`,
-      });
+      toast.success(`User ${data.user.email} created`);
     } catch (err) {
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to create user",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Failed to create user");
     } finally {
       setAddingUser(false);
     }
