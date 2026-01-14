@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
-import type { RenewalDecision, RenewalAssessment, AssessmentRecommendation } from "@/lib/supabase/types";
+import type { RenewalDecision, RenewalAssessment, AssessmentRecommendation, Database } from "@/lib/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * GET /api/renewal-decisions
@@ -14,8 +15,7 @@ export async function GET(request: Request) {
 
     const supabase = await createServerSupabaseClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabase as any)
+    let query = supabase
       .from("renewal_decisions")
       .select(`
         *,
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = createServiceClient();
+    const supabase = createServiceClient() as SupabaseClient<Database>;
 
     // Get all assessments for this app
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,8 +91,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Type assertion for assessments
-    const typedAssessments = (assessments || []) as RenewalAssessment[];
+    const typedAssessments = assessments || [];
 
     // Calculate aggregated stats
     const stats = calculateStats(typedAssessments);
@@ -126,7 +125,7 @@ export async function POST(request: Request) {
           { status: 500 }
         );
       }
-      decision = updated as RenewalDecision;
+      decision = updated;
     } else {
       // Create new decision
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,7 +145,7 @@ export async function POST(request: Request) {
           { status: 500 }
         );
       }
-      decision = created as RenewalDecision;
+      decision = created;
     }
 
     // Generate AI summary if requested
@@ -166,7 +165,7 @@ export async function POST(request: Request) {
           .single();
 
         if (withSummary) {
-          decision = withSummary as RenewalDecision;
+          decision = withSummary;
         }
       }
     }
@@ -212,7 +211,7 @@ function calculateStats(assessments: RenewalAssessment[]) {
  */
 async function generateAISummary(
   assessments: RenewalAssessment[],
-  supabase: ReturnType<typeof createServiceClient>,
+  supabase: SupabaseClient<Database>,
   appId: string
 ): Promise<string | null> {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;

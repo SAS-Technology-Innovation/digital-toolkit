@@ -8,7 +8,7 @@ A modern Next.js application for the SAS Digital Toolkit, providing a dashboard 
 - **Styling**: Tailwind CSS v4 with Shadcn/UI components
 - **Database**: Supabase (PostgreSQL + Realtime)
 - **Authentication**: Supabase Auth with Magic Links
-- **AI**: Claude API integration for intelligent search
+- **AI**: Claude API integration for intelligent search and summaries
 - **Deployment**: Vercel
 
 ## Features
@@ -18,19 +18,43 @@ A modern Next.js application for the SAS Digital Toolkit, providing a dashboard 
 - **App Catalog** (`/apps`) - Searchable catalog with filters (category, department, audience, division)
 - **Request App** (`/requests`) - Form to request new applications
 - **Status** (`/status`) - Real-time app status monitoring
-- **Renewals** (`/renewals`) - Subscription renewal management
 - **Analytics** (`/analytics`) - Usage analytics and insights
 - **Admin** (`/admin`) - Data sync and management
 - **Signage** (`/signage`) - Digital signage display
+- **Help** (`/help`) - Help center with documentation
+
+### Renewal Assessment Workflow
+The toolkit includes a complete renewal assessment workflow for managing educational software subscriptions:
+
+- **Submit Assessment** (`/renewal/submit`) - Public form for teachers to provide feedback on apps they use
+- **All Renewals** (`/renewals`) - View all app renewals and subscription status
+- **TIC Review** (`/renewals/tic-review`) - TIC dashboard to review teacher feedback and make recommendations
+- **Approver Decisions** (`/renewals/approver`) - Director/Approver dashboard to make final renewal decisions
+- **Admin Assessments** (`/admin/renewals`) - Admin view of all assessment submissions
+
+### User Roles & Permissions
+
+The system uses role-based access control (RBAC) with four tiers:
+
+| Role | Description | Permissions |
+|------|-------------|-------------|
+| **Staff** | Regular users | Browse apps, submit assessments, request new apps |
+| **TIC** | Technology Integration Coach | All Staff + review assessments, generate AI summaries, make recommendations |
+| **Approver** | Director/Decision maker | All TIC + make final decisions, set subscription terms |
+| **Admin** | EdTech team | All Approver + delete assessments, manage users, mark implemented |
+
+User profiles are automatically created on first assessment submission. Role upgrades require EdTech team approval.
 
 ### Authentication
 - Magic link authentication via Supabase
-- Protected routes (Admin requires login)
+- Protected routes (Admin, Renewals require login)
 - User avatar and sign-out in sidebar
+- Email domain restriction (@sas.edu.sg)
 
 ### AI Features
 - AI-powered search with natural language queries
 - Intelligent app recommendations
+- AI-generated summaries of teacher feedback for renewal decisions
 - Chat interface for assistance
 
 ## Getting Started
@@ -95,19 +119,30 @@ vercel/
 │   │   │   ├── page.tsx        # Main dashboard
 │   │   │   ├── apps/           # App catalog
 │   │   │   ├── admin/          # Admin panel
+│   │   │   │   └── renewals/   # Admin assessments view
 │   │   │   ├── analytics/      # Analytics
-│   │   │   ├── renewals/       # Renewals
+│   │   │   ├── renewals/       # Renewals management
+│   │   │   │   ├── page.tsx    # All renewals
+│   │   │   │   ├── tic-review/ # TIC review dashboard
+│   │   │   │   └── approver/   # Approver decisions
 │   │   │   ├── requests/       # Request form
 │   │   │   ├── status/         # Status page
+│   │   │   ├── help/           # Help center
 │   │   │   └── layout.tsx      # Dashboard layout with sidebar
 │   │   ├── api/                # API routes
 │   │   │   ├── ai/             # AI chat endpoint
+│   │   │   ├── apps/           # Apps CRUD endpoints
 │   │   │   ├── data/           # Apps data endpoint
+│   │   │   ├── renewal-assessments/  # Assessment CRUD
+│   │   │   ├── renewal-decisions/    # Decision CRUD
 │   │   │   ├── renewal-data/   # Renewal data endpoint
 │   │   │   ├── status/         # Status endpoint
 │   │   │   └── sync/           # Supabase sync endpoint
 │   │   ├── auth/               # Auth callback
 │   │   ├── login/              # Login page
+│   │   ├── renewal/            # Public renewal pages
+│   │   │   ├── page.tsx        # Renewal info/help
+│   │   │   └── submit/         # Public submission form
 │   │   ├── signage/            # Signage display
 │   │   └── layout.tsx          # Root layout
 │   ├── components/             # React components
@@ -117,13 +152,18 @@ vercel/
 │   │   ├── app-detail-modal.tsx# App detail modal
 │   │   └── app-sidebar.tsx     # Navigation sidebar
 │   ├── lib/                    # Utilities
-│   │   ├── auth/               # Auth context
+│   │   ├── auth/               # Auth context & RBAC
+│   │   │   ├── auth-context.tsx# Auth provider
+│   │   │   └── rbac.ts         # Role-based access control
 │   │   ├── supabase/           # Supabase clients
+│   │   │   ├── client.ts       # Browser client
+│   │   │   ├── server.ts       # Server clients
+│   │   │   └── types.ts        # Database types
 │   │   └── utils.ts            # Helper functions
 │   └── hooks/                  # Custom React hooks
 ├── public/                     # Static assets
 │   └── assets/                 # Images and icons
-├── supabase/                   # Supabase config
+├── supabase/                   # Supabase config & migrations
 └── package.json
 ```
 
@@ -146,13 +186,55 @@ Uses [Shadcn/UI](https://ui.shadcn.com/) with custom themed components:
 
 ## API Routes
 
+### Core APIs
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/data` | GET | Fetch apps data (from Apps Script or mock) |
+| `/api/data` | GET | Fetch apps data (from Apps Script or Supabase) |
 | `/api/ai` | POST | AI chat completion |
 | `/api/renewal-data` | GET | Fetch renewal data |
 | `/api/status` | GET | Fetch app status |
 | `/api/sync` | POST | Sync data with Supabase |
+
+### Renewal Assessment APIs
+| Route | Method | Auth | Description |
+|-------|--------|------|-------------|
+| `/api/renewal-assessments` | GET | Any | List assessments (filterable) |
+| `/api/renewal-assessments` | POST | Public | Create assessment (validates @sas.edu.sg) |
+| `/api/renewal-assessments/[id]` | GET | Any | Get assessment details |
+| `/api/renewal-assessments/[id]` | PATCH | TIC+ | Update assessment status |
+| `/api/renewal-assessments/[id]` | DELETE | Admin | Delete assessment |
+
+### Renewal Decision APIs
+| Route | Method | Auth | Description |
+|-------|--------|------|-------------|
+| `/api/renewal-decisions` | GET | Any | List decisions |
+| `/api/renewal-decisions` | POST | Any | Create/update decision (aggregate assessments) |
+| `/api/renewal-decisions/[id]` | GET | Any | Get decision with assessments |
+| `/api/renewal-decisions/[id]` | PATCH | Varies | Update decision (role-based) |
+| `/api/renewal-decisions/[id]` | DELETE | Admin | Delete decision |
+
+### PATCH Actions for Decisions
+| Action | Required Role | Description |
+|--------|---------------|-------------|
+| `tic_review` | TIC+ | Submit TIC recommendation |
+| `generate_summary` | TIC+ | Trigger AI summary |
+| `director_decision` | Approver+ | Make final decision |
+| `implement` | Admin | Mark as implemented |
+
+## Renewal Workflow
+
+```
+Teacher Submits → AI Aggregates → TIC Reviews → Approver Decides → Implemented
+   (Staff)        (automatic)       (TIC)        (Director)        (Admin)
+```
+
+### Status Flow
+1. **collecting** - Gathering teacher feedback
+2. **summarizing** - AI generating summary
+3. **assessor_review** - TIC reviewing
+4. **final_review** - Awaiting director decision
+5. **decided** - Decision made
+6. **implemented** - Changes applied
 
 ## Deployment
 
@@ -164,8 +246,18 @@ Deployed automatically via Vercel on push to `main` branch.
 - Output Directory: `.next`
 - Install Command: `npm install`
 
+## Database Schema
+
+### Key Tables
+- `apps` - Application catalog
+- `user_profiles` - User profiles with roles
+- `renewal_assessments` - Teacher assessment submissions
+- `renewal_decisions` - Aggregated decisions with TIC/Approver input
+
+See `supabase/migrations/` for full schema definitions.
+
 ## Related
 
 - [Root README](../README.md) - Main project documentation
-- [Apps Script Backend](../appsscript/) - Google Apps Script data source
+- [Apps Script Backend](../) - Google Apps Script data source
 - [CLAUDE.md](../CLAUDE.md) - AI assistant instructions

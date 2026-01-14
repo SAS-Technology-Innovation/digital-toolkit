@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
-import type { RenewalAssessmentInsert, UserProfileInsert } from "@/lib/supabase/types";
+import type { RenewalAssessmentInsert, UserProfileInsert, Database } from "@/lib/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * GET /api/renewal-assessments
@@ -122,10 +123,11 @@ export async function POST(request: Request) {
     }
 
     // Use service client for insert (bypasses RLS for public submission)
-    const supabase = createServiceClient();
+    const supabase = createServiceClient() as SupabaseClient<Database>;
 
     // First, get the app details to snapshot current values
-    const { data: app, error: appError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: app, error: appError } = await (supabase as any)
       .from("apps")
       .select("renewal_date, annual_cost, licenses")
       .eq("id", app_id)
@@ -223,7 +225,7 @@ export async function POST(request: Request) {
  * Get or create a user profile based on email
  */
 async function getOrCreateUserProfile(
-  supabase: ReturnType<typeof createServiceClient>,
+  supabase: SupabaseClient<Database>,
   userData: {
     email: string;
     name: string;
@@ -252,13 +254,13 @@ async function getOrCreateUserProfile(
           department: userData.department,
           division: userData.division,
           last_submission_at: now,
-          total_submissions: ((existing as { total_submissions?: number }).total_submissions || 0) + 1,
+          total_submissions: (existing.total_submissions || 0) + 1,
         })
-        .eq("id", (existing as { id: string }).id)
+        .eq("id", existing.id)
         .select("id")
         .single();
 
-      return updated as { id: string } | null;
+      return updated;
     } else {
       // Create new user profile
       const insertData: UserProfileInsert = {
@@ -284,7 +286,7 @@ async function getOrCreateUserProfile(
         return null;
       }
 
-      return created as { id: string } | null;
+      return created;
     }
   } catch (error) {
     console.error("Error in getOrCreateUserProfile:", error);
@@ -298,7 +300,7 @@ async function getOrCreateUserProfile(
  */
 async function updateRenewalDecision(
   appId: string,
-  supabase: ReturnType<typeof createServiceClient>
+  supabase: SupabaseClient<Database>
 ) {
   try {
     // Get all assessments for this app
@@ -310,16 +312,13 @@ async function updateRenewalDecision(
 
     if (!assessments) return;
 
-    // Type assertion for assessments
-    const typedAssessments = assessments as Array<{ recommendation: string }>;
-
     // Calculate stats
     const stats = {
-      total_submissions: typedAssessments.length,
-      renew_count: typedAssessments.filter((a) => a.recommendation === "renew").length,
-      renew_with_changes_count: typedAssessments.filter((a) => a.recommendation === "renew_with_changes").length,
-      replace_count: typedAssessments.filter((a) => a.recommendation === "replace").length,
-      retire_count: typedAssessments.filter((a) => a.recommendation === "retire").length,
+      total_submissions: assessments.length,
+      renew_count: assessments.filter((a: { recommendation: string }) => a.recommendation === "renew").length,
+      renew_with_changes_count: assessments.filter((a: { recommendation: string }) => a.recommendation === "renew_with_changes").length,
+      replace_count: assessments.filter((a: { recommendation: string }) => a.recommendation === "replace").length,
+      retire_count: assessments.filter((a: { recommendation: string }) => a.recommendation === "retire").length,
     };
 
     // Check if decision exists

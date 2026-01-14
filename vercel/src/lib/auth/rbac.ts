@@ -1,5 +1,6 @@
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
-import type { UserRole } from "@/lib/supabase/types";
+import type { UserRole, Database } from "@/lib/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Role hierarchy - higher roles have all permissions of lower roles
@@ -27,7 +28,7 @@ export async function getCurrentUserProfile() {
     }
 
     // Get user profile with role
-    const serviceClient = createServiceClient();
+    const serviceClient = createServiceClient() as SupabaseClient<Database>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile, error: profileError } = await (serviceClient as any)
       .from("user_profiles")

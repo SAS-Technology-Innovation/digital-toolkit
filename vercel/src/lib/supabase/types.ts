@@ -282,6 +282,145 @@ export interface Database {
           updated_at?: string;
         };
       };
+      renewal_decisions: {
+        Row: {
+          id: string;
+          app_id: string;
+          renewal_cycle_year: number;
+          ai_summary: string | null;
+          ai_summary_generated_at: string | null;
+          total_submissions: number;
+          renew_count: number;
+          renew_with_changes_count: number;
+          replace_count: number;
+          retire_count: number;
+          assessor_email: string | null;
+          assessor_name: string | null;
+          assessor_comment: string | null;
+          assessor_recommendation: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          assessor_reviewed_at: string | null;
+          approver_email: string | null;
+          approver_name: string | null;
+          approver_comment: string | null;
+          final_decision: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          final_decided_at: string | null;
+          new_renewal_date: string | null;
+          new_annual_cost: number | null;
+          new_licenses: number | null;
+          implementation_notes: string | null;
+          status: "collecting" | "summarizing" | "assessor_review" | "final_review" | "decided" | "implemented";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          app_id: string;
+          renewal_cycle_year?: number;
+          ai_summary?: string | null;
+          ai_summary_generated_at?: string | null;
+          total_submissions?: number;
+          renew_count?: number;
+          renew_with_changes_count?: number;
+          replace_count?: number;
+          retire_count?: number;
+          assessor_email?: string | null;
+          assessor_name?: string | null;
+          assessor_comment?: string | null;
+          assessor_recommendation?: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          assessor_reviewed_at?: string | null;
+          approver_email?: string | null;
+          approver_name?: string | null;
+          approver_comment?: string | null;
+          final_decision?: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          final_decided_at?: string | null;
+          new_renewal_date?: string | null;
+          new_annual_cost?: number | null;
+          new_licenses?: number | null;
+          implementation_notes?: string | null;
+          status?: "collecting" | "summarizing" | "assessor_review" | "final_review" | "decided" | "implemented";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          app_id?: string;
+          renewal_cycle_year?: number;
+          ai_summary?: string | null;
+          ai_summary_generated_at?: string | null;
+          total_submissions?: number;
+          renew_count?: number;
+          renew_with_changes_count?: number;
+          replace_count?: number;
+          retire_count?: number;
+          assessor_email?: string | null;
+          assessor_name?: string | null;
+          assessor_comment?: string | null;
+          assessor_recommendation?: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          assessor_reviewed_at?: string | null;
+          approver_email?: string | null;
+          approver_name?: string | null;
+          approver_comment?: string | null;
+          final_decision?: "renew" | "renew_with_changes" | "replace" | "retire" | null;
+          final_decided_at?: string | null;
+          new_renewal_date?: string | null;
+          new_annual_cost?: number | null;
+          new_licenses?: number | null;
+          implementation_notes?: string | null;
+          status?: "collecting" | "summarizing" | "assessor_review" | "final_review" | "decided" | "implemented";
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      user_profiles: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          department: string | null;
+          division: string | null;
+          role: "staff" | "tic" | "approver" | "admin";
+          avatar_url: string | null;
+          is_active: boolean;
+          first_submission_at: string | null;
+          last_submission_at: string | null;
+          total_submissions: number;
+          auth_user_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          name?: string | null;
+          department?: string | null;
+          division?: string | null;
+          role?: "staff" | "tic" | "approver" | "admin";
+          avatar_url?: string | null;
+          is_active?: boolean;
+          first_submission_at?: string | null;
+          last_submission_at?: string | null;
+          total_submissions?: number;
+          auth_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string | null;
+          department?: string | null;
+          division?: string | null;
+          role?: "staff" | "tic" | "approver" | "admin";
+          avatar_url?: string | null;
+          is_active?: boolean;
+          first_submission_at?: string | null;
+          last_submission_at?: string | null;
+          total_submissions?: number;
+          auth_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -294,6 +433,8 @@ export interface Database {
       sync_status_type: "pending" | "in_progress" | "completed" | "failed";
       assessment_status: "submitted" | "in_review" | "approved" | "rejected" | "completed";
       assessment_recommendation: "renew" | "renew_with_changes" | "replace" | "retire";
+      decision_status: "collecting" | "summarizing" | "assessor_review" | "final_review" | "decided" | "implemented";
+      user_role: "staff" | "tic" | "approver" | "admin";
     };
   };
 }
@@ -311,42 +452,16 @@ export type AppStatus = Database["public"]["Tables"]["app_status"]["Row"];
 // Renewal Assessment types
 export type AssessmentStatus = Database["public"]["Enums"]["assessment_status"];
 export type AssessmentRecommendation = Database["public"]["Enums"]["assessment_recommendation"];
-export type DecisionStatus = "collecting" | "summarizing" | "assessor_review" | "final_review" | "decided" | "implemented";
+export type DecisionStatus = Database["public"]["Enums"]["decision_status"];
 
 export type RenewalAssessment = Database["public"]["Tables"]["renewal_assessments"]["Row"];
 export type RenewalAssessmentInsert = Database["public"]["Tables"]["renewal_assessments"]["Insert"];
 export type RenewalAssessmentUpdate = Database["public"]["Tables"]["renewal_assessments"]["Update"];
 
 // Renewal Decision types (aggregates multiple assessments)
-export interface RenewalDecision {
-  id: string;
-  app_id: string;
-  renewal_cycle_year: number;
-  ai_summary: string | null;
-  ai_summary_generated_at: string | null;
-  total_submissions: number;
-  renew_count: number;
-  renew_with_changes_count: number;
-  replace_count: number;
-  retire_count: number;
-  assessor_email: string | null;
-  assessor_name: string | null;
-  assessor_comment: string | null;
-  assessor_recommendation: AssessmentRecommendation | null;
-  assessor_reviewed_at: string | null;
-  approver_email: string | null;
-  approver_name: string | null;
-  approver_comment: string | null;
-  final_decision: AssessmentRecommendation | null;
-  final_decided_at: string | null;
-  new_renewal_date: string | null;
-  new_annual_cost: number | null;
-  new_licenses: number | null;
-  implementation_notes: string | null;
-  status: DecisionStatus;
-  created_at: string;
-  updated_at: string;
-}
+export type RenewalDecision = Database["public"]["Tables"]["renewal_decisions"]["Row"];
+export type RenewalDecisionInsert = Database["public"]["Tables"]["renewal_decisions"]["Insert"];
+export type RenewalDecisionUpdate = Database["public"]["Tables"]["renewal_decisions"]["Update"];
 
 export interface RenewalDecisionWithApp extends RenewalDecision {
   apps: {
@@ -390,50 +505,8 @@ export interface RenewalAssessmentWithApp extends RenewalAssessment {
 }
 
 // User Profile types
-export type UserRole = "staff" | "tic" | "approver" | "admin";
+export type UserRole = Database["public"]["Enums"]["user_role"];
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  name: string | null;
-  department: string | null;
-  division: string | null;
-  role: UserRole;
-  avatar_url: string | null;
-  is_active: boolean;
-  first_submission_at: string | null;
-  last_submission_at: string | null;
-  total_submissions: number;
-  auth_user_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UserProfileInsert {
-  id?: string;
-  email: string;
-  name?: string | null;
-  department?: string | null;
-  division?: string | null;
-  role?: UserRole;
-  avatar_url?: string | null;
-  is_active?: boolean;
-  first_submission_at?: string | null;
-  last_submission_at?: string | null;
-  total_submissions?: number;
-  auth_user_id?: string | null;
-}
-
-export interface UserProfileUpdate {
-  email?: string;
-  name?: string | null;
-  department?: string | null;
-  division?: string | null;
-  role?: UserRole;
-  avatar_url?: string | null;
-  is_active?: boolean;
-  first_submission_at?: string | null;
-  last_submission_at?: string | null;
-  total_submissions?: number;
-  auth_user_id?: string | null;
-}
+export type UserProfile = Database["public"]["Tables"]["user_profiles"]["Row"];
+export type UserProfileInsert = Database["public"]["Tables"]["user_profiles"]["Insert"];
+export type UserProfileUpdate = Database["public"]["Tables"]["user_profiles"]["Update"];

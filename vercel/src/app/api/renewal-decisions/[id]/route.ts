@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
 import { requireRole, canPerformTicActions, canPerformApproverActions, getCurrentUserProfile } from "@/lib/auth/rbac";
-import type { UserRole } from "@/lib/supabase/types";
+import type { UserRole, Database } from "@/lib/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * GET /api/renewal-decisions/[id]
@@ -131,7 +132,7 @@ export async function PATCH(
         }
     }
 
-    const supabase = createServiceClient();
+    const supabase = createServiceClient() as SupabaseClient<Database>;
 
     let updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -280,7 +281,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const supabase = createServiceClient();
+    const supabase = createServiceClient() as SupabaseClient<Database>;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)

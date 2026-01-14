@@ -49,15 +49,26 @@ export async function createServerSupabaseClient() {
  * Uses service role key for bypassing RLS
  */
 export function createServiceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
 
-  if (!secretKey) {
-    throw new Error("SUPABASE_SECRET_KEY is not set");
+  // During build time, env vars may not be available - return placeholder client
+  if (!supabaseUrl || !secretKey) {
+    return createSupabaseClient<Database>(
+      "https://placeholder.supabase.co",
+      "placeholder-key",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
   }
 
   // Use direct supabase-js client for admin operations (no cookies needed)
   return createSupabaseClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl,
     secretKey,
     {
       auth: {
