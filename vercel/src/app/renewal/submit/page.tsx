@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   FileText,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface App {
   id: string;
@@ -59,6 +62,8 @@ interface FormState {
   app_id: string;
   submitter_email: string;
   submitter_name: string;
+  submitter_departments: string[];
+  submitter_division: string;
   usage_frequency: string;
   primary_use_cases: string;
   learning_impact: string;
@@ -75,6 +80,8 @@ const initialFormState: FormState = {
   app_id: "",
   submitter_email: "",
   submitter_name: "",
+  submitter_departments: [],
+  submitter_division: "",
   usage_frequency: "",
   primary_use_cases: "",
   learning_impact: "",
@@ -87,12 +94,38 @@ const initialFormState: FormState = {
   proposed_changes: "",
 };
 
+// Department options
+const DEPARTMENTS = [
+  "Technology & Innovation",
+  "English Language Arts",
+  "Math",
+  "Science",
+  "Social Studies",
+  "World Languages",
+  "Arts",
+  "Physical Education",
+  "Counseling",
+  "Library",
+  "Learning Support",
+  "Administration",
+  "Other",
+];
+
+// Division options
+const DIVISIONS = [
+  "Elementary School",
+  "Middle School",
+  "High School",
+  "Whole School",
+];
+
 export default function RenewalSubmitPage() {
   const [apps, setApps] = useState<App[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [deptOpen, setDeptOpen] = useState(false);
   const [form, setForm] = useState<FormState>(initialFormState);
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
 
@@ -124,8 +157,26 @@ export default function RenewalSubmitPage() {
     }
   }, [form.app_id, apps]);
 
-  const handleChange = (field: keyof FormState, value: string) => {
+  const handleChange = (field: keyof FormState, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleDepartment = (dept: string) => {
+    setForm((prev) => {
+      const current = prev.submitter_departments;
+      if (current.includes(dept)) {
+        return { ...prev, submitter_departments: current.filter((d) => d !== dept) };
+      } else {
+        return { ...prev, submitter_departments: [...current, dept] };
+      }
+    });
+  };
+
+  const removeDepartment = (dept: string) => {
+    setForm((prev) => ({
+      ...prev,
+      submitter_departments: prev.submitter_departments.filter((d) => d !== dept),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,6 +190,21 @@ export default function RenewalSubmitPage() {
 
     if (!form.submitter_email || !form.submitter_email.endsWith("@sas.edu.sg")) {
       toast.error("Please enter a valid @sas.edu.sg email address");
+      return;
+    }
+
+    if (!form.submitter_name.trim()) {
+      toast.error("Please enter your name");
+      return;
+    }
+
+    if (form.submitter_departments.length === 0) {
+      toast.error("Please select at least one department");
+      return;
+    }
+
+    if (!form.submitter_division) {
+      toast.error("Please select your division");
       return;
     }
 
@@ -209,7 +275,7 @@ export default function RenewalSubmitPage() {
                 Submit Another
               </Button>
               <Button asChild className="flex-1">
-                <Link href="/renewals">View Renewals</Link>
+                <Link href="/renewal">Back to Guide</Link>
               </Button>
             </div>
           </CardContent>
@@ -224,9 +290,9 @@ export default function RenewalSubmitPage() {
         {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" asChild>
-            <Link href="/renewals">
+            <Link href="/renewal">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Renewals
+              Back to Guide
             </Link>
           </Button>
         </div>
@@ -369,6 +435,17 @@ export default function RenewalSubmitPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="submitter_name">Your Name *</Label>
+                    <Input
+                      id="submitter_name"
+                      placeholder="Your full name"
+                      value={form.submitter_name}
+                      onChange={(e) => handleChange("submitter_name", e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="submitter_email">Email Address *</Label>
                     <Input
                       id="submitter_email"
@@ -384,13 +461,90 @@ export default function RenewalSubmitPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="submitter_name">Your Name (optional)</Label>
-                    <Input
-                      id="submitter_name"
-                      placeholder="Your full name"
-                      value={form.submitter_name}
-                      onChange={(e) => handleChange("submitter_name", e.target.value)}
-                    />
+                    <Label htmlFor="submitter_departments">Department(s) *</Label>
+                    <Popover open={deptOpen} onOpenChange={setDeptOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={deptOpen}
+                          className="w-full justify-between h-auto min-h-10"
+                        >
+                          <div className="flex flex-wrap gap-1">
+                            {form.submitter_departments.length > 0 ? (
+                              form.submitter_departments.map((dept) => (
+                                <Badge
+                                  key={dept}
+                                  variant="secondary"
+                                  className="mr-1 mb-1"
+                                >
+                                  {dept}
+                                  <button
+                                    type="button"
+                                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeDepartment(dept);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-muted-foreground">
+                                Select department(s)
+                              </span>
+                            )}
+                          </div>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search departments..." />
+                          <CommandList>
+                            <CommandEmpty>No department found.</CommandEmpty>
+                            <CommandGroup>
+                              {DEPARTMENTS.map((dept) => (
+                                <CommandItem
+                                  key={dept}
+                                  value={dept}
+                                  onSelect={() => toggleDepartment(dept)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Checkbox
+                                      checked={form.submitter_departments.includes(dept)}
+                                      className="pointer-events-none"
+                                    />
+                                    {dept}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="submitter_division">Division *</Label>
+                    <Select
+                      value={form.submitter_division}
+                      onValueChange={(v) => handleChange("submitter_division", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your division" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DIVISIONS.map((div) => (
+                          <SelectItem key={div} value={div}>
+                            {div}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

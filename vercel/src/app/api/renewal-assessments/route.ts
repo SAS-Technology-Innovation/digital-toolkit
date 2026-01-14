@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
-import type { RenewalAssessmentInsert } from "@/lib/supabase/types";
+import type { RenewalAssessmentInsert, UserProfileInsert } from "@/lib/supabase/types";
 
 /**
  * GET /api/renewal-assessments
@@ -59,17 +59,47 @@ export async function GET(request: Request) {
 /**
  * POST /api/renewal-assessments
  * Create a new assessment (public, no auth required)
+ * Also auto-creates or updates user profile
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
     // Validate required fields
-    const { app_id, submitter_email, recommendation, justification } = body;
+    const {
+      app_id,
+      submitter_email,
+      submitter_name,
+      submitter_departments,
+      submitter_division,
+      recommendation,
+      justification,
+    } = body;
 
     if (!app_id || !submitter_email || !recommendation || !justification) {
       return NextResponse.json(
         { error: "Missing required fields: app_id, submitter_email, recommendation, justification" },
+        { status: 400 }
+      );
+    }
+
+    if (!submitter_name) {
+      return NextResponse.json(
+        { error: "Name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!submitter_departments || submitter_departments.length === 0) {
+      return NextResponse.json(
+        { error: "At least one department is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!submitter_division) {
+      return NextResponse.json(
+        { error: "Division is required" },
         { status: 400 }
       );
     }
@@ -108,16 +138,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // Type assertion for app data (needed for build-time type checking)
+    const appData = app as { renewal_date: string | null; annual_cost: number | null; licenses: number | null };
+
+    // Auto-create or update user profile
+    const userProfile = await getOrCreateUserProfile(supabase, {
+      email: submitter_email,
+      name: submitter_name,
+      department: Array.isArray(submitter_departments)
+        ? submitter_departments.join(", ")
+        : submitter_departments,
+      division: submitter_division,
+    });
+
     // Prepare insert data
     const insertData: RenewalAssessmentInsert = {
       app_id,
       submitter_email,
-      submitter_name: body.submitter_name || null,
+      submitter_name: submitter_name || null,
       recommendation,
       justification,
-      current_renewal_date: app.renewal_date,
-      current_annual_cost: app.annual_cost,
-      current_licenses: app.licenses,
+      current_renewal_date: appData.renewal_date,
+      current_annual_cost: appData.annual_cost,
+      current_licenses: appData.licenses,
       usage_frequency: body.usage_frequency || null,
       primary_use_cases: body.primary_use_cases || null,
       learning_impact: body.learning_impact || null,
@@ -131,9 +174,20 @@ export async function POST(request: Request) {
       status: "submitted",
     };
 
-    const { data: assessment, error: insertError } = await supabase
+    // Add department/division/profile info to assessment (uses extended columns)
+    const extendedInsertData = {
+      ...insertData,
+      submitter_department: Array.isArray(submitter_departments)
+        ? submitter_departments.join(", ")
+        : submitter_departments,
+      submitter_division: submitter_division,
+      submitter_profile_id: userProfile?.id || null,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: assessment, error: insertError } = await (supabase as any)
       .from("renewal_assessments")
-      .insert(insertData)
+      .insert(extendedInsertData)
       .select(`
         *,
         apps (
@@ -152,9 +206,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Send email notification (non-blocking)
-    sendNotificationEmail(assessment).catch(console.error);
-
     // Update or create renewal decision (non-blocking)
     updateRenewalDecision(app_id, supabase).catch(console.error);
 
@@ -169,70 +220,75 @@ export async function POST(request: Request) {
 }
 
 /**
- * Send email notification to edtech@sas.edu.sg
+ * Get or create a user profile based on email
  */
-async function sendNotificationEmail(assessment: {
-  id: string;
-  submitter_email: string;
-  recommendation: string;
-  justification: string;
-  submission_date: string;
-  apps?: {
-    product?: string;
-    vendor?: string;
-  };
-}) {
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-
-  if (!RESEND_API_KEY) {
-    console.log("RESEND_API_KEY not configured, skipping email notification");
-    return;
+async function getOrCreateUserProfile(
+  supabase: ReturnType<typeof createServiceClient>,
+  userData: {
+    email: string;
+    name: string;
+    department: string;
+    division: string;
   }
-
-  const recommendationLabels: Record<string, string> = {
-    renew: "Renew",
-    renew_with_changes: "Renew with Changes",
-    replace: "Replace",
-    retire: "Retire",
-  };
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sas-digital-toolkit.vercel.app";
-
+): Promise<{ id: string } | null> {
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "SAS Digital Toolkit <noreply@resend.dev>",
-        to: ["edtech@sas.edu.sg"],
-        subject: `New Renewal Assessment: ${assessment.apps?.product || "Unknown App"}`,
-        html: `
-          <h2>New Renewal Assessment Submitted</h2>
-          <p><strong>App:</strong> ${assessment.apps?.product || "Unknown"}</p>
-          <p><strong>Vendor:</strong> ${assessment.apps?.vendor || "N/A"}</p>
-          <p><strong>Submitter:</strong> ${assessment.submitter_email}</p>
-          <p><strong>Recommendation:</strong> ${recommendationLabels[assessment.recommendation] || assessment.recommendation}</p>
-          <p><strong>Submitted:</strong> ${new Date(assessment.submission_date).toLocaleString()}</p>
-          <hr/>
-          <p><strong>Justification:</strong></p>
-          <p>${assessment.justification}</p>
-          <hr/>
-          <p><a href="${appUrl}/admin/renewals">View Assessment in Dashboard</a></p>
-        `,
-      }),
-    });
+    // Check if user exists
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existing } = await (supabase as any)
+      .from("user_profiles")
+      .select("id, total_submissions")
+      .eq("email", userData.email)
+      .single();
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Failed to send email:", error);
+    const now = new Date().toISOString();
+
+    if (existing) {
+      // Update existing user profile
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updated } = await (supabase as any)
+        .from("user_profiles")
+        .update({
+          name: userData.name,
+          department: userData.department,
+          division: userData.division,
+          last_submission_at: now,
+          total_submissions: ((existing as { total_submissions?: number }).total_submissions || 0) + 1,
+        })
+        .eq("id", (existing as { id: string }).id)
+        .select("id")
+        .single();
+
+      return updated as { id: string } | null;
     } else {
-      console.log("Email notification sent successfully");
+      // Create new user profile
+      const insertData: UserProfileInsert = {
+        email: userData.email,
+        name: userData.name,
+        department: userData.department,
+        division: userData.division,
+        role: "staff",
+        first_submission_at: now,
+        last_submission_at: now,
+        total_submissions: 1,
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: created, error } = await (supabase as any)
+        .from("user_profiles")
+        .insert(insertData)
+        .select("id")
+        .single();
+
+      if (error) {
+        console.error("Error creating user profile:", error);
+        return null;
+      }
+
+      return created as { id: string } | null;
     }
   } catch (error) {
-    console.error("Email send error:", error);
+    console.error("Error in getOrCreateUserProfile:", error);
+    return null;
   }
 }
 
@@ -246,24 +302,29 @@ async function updateRenewalDecision(
 ) {
   try {
     // Get all assessments for this app
-    const { data: assessments } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: assessments } = await (supabase as any)
       .from("renewal_assessments")
       .select("recommendation")
       .eq("app_id", appId);
 
     if (!assessments) return;
 
+    // Type assertion for assessments
+    const typedAssessments = assessments as Array<{ recommendation: string }>;
+
     // Calculate stats
     const stats = {
-      total_submissions: assessments.length,
-      renew_count: assessments.filter((a) => a.recommendation === "renew").length,
-      renew_with_changes_count: assessments.filter((a) => a.recommendation === "renew_with_changes").length,
-      replace_count: assessments.filter((a) => a.recommendation === "replace").length,
-      retire_count: assessments.filter((a) => a.recommendation === "retire").length,
+      total_submissions: typedAssessments.length,
+      renew_count: typedAssessments.filter((a) => a.recommendation === "renew").length,
+      renew_with_changes_count: typedAssessments.filter((a) => a.recommendation === "renew_with_changes").length,
+      replace_count: typedAssessments.filter((a) => a.recommendation === "replace").length,
+      retire_count: typedAssessments.filter((a) => a.recommendation === "retire").length,
     };
 
     // Check if decision exists
-    const { data: existing } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existing } = await (supabase as any)
       .from("renewal_decisions")
       .select("id")
       .eq("app_id", appId)
@@ -271,7 +332,8 @@ async function updateRenewalDecision(
 
     if (existing) {
       // Update existing
-      await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any)
         .from("renewal_decisions")
         .update({
           ...stats,
@@ -280,7 +342,8 @@ async function updateRenewalDecision(
         .eq("app_id", appId);
     } else {
       // Create new
-      await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any)
         .from("renewal_decisions")
         .insert({
           app_id: appId,

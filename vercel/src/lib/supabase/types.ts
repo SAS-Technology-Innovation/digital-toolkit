@@ -187,6 +187,9 @@ export interface Database {
           app_id: string;
           submitter_email: string;
           submitter_name: string | null;
+          submitter_department: string | null;
+          submitter_division: string | null;
+          submitter_profile_id: string | null;
           submission_date: string;
           status: "submitted" | "in_review" | "approved" | "rejected" | "completed";
           current_renewal_date: string | null;
@@ -217,6 +220,9 @@ export interface Database {
           app_id: string;
           submitter_email: string;
           submitter_name?: string | null;
+          submitter_department?: string | null;
+          submitter_division?: string | null;
+          submitter_profile_id?: string | null;
           submission_date?: string;
           status?: "submitted" | "in_review" | "approved" | "rejected" | "completed";
           current_renewal_date?: string | null;
@@ -247,6 +253,9 @@ export interface Database {
           app_id?: string;
           submitter_email?: string;
           submitter_name?: string | null;
+          submitter_department?: string | null;
+          submitter_division?: string | null;
+          submitter_profile_id?: string | null;
           submission_date?: string;
           status?: "submitted" | "in_review" | "approved" | "rejected" | "completed";
           current_renewal_date?: string | null;
@@ -370,4 +379,61 @@ export interface RenewalAssessmentWithApp extends RenewalAssessment {
     website: string | null;
     description: string | null;
   };
+  user_profiles?: {
+    id: string;
+    name: string | null;
+    email: string;
+    department: string | null;
+    division: string | null;
+    role: UserRole;
+  } | null;
+}
+
+// User Profile types
+export type UserRole = "staff" | "tic" | "approver" | "admin";
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string | null;
+  department: string | null;
+  division: string | null;
+  role: UserRole;
+  avatar_url: string | null;
+  is_active: boolean;
+  first_submission_at: string | null;
+  last_submission_at: string | null;
+  total_submissions: number;
+  auth_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserProfileInsert {
+  id?: string;
+  email: string;
+  name?: string | null;
+  department?: string | null;
+  division?: string | null;
+  role?: UserRole;
+  avatar_url?: string | null;
+  is_active?: boolean;
+  first_submission_at?: string | null;
+  last_submission_at?: string | null;
+  total_submissions?: number;
+  auth_user_id?: string | null;
+}
+
+export interface UserProfileUpdate {
+  email?: string;
+  name?: string | null;
+  department?: string | null;
+  division?: string | null;
+  role?: UserRole;
+  avatar_url?: string | null;
+  is_active?: boolean;
+  first_submission_at?: string | null;
+  last_submission_at?: string | null;
+  total_submissions?: number;
+  auth_user_id?: string | null;
 }
