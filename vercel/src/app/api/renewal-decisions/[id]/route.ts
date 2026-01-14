@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
+import { requireRole, canPerformTicActions, canPerformApproverActions, getCurrentUserProfile } from "@/lib/auth/rbac";
+import type { UserRole } from "@/lib/supabase/types";
 
 /**
  * GET /api/renewal-decisions/[id]
@@ -65,6 +67,10 @@ export async function GET(
 /**
  * PATCH /api/renewal-decisions/[id]
  * Update a decision (TIC review or Director decision)
+ * Role requirements:
+ * - tic_review, generate_summary: TIC or higher
+ * - director_decision: Approver or higher
+ * - implement: Admin only
  */
 export async function PATCH(
   request: Request,
@@ -74,6 +80,56 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const { action } = body;
+
+    // Get current user profile for authorization
+    const { profile, error: authError } = await getCurrentUserProfile();
+    if (authError || !profile) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const userRole = profile.role as UserRole;
+
+    // Check role based on action
+    switch (action) {
+      case "tic_review":
+      case "generate_summary":
+        if (!canPerformTicActions(userRole)) {
+          return NextResponse.json(
+            { error: "TIC role or higher required for this action" },
+            { status: 403 }
+          );
+        }
+        break;
+      case "director_decision":
+        if (!canPerformApproverActions(userRole)) {
+          return NextResponse.json(
+            { error: "Approver role or higher required for this action" },
+            { status: 403 }
+          );
+        }
+        break;
+      case "implement":
+        // Only admin can mark as implemented
+        const { authorized, errorResponse } = await requireRole("admin");
+        if (!authorized || errorResponse) {
+          return NextResponse.json(
+            { error: "Admin role required to mark as implemented" },
+            { status: 403 }
+          );
+        }
+        break;
+      default:
+        // For generic updates, require at least TIC role
+        if (!canPerformTicActions(userRole)) {
+          return NextResponse.json(
+            { error: "TIC role or higher required" },
+            { status: 403 }
+          );
+        }
+    }
 
     const supabase = createServiceClient();
 
@@ -85,10 +141,11 @@ export async function PATCH(
     switch (action) {
       case "tic_review":
         // TIC (Assessor) reviewing the aggregated feedback
+        // Use the authenticated user's info instead of allowing spoofing
         updates = {
           ...updates,
-          assessor_email: body.assessor_email,
-          assessor_name: body.assessor_name,
+          assessor_email: profile.email,
+          assessor_name: profile.name || body.assessor_name,
           assessor_comment: body.assessor_comment,
           assessor_recommendation: body.assessor_recommendation,
           assessor_reviewed_at: new Date().toISOString(),
@@ -98,10 +155,11 @@ export async function PATCH(
 
       case "director_decision":
         // Director making the final decision
+        // Use the authenticated user's info instead of allowing spoofing
         updates = {
           ...updates,
-          approver_email: body.approver_email,
-          approver_name: body.approver_name,
+          approver_email: profile.email,
+          approver_name: profile.name || body.approver_name,
           approver_comment: body.approver_comment,
           final_decision: body.final_decision,
           final_decided_at: new Date().toISOString(),
@@ -215,6 +273,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify user has admin role
+    const { authorized, errorResponse } = await requireRole("admin");
+    if (!authorized || errorResponse) {
+      return errorResponse;
+    }
+
     const { id } = await params;
     const supabase = createServiceClient();
 

@@ -260,7 +260,7 @@ export default function RenewalSubmitPage() {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
               The EdTech team will review your assessment and follow up if needed.
-              You will receive a confirmation email at {form.submitter_email}.
+              Your submission has been recorded for {form.submitter_email}.
             </p>
             <div className="flex gap-2">
               <Button
