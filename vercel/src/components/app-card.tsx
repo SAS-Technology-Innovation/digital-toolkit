@@ -58,6 +58,48 @@ function getFaviconUrl(website: string | undefined): string {
   }
 }
 
+// Format grade levels to a shorter display string
+function formatGradeLevels(gradeLevels: string): string {
+  if (!gradeLevels || gradeLevels === "N/A") return "";
+
+  // Common patterns to shorten
+  const grades = gradeLevels.split(",").map(g => g.trim());
+
+  // If it's just one or two grades, show as-is
+  if (grades.length <= 2) return gradeLevels;
+
+  // Check for Pre-K through Grade X pattern (Elementary)
+  if (grades.some(g => g.includes("Pre-K") || g.includes("Kindergarten"))) {
+    const hasPreK = grades.some(g => g.includes("Pre-K"));
+    const lastGrade = grades[grades.length - 1];
+    const gradeNum = lastGrade.match(/Grade (\d+)/)?.[1];
+    if (gradeNum) {
+      return hasPreK ? `Pre-K - ${gradeNum}` : `K - ${gradeNum}`;
+    }
+  }
+
+  // Check for Grade X through Grade Y pattern
+  const gradeNumbers = grades
+    .map(g => g.match(/Grade (\d+)/)?.[1])
+    .filter(Boolean)
+    .map(Number);
+
+  if (gradeNumbers.length >= 2) {
+    const min = Math.min(...gradeNumbers);
+    const max = Math.max(...gradeNumbers);
+    return `${min} - ${max}`;
+  }
+
+  // K-12 pattern
+  if (gradeLevels.toLowerCase().includes("k-12") ||
+      (grades.length > 10 && gradeNumbers.includes(1) && gradeNumbers.includes(12))) {
+    return "K-12";
+  }
+
+  // Fallback: just show count
+  return `${grades.length} grades`;
+}
+
 interface AppCardProps {
   app: AppData;
   showNewBadge?: boolean;
@@ -134,10 +176,14 @@ export function AppCard({
             Mobile
           </Badge>
         )}
-        {app.gradeLevels && app.gradeLevels !== "N/A" && (
-          <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
+        {app.gradeLevels && app.gradeLevels !== "N/A" && formatGradeLevels(app.gradeLevels) && (
+          <Badge
+            variant="secondary"
+            className="text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+            title={app.gradeLevels}
+          >
             <GraduationCap className="w-3 h-3 mr-1" />
-            {app.gradeLevels}
+            {formatGradeLevels(app.gradeLevels)}
           </Badge>
         )}
       </div>

@@ -90,6 +90,9 @@ function transformAppToSupabase(app: AppsScriptApp): AppInsert {
   // Annual cost: Apps Script returns this as 'spend', also support annualCost and annual_cost
   const annualCostValue = app.spend ?? app.annualCost ?? app.annual_cost;
 
+  // Parse date_added for NEW badge calculation
+  const dateAddedValue = app.dateAdded || app.date_added || null;
+
   return {
     product: app.product,
     description: app.description || null,
@@ -104,7 +107,7 @@ function transformAppToSupabase(app: AppsScriptApp): AppInsert {
     sso_enabled: parseBoolean(app.ssoEnabled ?? app.sso_enabled),
     mobile_app: parseBoolean(app.mobileApp ?? app.mobile_app),
     grade_levels: app.gradeLevels || app.grade_levels || null,
-    is_new: parseBoolean(app.isNew ?? app.is_new ?? app.enterprise), // enterprise apps could be treated as "new"
+    is_new: parseBoolean(app.isNew ?? app.is_new),
     vendor: app.vendor || null,
     license_type: app.licenseType || app.license_type || null,
     renewal_date: app.renewalDate || app.renewal_date || null,
@@ -114,6 +117,12 @@ function transformAppToSupabase(app: AppsScriptApp): AppInsert {
     status: app.status || null,
     synced_at: new Date().toISOString(),
     apps_script_id: app.id || null,
+    // New fields from Apps Script
+    enterprise: parseBoolean(app.enterprise),
+    budget: app.budget || null,
+    support_email: app.supportEmail || app.support_email || null,
+    date_added: dateAddedValue,
+    is_whole_school: parseBoolean(app.isWholeSchool),
   };
 }
 
@@ -144,6 +153,12 @@ function transformAppToAppsScript(app: App): AppsScriptApp {
     licenses: app.licenses || undefined,
     utilization: app.utilization || undefined,
     status: app.status || undefined,
+    // New fields from Apps Script
+    enterprise: app.enterprise,
+    budget: app.budget || undefined,
+    supportEmail: app.support_email || undefined,
+    dateAdded: app.date_added || undefined,
+    isWholeSchool: app.is_whole_school,
   };
 }
 

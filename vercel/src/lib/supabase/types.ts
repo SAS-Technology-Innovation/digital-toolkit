@@ -44,6 +44,12 @@ export interface Database {
           updated_at: string;
           synced_at: string | null;
           apps_script_id: string | null;
+          // New fields from Apps Script
+          enterprise: boolean;
+          budget: string | null;
+          support_email: string | null;
+          date_added: string | null;
+          is_whole_school: boolean;
         };
         Insert: {
           id?: string;
@@ -72,6 +78,12 @@ export interface Database {
           updated_at?: string;
           synced_at?: string | null;
           apps_script_id?: string | null;
+          // New fields from Apps Script
+          enterprise?: boolean;
+          budget?: string | null;
+          support_email?: string | null;
+          date_added?: string | null;
+          is_whole_school?: boolean;
         };
         Update: {
           id?: string;
@@ -100,6 +112,12 @@ export interface Database {
           updated_at?: string;
           synced_at?: string | null;
           apps_script_id?: string | null;
+          // New fields from Apps Script
+          enterprise?: boolean;
+          budget?: string | null;
+          support_email?: string | null;
+          date_added?: string | null;
+          is_whole_school?: boolean;
         };
       };
       sync_logs: {

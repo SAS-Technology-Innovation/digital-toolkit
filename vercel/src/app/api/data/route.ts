@@ -30,6 +30,12 @@ interface SupabaseApp {
   licenses: number | null;
   created_at: string;
   updated_at: string;
+  // New fields from Apps Script sync
+  enterprise: boolean;
+  budget: string | null;
+  support_email: string | null;
+  date_added: string | null;
+  is_whole_school: boolean;
 }
 
 interface DashboardApp {
@@ -75,8 +81,8 @@ function transformToDashboard(app: SupabaseApp): DashboardApp {
     licenseType: app.license_type || "N/A",
     renewalDate: app.renewal_date || "",
     spend: app.annual_cost === 0 ? "Free" : (app.annual_cost || "N/A"),
-    dateAdded: app.created_at,
-    enterprise: app.is_new, // Using is_new flag for enterprise status
+    dateAdded: app.date_added || "", // Use actual date_added from Apps Script
+    enterprise: app.enterprise, // Use enterprise field from Apps Script
   };
 }
 
