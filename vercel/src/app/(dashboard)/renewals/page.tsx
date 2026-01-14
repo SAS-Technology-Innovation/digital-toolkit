@@ -15,7 +15,9 @@ import {
   MoreHorizontal,
   RefreshCw,
   Loader2,
+  FileText,
 } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -282,6 +284,12 @@ export default function RenewalsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button asChild>
+            <Link href="/renewal/submit">
+              <FileText className="mr-2 h-4 w-4" />
+              Submit Assessment
+            </Link>
+          </Button>
           <Button variant="outline" onClick={fetchData} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh

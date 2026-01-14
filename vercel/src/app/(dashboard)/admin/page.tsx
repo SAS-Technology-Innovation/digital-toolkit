@@ -60,6 +60,16 @@ interface RawAppData {
   [key: string]: unknown;
 }
 
+// Safely extract hostname from URL, returns null if invalid
+function getHostname(url: string | undefined): string | null {
+  if (!url || url === "#" || url === "N/A") return null;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
 export default function AdminPage() {
   const [apps, setApps] = useState<App[]>([]);
   const [rawData, setRawData] = useState<RawAppData[]>([]);
@@ -553,14 +563,14 @@ export default function AdminPage() {
                             <TableCell>{app.division || "N/A"}</TableCell>
                             <TableCell>{app.vendor || "N/A"}</TableCell>
                             <TableCell>
-                              {app.website ? (
+                              {getHostname(app.website) ? (
                                 <a
                                   href={app.website}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-primary hover:underline text-xs"
                                 >
-                                  {new URL(app.website).hostname}
+                                  {getHostname(app.website)}
                                 </a>
                               ) : (
                                 "N/A"
