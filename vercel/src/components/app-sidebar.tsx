@@ -14,6 +14,9 @@ import {
   LogIn,
   LogOut,
   User,
+  BookOpen,
+  Gavel,
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -69,6 +72,31 @@ const navigation = [
     ],
   },
   {
+    title: "Renewals",
+    items: [
+      {
+        title: "All Renewals",
+        url: "/renewals",
+        icon: Calendar,
+      },
+      {
+        title: "Submit Assessment",
+        url: "/renewal/submit",
+        icon: ClipboardList,
+      },
+      {
+        title: "TIC Review",
+        url: "/renewals/tic-review",
+        icon: BookOpen,
+      },
+      {
+        title: "Approver Decisions",
+        url: "/renewals/approver",
+        icon: Gavel,
+      },
+    ],
+  },
+  {
     title: "Displays",
     items: [
       {
@@ -82,11 +110,6 @@ const navigation = [
 
 const footerItems = [
   {
-    title: "Renewals",
-    url: "/renewals",
-    icon: Calendar,
-  },
-  {
     title: "Analytics",
     url: "/analytics",
     icon: BarChart3,
@@ -98,7 +121,7 @@ const footerItems = [
   },
   {
     title: "Help",
-    url: "mailto:edtech@sas.edu.sg",
+    url: "/help",
     icon: HelpCircle,
   },
 ];

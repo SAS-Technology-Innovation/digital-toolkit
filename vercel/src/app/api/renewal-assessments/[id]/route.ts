@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
-import type { RenewalAssessmentUpdate } from "@/lib/supabase/types";
+import type { RenewalAssessmentUpdate, Database } from "@/lib/supabase/types";
+import { requireRole } from "@/lib/auth/rbac";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * GET /api/renewal-assessments/[id]
@@ -53,18 +55,24 @@ export async function GET(
 
 /**
  * PATCH /api/renewal-assessments/[id]
- * Update an assessment (admin only - protected by middleware)
+ * Update an assessment (TIC or higher role required)
  */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify user has TIC role or higher
+    const { authorized, profile, errorResponse } = await requireRole("tic");
+    if (!authorized || errorResponse) {
+      return errorResponse;
+    }
+
     const { id } = await params;
     const body = await request.json();
 
     // Use service client for admin updates
-    const supabase = createServiceClient();
+    const supabase = createServiceClient() as SupabaseClient<Database>;
 
     // Build update object with only allowed fields
     const allowedFields = [
@@ -76,26 +84,34 @@ export async function PATCH(
       "final_decision",
     ];
 
-    const updates: RenewalAssessmentUpdate = {};
+    // Build updates object with only allowed fields
+    const updates: RenewalAssessmentUpdate = {
+      updated_at: new Date().toISOString(),
+    };
+
+    let hasFieldsToUpdate = false;
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         (updates as Record<string, unknown>)[field] = body[field];
+        hasFieldsToUpdate = true;
       }
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (!hasFieldsToUpdate) {
       return NextResponse.json(
         { error: "No valid fields to update" },
         { status: 400 }
       );
     }
 
-    // Add updated_at timestamp
-    updates.updated_at = new Date().toISOString();
-
-    // If status is changing to approved/rejected/completed, set reviewed_at
-    if (["approved", "rejected", "completed"].includes(body.status) && !body.reviewed_at) {
-      updates.reviewed_at = new Date().toISOString();
+    // If status is changing to approved/rejected/completed, set reviewed_at and reviewed_by
+    if (["approved", "rejected", "completed"].includes(body.status)) {
+      if (!body.reviewed_at) {
+        updates.reviewed_at = new Date().toISOString();
+      }
+      if (!body.reviewed_by && profile?.email) {
+        updates.reviewed_by = profile.email;
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,8 +153,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify user has admin role
+    const { authorized, errorResponse } = await requireRole("admin");
+    if (!authorized || errorResponse) {
+      return errorResponse;
+    }
+
     const { id } = await params;
-    const supabase = createServiceClient();
+    const supabase = createServiceClient() as SupabaseClient<Database>;
 
     const { error } = await supabase
       .from("renewal_assessments")
