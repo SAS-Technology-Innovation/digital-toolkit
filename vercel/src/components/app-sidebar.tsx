@@ -14,6 +14,7 @@ import {
   LogIn,
   LogOut,
   User,
+  Users,
   BookOpen,
   Gavel,
   ClipboardList,
@@ -81,7 +82,7 @@ const navigation = [
       },
       {
         title: "Submit Assessment",
-        url: "/renewal/submit",
+        url: "/renewals/submit",
         icon: ClipboardList,
       },
       {
@@ -118,6 +119,11 @@ const footerItems = [
     title: "Admin",
     url: "/admin",
     icon: ShieldCheck,
+  },
+  {
+    title: "Users",
+    url: "/admin/users",
+    icon: Users,
   },
   {
     title: "Help",

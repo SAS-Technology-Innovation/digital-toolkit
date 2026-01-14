@@ -118,9 +118,10 @@ digital-toolkit/
 
 ### Overview
 - **Provider**: Supabase Auth
-- **Method**: Magic Links (passwordless email)
+- **Methods**: Magic Links (passwordless) AND Password Authentication
 - **Domain Restriction**: `@sas.edu.sg` emails only
 - **Protected Routes**: `/admin` requires authentication
+- **User Registration**: Self-service with email verification
 
 ### Key Files
 
@@ -132,6 +133,10 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata?: SignUpMetadata) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 ```
@@ -142,20 +147,52 @@ interface AuthContextType {
 - Redirects authenticated users from `/login` to home
 
 **[vercel/src/app/auth/callback/route.ts](vercel/src/app/auth/callback/route.ts)**
-- Handles magic link verification
+- Handles magic link verification and password reset
 - Exchanges code for session
 - Redirects to requested page or home
 
 **[vercel/src/app/login/page.tsx](vercel/src/app/login/page.tsx)**
-- Login form with @sas.edu.sg validation
-- Shows success message after sending magic link
-- Uses Suspense for useSearchParams
+- Tabbed login form (Magic Link / Password)
+- @sas.edu.sg domain validation
+- Links to registration and password reset
 
-### Auth Flow
+**[vercel/src/app/register/page.tsx](vercel/src/app/register/page.tsx)**
+- User registration with password strength indicator
+- Collects name, department, division
+- Email verification required
+
+**[vercel/src/app/reset-password/page.tsx](vercel/src/app/reset-password/page.tsx)**
+- Request password reset via email
+
+**[vercel/src/app/reset-password/confirm/page.tsx](vercel/src/app/reset-password/confirm/page.tsx)**
+- Set new password after clicking email link
+
+### Auth Flows
+
+**Magic Link Flow:**
 ```
 User enters email → Validate @sas.edu.sg domain → Send magic link
        ↓
 User clicks link → /auth/callback → Exchange code for session → Redirect
+```
+
+**Password Flow:**
+```
+User enters email + password → Validate credentials → Create session → Redirect
+```
+
+**Registration Flow:**
+```
+User fills form → Validate @sas.edu.sg → Create account → Send verification email
+       ↓
+User clicks verification link → Account activated → Redirect to login
+```
+
+**Password Reset Flow:**
+```
+User requests reset → Send email → User clicks link → /reset-password/confirm
+       ↓
+User enters new password → Update password → Redirect to login
 ```
 
 ## 🎨 UI Components
@@ -198,6 +235,12 @@ Components are installed via `npx shadcn@latest add [component]` and stored in `
 | `/api/renewal-data` | GET | Fetch renewal data |
 | `/api/status` | GET | Fetch app status |
 | `/api/sync` | POST | Sync data with Supabase |
+| `/api/apps/list` | GET | Get apps for dropdown selection |
+| `/api/users` | GET | List users (admin only) |
+| `/api/users` | POST | Create user (admin only) |
+| `/api/users/[id]` | GET | Get user details (admin only) |
+| `/api/users/[id]` | PATCH | Update user (admin only) |
+| `/api/users/[id]` | DELETE | Delete user (admin only) |
 
 ### Data Structure
 
