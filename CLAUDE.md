@@ -261,6 +261,14 @@ npm run build        # Production build
 npm run lint         # Run ESLint
 npm run start        # Start production server
 
+# Testing (see Testing section below for details)
+npm run test         # Run tests in watch mode
+npm run test:run     # Run tests once (CI mode)
+npm run test:coverage # Run tests with coverage report
+
+# Run a single test file
+npx vitest run src/__tests__/components/app-card.test.tsx
+
 # Shadcn/UI
 npx shadcn@latest add [component]  # Add new component
 ```
@@ -277,6 +285,84 @@ npm run deploy       # Create new deployment
 npm run logs         # View execution logs
 npm run open         # Open in browser
 ```
+
+## 🧪 Testing
+
+- **Framework**: Vitest with jsdom environment
+- **Testing Library**: @testing-library/react
+- **Location**: `vercel/src/__tests__/`
+- **Pattern**: `*.test.ts` or `*.test.tsx`
+
+### Test Structure
+
+```text
+vercel/src/__tests__/
+├── setup.ts                    # Global test setup
+├── api/
+│   └── sync.test.ts            # API route tests
+├── components/
+│   ├── app-card.test.tsx       # Component tests
+│   ├── app-detail-modal.test.tsx
+│   └── badges.test.tsx
+└── lib/
+    ├── auth.test.tsx           # Auth context tests
+    └── utils.test.ts           # Utility function tests
+```
+
+### Test Setup
+
+The setup file [setup.ts](vercel/src/__tests__/setup.ts) configures:
+
+- Jest DOM matchers for Vitest
+- Automatic cleanup after each test
+- Next.js router mocks (`useRouter`, `usePathname`, `useSearchParams`)
+- Browser API mocks (`matchMedia`, `ResizeObserver`, `IntersectionObserver`)
+
+### Writing Tests
+
+**Component Test Example:**
+
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { AppCard } from "@/components/app-card";
+
+describe("AppCard Component", () => {
+  it("renders app name correctly", () => {
+    render(<AppCard app={mockApp} />);
+    expect(screen.getByText("App Name")).toBeInTheDocument();
+  });
+
+  it("calls handler on button click", () => {
+    const onShowDetails = vi.fn();
+    render(<AppCard app={mockApp} onShowDetails={onShowDetails} />);
+    fireEvent.click(screen.getByRole("button", { name: /details/i }));
+    expect(onShowDetails).toHaveBeenCalledWith(mockApp);
+  });
+});
+```
+
+**Utility Test Example:**
+
+```typescript
+import { describe, it, expect } from "vitest";
+import { cn } from "@/lib/utils";
+
+describe("cn utility", () => {
+  it("merges Tailwind classes correctly", () => {
+    expect(cn("px-2 py-1", "px-4")).toBe("py-1 px-4");
+  });
+});
+```
+
+### Vitest Configuration
+
+Key settings in [vercel/vitest.config.ts](vercel/vitest.config.ts):
+
+- `environment: "jsdom"` - Browser-like environment
+- `globals: true` - Global test functions (describe, it, expect)
+- Path alias `@/` maps to `./src`
+- Coverage excludes `node_modules/`, setup files, `.d.ts`, and Shadcn UI components
 
 ## ⚙️ Environment Variables
 
