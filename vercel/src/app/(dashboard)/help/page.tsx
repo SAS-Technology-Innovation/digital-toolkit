@@ -35,7 +35,7 @@ const quickLinks = [
   {
     title: "Submit Renewal Assessment",
     description: "Provide feedback on apps you use",
-    href: "/renewal/submit",
+    href: "/renewals/submit",
     icon: FileText,
     color: "text-blue-600",
   },
@@ -106,10 +106,11 @@ const roleGuides = [
     description: "Full system access for EdTech team",
     capabilities: [
       "All Approver capabilities",
-      "Manage user roles and profiles",
-      "Access admin dashboard",
+      "Manage user roles and profiles via User Management page",
+      "Access admin dashboard and user management",
       "Delete assessments and decisions",
       "Mark decisions as implemented",
+      "Activate/deactivate user accounts",
     ],
     icon: Shield,
     color: "bg-red-100 text-red-800",
@@ -156,8 +157,20 @@ const workflowSteps = [
 
 const faqs = [
   {
+    question: "How do I sign in to the Digital Toolkit?",
+    answer: "You can sign in using either a magic link (passwordless) or your password. Enter your @sas.edu.sg email address on the login page and choose your preferred method. If you don't have an account yet, click 'Create account' to register."
+  },
+  {
+    question: "How do I create an account?",
+    answer: "Click 'Create account' on the login page. Enter your @sas.edu.sg email, create a password (at least 8 characters with uppercase, lowercase, and numbers), and provide your name. You'll receive a verification email to activate your account."
+  },
+  {
+    question: "How do I reset my password?",
+    answer: "On the login page, click 'Forgot password?' and enter your @sas.edu.sg email. You'll receive an email with a link to create a new password. The link expires in 1 hour."
+  },
+  {
     question: "How do I submit a renewal assessment?",
-    answer: "Navigate to the 'Submit Assessment' page from the sidebar or dashboard. Select the app you want to review, answer the questions about your usage, and submit your recommendation. Your feedback helps the EdTech team make informed decisions."
+    answer: "Navigate to 'Submit Assessment' from the sidebar under Renewals. Select the app you want to review, answer the questions about your usage, and submit your recommendation. Your feedback helps the EdTech team make informed decisions."
   },
   {
     question: "Who can see my assessment submission?",
@@ -185,7 +198,11 @@ const faqs = [
   },
   {
     question: "How do I get a higher access level?",
-    answer: "Contact the EdTech team (edtech@sas.edu.sg) to request elevated access. Role assignments are based on your position and responsibilities. TIC and Approver roles are typically assigned to specific staff members."
+    answer: "Contact the EdTech team (edtech@sas.edu.sg) to request elevated access. Admins can also manage user roles via the User Management page. Role assignments are based on your position and responsibilities."
+  },
+  {
+    question: "How do Admins manage users?",
+    answer: "Admins can access the User Management page from the Admin menu in the sidebar. From there, they can view all users, change roles (Staff, TIC, Approver, Admin), and activate or deactivate accounts."
   },
 ];
 
@@ -282,7 +299,7 @@ export default function HelpPage() {
                 <ul className="space-y-2">
                   {role.capabilities.map((cap, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                       <span>{cap}</span>
                     </li>
                   ))}

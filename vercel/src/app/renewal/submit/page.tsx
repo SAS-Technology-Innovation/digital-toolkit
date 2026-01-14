@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   FileText,
   X,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -122,6 +124,7 @@ const DIVISIONS = [
 export default function RenewalSubmitPage() {
   const [apps, setApps] = useState<App[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [open, setOpen] = useState(false);
@@ -130,20 +133,35 @@ export default function RenewalSubmitPage() {
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
 
   // Fetch apps for dropdown
-  useEffect(() => {
-    async function fetchApps() {
-      try {
-        const response = await fetch("/api/apps/list");
-        if (!response.ok) throw new Error("Failed to fetch apps");
-        const data = await response.json();
-        setApps(data);
-      } catch (error) {
-        console.error("Error fetching apps:", error);
-        toast.error("Failed to load apps");
-      } finally {
-        setLoading(false);
+  const fetchApps = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const response = await fetch("/api/apps/list");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch apps");
       }
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setApps(data);
+        if (data.length === 0) {
+          setLoadError("No apps available. Please contact the EdTech team or try syncing data from the Admin page.");
+        }
+      } else {
+        setApps([]);
+        setLoadError("Invalid data received from server.");
+      }
+    } catch (error) {
+      console.error("Error fetching apps:", error);
+      setLoadError(error instanceof Error ? error.message : "Failed to load apps");
+      toast.error("Failed to load apps");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchApps();
   }, []);
 
@@ -389,6 +407,28 @@ export default function RenewalSubmitPage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+
+                  {/* Error message with retry button */}
+                  {loadError && (
+                    <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span className="text-sm flex-1">{loadError}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchApps}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                        <span className="ml-1">Retry</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Current subscription info */}
