@@ -195,9 +195,9 @@ export function AppCard({
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2 mt-3 pt-3 border-t">
+      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
         {app.tutorialLink && (
-          <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
+          <Button size="sm" variant="outline" className="flex-1 min-w-[70px] text-xs" asChild>
             <a href={app.tutorialLink} target="_blank" rel="noopener noreferrer">
               <Play className="w-3 h-3 mr-1" />
               Tutorial
@@ -208,14 +208,14 @@ export function AppCard({
           <Button
             size="sm"
             variant="outline"
-            className="flex-1 text-xs"
+            className="flex-1 min-w-[70px] text-xs"
             onClick={() => onShowDetails(app)}
           >
             <Info className="w-3 h-3 mr-1" />
             Details
           </Button>
         )}
-        <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
+        <Button size="sm" variant="outline" className="flex-1 min-w-[70px] text-xs" asChild>
           <a href={app.website || "#"} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="w-3 h-3 mr-1" />
             Open

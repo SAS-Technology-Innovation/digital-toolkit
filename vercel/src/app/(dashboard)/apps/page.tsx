@@ -420,7 +420,7 @@ function AppsPageContent() {
 
       {/* Apps Grid/List */}
       {viewMode === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredApps.map((app) => (
             <AppCard
               key={app.id}
@@ -506,7 +506,7 @@ function AppsPageSkeleton() {
         <Skeleton className="h-10 w-40" />
         <Skeleton className="h-10 w-40" />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <Card key={i}>
             <CardHeader className="pb-3">
