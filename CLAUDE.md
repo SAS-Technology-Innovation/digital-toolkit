@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **SAS Digital Toolkit** is a full-stack web application for managing and showcasing educational applications at Singapore American School. The frontend is built with Next.js 16 and deployed to Vercel, while the backend uses Google Apps Script to read from Google Sheets.
 
+**Current Version:** 2.1.0 | [View Releases](/releases) | [Changelog](CHANGELOG.md)
+
 ### Architecture
 
 ```
@@ -17,13 +19,13 @@ The **SAS Digital Toolkit** is a full-stack web application for managing and sho
 │  │  │Dashboard │ │App Catalog│ │  Admin   │  ...       │    │
 │  │  └──────────┘ └──────────┘ └──────────┘            │    │
 │  │  ┌──────────────────────────────────────┐          │    │
-│  │  │        Supabase Auth (Magic Links)    │          │    │
+│  │  │   Supabase Auth (Magic Links + PWD)   │          │    │
 │  │  └──────────────────────────────────────┘          │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                           │                                  │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │              API Routes (/api/*)                     │    │
-│  │  /api/data  /api/ai  /api/sync  /api/status         │    │
+│  │  /api/data  /api/users  /api/sync  /api/status      │    │
 │  └─────────────────────────────────────────────────────┘    │
 └──────────────────────────────┼──────────────────────────────┘
                                │
@@ -47,9 +49,10 @@ The **SAS Digital Toolkit** is a full-stack web application for managing and sho
 |-------|-----------|
 | Frontend | Next.js 16 with App Router, TypeScript |
 | Styling | Tailwind CSS v4, Shadcn/UI components |
-| Authentication | Supabase Auth (Magic Links) |
+| Authentication | Supabase Auth (Magic Links + Password) |
 | Database | Supabase (PostgreSQL), Google Sheets |
 | AI | Claude API (via Apps Script proxy) |
+| Analytics | Vercel Analytics, Speed Insights |
 | Deployment | Vercel |
 | Backend API | Google Apps Script |
 
@@ -64,26 +67,44 @@ digital-toolkit/
 │   │   │   │   ├── page.tsx     # Main dashboard (/)
 │   │   │   │   ├── apps/        # App catalog (/apps)
 │   │   │   │   ├── admin/       # Admin panel (/admin) - protected
+│   │   │   │   │   └── users/   # User management (/admin/users)
 │   │   │   │   ├── analytics/   # Analytics (/analytics)
-│   │   │   │   ├── renewals/    # Renewals (/renewals)
+│   │   │   │   ├── renewals/    # Renewals workflow
+│   │   │   │   │   ├── page.tsx         # Renewals dashboard
+│   │   │   │   │   ├── submit/          # Submit assessment
+│   │   │   │   │   ├── tic-review/      # TIC review page
+│   │   │   │   │   └── approver/        # Approver decisions
 │   │   │   │   ├── requests/    # Request form (/requests)
 │   │   │   │   ├── status/      # Status page (/status)
+│   │   │   │   ├── help/        # Help center (/help)
+│   │   │   │   ├── about/       # About page (/about)
+│   │   │   │   ├── privacy/     # Privacy policy (/privacy)
+│   │   │   │   ├── terms/       # Terms of service (/terms)
+│   │   │   │   ├── releases/    # Releases/changelog (/releases)
 │   │   │   │   └── layout.tsx   # Dashboard layout with sidebar
 │   │   │   ├── api/             # API routes
 │   │   │   │   ├── ai/route.ts  # AI chat endpoint
 │   │   │   │   ├── data/route.ts # Apps data endpoint
+│   │   │   │   ├── users/       # User management API
+│   │   │   │   │   ├── route.ts       # GET list, POST create
+│   │   │   │   │   └── [id]/route.ts  # GET, PATCH, DELETE
+│   │   │   │   ├── apps/list/route.ts # Apps dropdown list
 │   │   │   │   ├── renewal-data/route.ts
 │   │   │   │   ├── status/route.ts
 │   │   │   │   └── sync/route.ts # Supabase sync
-│   │   │   ├── auth/callback/   # Magic link callback
-│   │   │   ├── login/           # Login page
+│   │   │   ├── auth/callback/   # Auth callback handler
+│   │   │   ├── login/           # Login page (Magic Link + Password)
+│   │   │   ├── register/        # User registration
+│   │   │   ├── reset-password/  # Password reset flow
+│   │   │   │   ├── page.tsx     # Request reset
+│   │   │   │   └── confirm/     # Set new password
+│   │   │   ├── renewal/         # Public renewal form (legacy)
 │   │   │   ├── signage/         # Signage display (no sidebar)
 │   │   │   └── layout.tsx       # Root layout
 │   │   ├── components/          # React components
 │   │   │   ├── ui/              # Shadcn/UI components
-│   │   │   │   ├── audience-badge.tsx   # Color-coded audience tags
-│   │   │   │   ├── category-badge.tsx   # Color-coded category tags
-│   │   │   │   ├── division-section.tsx # Division containers
+│   │   │   │   ├── switch.tsx   # Toggle switch
+│   │   │   │   ├── breadcrumb.tsx
 │   │   │   │   └── ...          # Other Shadcn components
 │   │   │   ├── app-card.tsx     # App card component
 │   │   │   ├── app-detail-modal.tsx
@@ -94,13 +115,16 @@ digital-toolkit/
 │   │   │   │   └── auth-context.tsx
 │   │   │   ├── supabase/        # Supabase clients
 │   │   │   │   ├── client.ts    # Browser client
-│   │   │   │   └── server.ts    # Server client
+│   │   │   │   ├── server.ts    # Server client
+│   │   │   │   └── types.ts     # TypeScript types
 │   │   │   └── utils.ts         # Helper functions
 │   │   ├── hooks/               # Custom React hooks
+│   │   ├── __tests__/           # Test files
 │   │   └── middleware.ts        # Auth middleware
 │   ├── public/assets/           # Static assets (logos, images)
 │   ├── supabase/                # Supabase config
 │   ├── package.json
+│   ├── vitest.config.ts         # Test configuration
 │   ├── tsconfig.json
 │   ├── next.config.ts
 │   └── components.json          # Shadcn/UI config
@@ -111,6 +135,8 @@ digital-toolkit/
 │   ├── data-management.js       # Data enrichment
 │   └── appsscript.json          # Apps Script config
 ├── docs/                        # Documentation
+├── CHANGELOG.md                 # Version history
+├── CLAUDE.md                    # This file
 └── README.md
 ```
 
@@ -120,8 +146,9 @@ digital-toolkit/
 - **Provider**: Supabase Auth
 - **Methods**: Magic Links (passwordless) AND Password Authentication
 - **Domain Restriction**: `@sas.edu.sg` emails only
-- **Protected Routes**: `/admin` requires authentication
+- **Protected Routes**: `/admin`, `/admin/users` require authentication
 - **User Registration**: Self-service with email verification
+- **Role-Based Access**: Staff, TIC, Approver, Admin roles
 
 ### Key Files
 
@@ -195,6 +222,88 @@ User requests reset → Send email → User clicks link → /reset-password/conf
 User enters new password → Update password → Redirect to login
 ```
 
+## 👥 User Management
+
+### Roles & Permissions
+
+| Role | Permissions |
+|------|-------------|
+| Staff | Browse apps, submit assessments, request apps |
+| TIC | + Review assessments, generate AI summaries, make recommendations |
+| Approver | + Make final renewal decisions |
+| Admin | + Manage users, roles, delete assessments, full system access |
+
+### User Management Page (`/admin/users`)
+- View all users with search and filter
+- Inline role dropdown for quick changes
+- Active/inactive toggle
+- Stats cards by role
+
+## 📄 Application Pages
+
+### Dashboard Group (with sidebar)
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Dashboard | Division-based app organization |
+| `/apps` | App Catalog | Searchable catalog with filters |
+| `/requests` | Request App | Form to request new applications |
+| `/status` | Status | App health monitoring |
+| `/analytics` | Analytics | Usage analytics and insights |
+| `/admin` | Admin | Data sync and management |
+| `/admin/users` | User Management | Manage users and roles |
+| `/renewals` | Renewals Dashboard | App renewal overview |
+| `/renewals/submit` | Submit Assessment | Teacher feedback form |
+| `/renewals/tic-review` | TIC Review | Review and summarize feedback |
+| `/renewals/approver` | Approver Decisions | Final decision making |
+| `/help` | Help Center | Documentation and FAQs |
+| `/about` | About | Platform information |
+| `/releases` | Releases | Version history |
+| `/privacy` | Privacy Policy | Data protection info |
+| `/terms` | Terms of Service | Usage guidelines |
+
+### Standalone Pages (no sidebar)
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/login` | Login | Magic link + password auth |
+| `/register` | Register | User registration |
+| `/reset-password` | Reset Password | Password recovery |
+| `/signage` | Signage | Digital signage display |
+
+## 🔌 API Routes
+
+| Route | Method | Description | Auth |
+|-------|--------|-------------|------|
+| `/api/data` | GET | Fetch apps data (proxies to Apps Script) | - |
+| `/api/ai` | POST | AI chat completion | - |
+| `/api/renewal-data` | GET | Fetch renewal data | - |
+| `/api/status` | GET | Fetch app status | - |
+| `/api/sync` | POST | Sync data with Supabase | - |
+| `/api/apps/list` | GET | Get apps for dropdown selection | - |
+| `/api/users` | GET | List users | Admin |
+| `/api/users` | POST | Create user | Admin |
+| `/api/users/[id]` | GET | Get user details | Admin |
+| `/api/users/[id]` | PATCH | Update user | Admin |
+| `/api/users/[id]` | DELETE | Delete user | Admin |
+
+### Data Structure
+
+The `/api/data` route returns division-based data:
+
+```typescript
+interface DashboardData {
+  wholeSchool: {
+    enterprise: App[];
+    everyone: App[];
+    departments: Record<string, App[]>;
+  };
+  elementary: { /* same structure */ };
+  middleSchool: { /* same structure */ };
+  highSchool: { /* same structure */ };
+}
+```
+
 ## 🎨 UI Components
 
 ### Shadcn/UI Integration
@@ -224,71 +333,6 @@ Components are installed via `npx shadcn@latest add [component]` and stored in `
 --sas-red: #a0192a;       /* SAS Red */
 --sas-yellow: #fabc00;    /* Eagle Yellow */
 --elementary: #228ec2;    /* Elementary Blue */
-```
-
-## 🔌 API Routes
-
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/data` | GET | Fetch apps data (proxies to Apps Script) |
-| `/api/ai` | POST | AI chat completion |
-| `/api/renewal-data` | GET | Fetch renewal data |
-| `/api/status` | GET | Fetch app status |
-| `/api/sync` | POST | Sync data with Supabase |
-| `/api/apps/list` | GET | Get apps for dropdown selection |
-| `/api/users` | GET | List users (admin only) |
-| `/api/users` | POST | Create user (admin only) |
-| `/api/users/[id]` | GET | Get user details (admin only) |
-| `/api/users/[id]` | PATCH | Update user (admin only) |
-| `/api/users/[id]` | DELETE | Delete user (admin only) |
-
-### Data Structure
-
-The `/api/data` route returns division-based data:
-
-```typescript
-interface DashboardData {
-  wholeSchool: {
-    enterprise: App[];
-    everyone: App[];
-    departments: Record<string, App[]>;
-  };
-  elementary: { /* same structure */ };
-  middleSchool: { /* same structure */ };
-  highSchool: { /* same structure */ };
-}
-```
-
-## 🏗️ Business Logic
-
-### Division Assignment
-
-Apps are categorized based on these rules:
-
-**Three-Tier Hierarchy:**
-
-1. **Enterprise Apps** (Whole School only):
-   - `enterprise` column = TRUE
-   - Premium gold styling
-
-2. **Apps Everyone Can Use**:
-   - Site/School/Enterprise/Unlimited licenses
-   - Division tabs show only division-specific apps
-
-3. **Department-Specific Apps**:
-   - Individual licenses
-   - Grouped by department with counts
-
-**Whole School Determination:**
-```javascript
-const isWholeSchool =
-  licenseType.includes('site') ||
-  licenseType.includes('school') ||
-  licenseType.includes('enterprise') ||
-  licenseType.includes('unlimited') ||
-  department === 'school operations' ||
-  division.includes('whole school') ||
-  (hasElementary && hasMiddle && hasHigh);
 ```
 
 ## 🚀 Development Commands
@@ -327,6 +371,28 @@ npm run pull         # Pull code from Apps Script
 npm run deploy       # Create new deployment
 npm run logs         # View execution logs
 npm run open         # Open in browser
+```
+
+## ✅ Pre-Commit Checklist
+
+Before pushing changes, ensure:
+
+### Required Checks
+- [ ] **Build passes**: `npm run build` completes without errors
+- [ ] **Lint passes**: `npm run lint` has no errors
+- [ ] **Tests pass**: `npm run test:run` all tests pass
+- [ ] **Types check**: No TypeScript errors
+
+### Recommended Checks
+- [ ] **New features tested**: Add tests for new functionality
+- [ ] **Documentation updated**: Update CLAUDE.md, README, or help pages if needed
+- [ ] **CHANGELOG updated**: Add entry for significant changes
+- [ ] **UI reviewed**: Manually test in browser for visual issues
+
+### Quick Commands
+```bash
+# Run all checks before commit
+cd vercel && npm run lint && npm run build && npm run test:run
 ```
 
 ## 🧪 Testing
@@ -398,6 +464,17 @@ describe("cn utility", () => {
 });
 ```
 
+### Tests to Add for New Features
+
+When adding new features, create corresponding tests:
+
+| Feature | Test File | What to Test |
+|---------|-----------|--------------|
+| New Page | `__tests__/pages/[page].test.tsx` | Renders correctly, navigation works |
+| New API | `__tests__/api/[route].test.ts` | Returns correct data, handles errors |
+| New Component | `__tests__/components/[comp].test.tsx` | Props work, events fire, accessibility |
+| Auth Change | `__tests__/lib/auth.test.tsx` | Auth flows work correctly |
+
 ### Vitest Configuration
 
 Key settings in [vercel/vitest.config.ts](vercel/vitest.config.ts):
@@ -438,6 +515,38 @@ Set via Project Settings → Script Properties:
 | `FRONTEND_KEY` | Shared secret for API auth |
 | `GEMINI_API_KEY` | For user-facing AI features |
 | `CLAUDE_API_KEY` | For admin data enrichment |
+
+## 🏗️ Business Logic
+
+### Division Assignment
+
+Apps are categorized based on these rules:
+
+**Three-Tier Hierarchy:**
+
+1. **Enterprise Apps** (Whole School only):
+   - `enterprise` column = TRUE
+   - Premium gold styling
+
+2. **Apps Everyone Can Use**:
+   - Site/School/Enterprise/Unlimited licenses
+   - Division tabs show only division-specific apps
+
+3. **Department-Specific Apps**:
+   - Individual licenses
+   - Grouped by department with counts
+
+**Whole School Determination:**
+```javascript
+const isWholeSchool =
+  licenseType.includes('site') ||
+  licenseType.includes('school') ||
+  licenseType.includes('enterprise') ||
+  licenseType.includes('unlimited') ||
+  department === 'school operations' ||
+  division.includes('whole school') ||
+  (hasElementary && hasMiddle && hasHigh);
+```
 
 ## 🗄️ Google Sheets Structure
 
@@ -502,17 +611,15 @@ Required columns (lowercase):
 - Verify APPS_SCRIPT_URL is correct deployment URL
 - Check Apps Script logs: `npm run logs`
 
-## 🧪 Testing Locally
+### UI Components
 
-1. **Frontend only** (uses API):
-   ```bash
-   cd vercel
-   npm run dev
-   ```
+**Missing component error**
+- Install via: `npx shadcn@latest add [component]`
+- Check `components.json` for correct paths
 
-2. **With mock data**: Create mock data in component for offline dev
-
-3. **Full integration**: Deploy Apps Script and set `APPS_SCRIPT_URL`
+**Toast not showing**
+- Use `toast` from `sonner`, not `useToast`
+- Ensure `<Toaster />` is in root layout
 
 ## 📝 Code Patterns
 
@@ -521,23 +628,28 @@ Required columns (lowercase):
 1. Create page in `src/app/(dashboard)/[route]/page.tsx`
 2. Add to navigation in `src/components/app-sidebar.tsx`
 3. Add route protection in `middleware.ts` if needed
+4. Add tests in `src/__tests__/pages/`
+5. Update CLAUDE.md with new route
 
 ### Adding a New API Route
 
 1. Create `src/app/api/[route]/route.ts`
-2. Export GET/POST handlers:
+2. Export GET/POST/PATCH/DELETE handlers:
    ```typescript
    export async function GET(request: Request) {
      // Handle request
      return Response.json(data);
    }
    ```
+3. Add auth check if needed: `await requireRole("admin")`
+4. Add tests in `src/__tests__/api/`
 
 ### Adding a New Component
 
 1. For Shadcn/UI: `npx shadcn@latest add [component]`
 2. For custom: Create in `src/components/`
 3. Follow existing patterns for consistency
+4. Add tests in `src/__tests__/components/`
 
 ---
 
@@ -549,3 +661,5 @@ Required columns (lowercase):
 4. Test auth flows locally before deploying
 5. Use Shadcn/UI for consistency
 6. Keep sensitive data in environment variables
+7. Run pre-commit checks before pushing
+8. Update documentation for significant changes

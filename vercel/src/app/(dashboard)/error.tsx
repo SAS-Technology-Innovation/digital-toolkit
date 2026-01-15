@@ -33,6 +33,8 @@ export default function DashboardError({
           Try Again
         </Button>
         <Button variant="outline" asChild>
+          {/* Using <a> intentionally to force full page reload in error state */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/">Go to Dashboard</a>
         </Button>
       </div>

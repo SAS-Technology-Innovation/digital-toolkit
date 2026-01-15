@@ -128,7 +128,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
     else if (PATTERNS.intents.filter.test(normalized)) intent = "filter";
 
     // Extract remaining search terms (remove matched patterns)
-    let searchTerms = query
+    const searchTerms = query
       .replace(PATTERNS.division, "")
       .replace(PATTERNS.category, "")
       .replace(PATTERNS.audience, "")
