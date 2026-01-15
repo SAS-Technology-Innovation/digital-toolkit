@@ -19,9 +19,14 @@ import {
   Crown,
   Star,
   Shield,
+  AppWindow,
+  DollarSign,
+  TrendingUp,
+  AlertTriangle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { AppCard, AppDetailModal } from "@/components";
 import type { AppData } from "@/components";
@@ -119,6 +124,23 @@ function isWithinDays(dateString: string | undefined, days: number): boolean {
   }
 }
 
+// Analytics data type
+interface AnalyticsData {
+  overview: {
+    totalApps: number;
+    totalCategories: number;
+    enterpriseApps: number;
+    newAppsLast60Days: number;
+    totalAnnualCost: number;
+    avgUtilization: number;
+  };
+  renewalStats: {
+    urgentCount: number;
+    upcomingCount: number;
+    overdueCount: number;
+  };
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("wholeSchool");
@@ -130,6 +152,7 @@ export default function DashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [myApps, setMyApps] = useState<MyApp[]>([]);
   const [myAppsLoading, setMyAppsLoading] = useState(false);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
 
   // Build divisions list - add My Apps only when logged in
   const divisions = useMemo(() => {
@@ -170,6 +193,7 @@ export default function DashboardPage() {
 
   // Fetch data on mount
   useEffect(() => {
+    // Fetch apps data
     fetch("/api/data")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
@@ -183,6 +207,18 @@ export default function DashboardPage() {
       .catch((err) => {
         setError(err.message);
         setLoading(false);
+      });
+
+    // Fetch analytics data
+    fetch("/api/analytics")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.error) {
+          setAnalytics(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch analytics:", err);
       });
   }, []);
 
@@ -215,25 +251,6 @@ export default function DashboardPage() {
     if (!divisionData) return [];
     return divisionData.apps.filter((app) => isWithinDays(app.dateAdded, 60));
   }, [divisionData]);
-
-  // Calculate metrics across all divisions (for future dashboard stats)
-  const _metrics = useMemo(() => {
-    if (!rawData) return null;
-    const allApps = [
-      ...(rawData.wholeSchool?.apps || []),
-      ...(rawData.elementary?.apps || []),
-      ...(rawData.middleSchool?.apps || []),
-      ...(rawData.highSchool?.apps || []),
-    ];
-    const uniqueApps = new Map<string, App>();
-    allApps.forEach(app => uniqueApps.set(app.product, app));
-
-    const totalApps = uniqueApps.size;
-    const enterpriseCount = [...uniqueApps.values()].filter(a => a.enterprise).length;
-    const newCount = [...uniqueApps.values()].filter(a => isWithinDays(a.dateAdded, 60)).length;
-
-    return { totalApps, enterpriseCount, newCount };
-  }, [rawData]);
 
   // Loading state
   if (loading) {
@@ -282,6 +299,74 @@ export default function DashboardPage() {
           </button>
         ))}
       </div>
+
+      {/* Live Stats Cards */}
+      {analytics && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Apps</CardTitle>
+              <AppWindow className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.overview.totalApps}</div>
+              <p className="text-xs text-muted-foreground">
+                {analytics.overview.enterpriseApps} enterprise, {analytics.overview.newAppsLast60Days} new
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Annual Investment</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${analytics.overview.totalAnnualCost > 0
+                  ? analytics.overview.totalAnnualCost >= 1000
+                    ? `${(analytics.overview.totalAnnualCost / 1000).toFixed(0)}K`
+                    : analytics.overview.totalAnnualCost.toLocaleString()
+                  : "0"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Across {analytics.overview.totalCategories} categories
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Utilization</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.overview.avgUtilization}%</div>
+              <p className="text-xs text-muted-foreground">
+                License usage rate
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Renewals Attention</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analytics.renewalStats.urgentCount + analytics.renewalStats.overdueCount}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {analytics.renewalStats.overdueCount > 0 && (
+                  <span className="text-red-600">{analytics.renewalStats.overdueCount} overdue, </span>
+                )}
+                {analytics.renewalStats.urgentCount} urgent
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="relative max-w-md mb-6">
