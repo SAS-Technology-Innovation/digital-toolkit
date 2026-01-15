@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { DM_Sans, Bebas_Neue } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth/auth-context";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -38,6 +40,8 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
+          <Analytics />
+          <SpeedInsights />
         </AuthProvider>
       </body>
     </html>
