@@ -111,7 +111,6 @@ function parseDivisions(divisionStr: string): { es: boolean; ms: boolean; hs: bo
  * Determine if an app is effectively whole school
  */
 function isEffectivelyWholeSchool(app: DashboardApp): boolean {
-  const licenseType = app.licenseType.toLowerCase();
   const department = app.department.toLowerCase();
   const divisions = parseDivisions(app.division);
 
@@ -180,7 +179,7 @@ export async function GET() {
     let supabase;
     try {
       supabase = await createServerSupabaseClient();
-    } catch (err) {
+    } catch {
       console.log("Supabase not configured, using mock data");
       return NextResponse.json(mockData, {
         headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },

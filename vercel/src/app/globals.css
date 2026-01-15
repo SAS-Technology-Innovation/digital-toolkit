@@ -57,7 +57,8 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  /* SAS Brand: Sharp edges - no rounded corners */
+  --radius: 0;
 
   /* SAS Brand Theme - Light Mode */
   --background: #ffffff;

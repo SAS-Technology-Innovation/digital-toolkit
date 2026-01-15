@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import type { AppContext, AIMessage, AIQueryResponse } from "@/lib/ai";
+import type { AppContext, AIQueryResponse } from "@/lib/ai";
 
 interface AIContextValue {
   // Apps data shared across the app

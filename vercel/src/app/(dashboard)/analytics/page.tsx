@@ -229,7 +229,7 @@ export default function AnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-75">
               <AreaChart data={monthlyTrends}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="month" className="text-xs" />
@@ -412,7 +412,7 @@ export default function AnalyticsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[300px]">
+          <ChartContainer config={chartConfig} className="h-75">
             <BarChart data={spendByCategory} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
               <XAxis type="number" className="text-xs" tickFormatter={(value) => `$${value / 1000}K`} />

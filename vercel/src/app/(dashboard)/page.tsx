@@ -216,8 +216,8 @@ export default function DashboardPage() {
     return divisionData.apps.filter((app) => isWithinDays(app.dateAdded, 60));
   }, [divisionData]);
 
-  // Calculate metrics across all divisions
-  const metrics = useMemo(() => {
+  // Calculate metrics across all divisions (for future dashboard stats)
+  const _metrics = useMemo(() => {
     if (!rawData) return null;
     const allApps = [
       ...(rawData.wholeSchool?.apps || []),

@@ -16,7 +16,7 @@ interface AIChatProps {
  */
 export function AIChat({ appsData }: AIChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { messages, isLoading, sendMessage, clearMessages } = useAIChat();
+  const { messages, isLoading, sendMessage } = useAIChat();
 
   const handleSendMessage = (message: string) => {
     sendMessage(message, appsData);
