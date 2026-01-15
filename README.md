@@ -20,10 +20,18 @@ The Digital Toolkit Dashboard provides an elegant interface for organizing and d
 ### Dashboard
 
 - **Division-Based Organization** - Whole School, Elementary, Middle School, High School tabs
+- **My Apps Tab** - View apps you own or champion (when logged in)
 - **Smart Categorization** - Enterprise Apps, Apps Everyone Can Use, Department-Specific Apps
 - **Enhanced App Cards** - Logos, grade levels, "NEW" badges, audience tags, SSO/mobile indicators
 - **Powerful Search** - Real-time filtering across name, category, subject, department, audience
-- **App Details Modal** - Comprehensive information with descriptions, renewal dates, tutorials
+- **App Details Modal** - Comprehensive information with team assignments, descriptions, tutorials
+
+### App Ownership System
+
+- **App Roles** - Owner, Champion, TIC Manager assignments per app
+- **Team Management** - View and manage app team from detail modal
+- **My Apps View** - Dashboard tab showing apps you're responsible for
+- **Role Constraints** - Single Owner and TIC Manager, multiple Champions allowed
 
 ### Additional Pages
 

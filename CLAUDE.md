@@ -237,7 +237,30 @@ User enters new password → Update password → Redirect to login
 - View all users with search and filter
 - Inline role dropdown for quick changes
 - Active/inactive toggle
-- Stats cards by role
+
+## 📱 App Ownership System
+
+### App Roles
+
+| Role | Count Per App | Description |
+|------|---------------|-------------|
+| **Owner** | 1 | Primary responsible person for the app |
+| **Champion** | Multiple | Product advocates and experts who support users |
+| **TIC Manager** | 1 | Provides technical oversight |
+
+### My Apps Tab
+
+- Appears as first tab on Dashboard when logged in
+- Shows all apps user is assigned to
+- Grouped by role (Owner, Champion, TIC Manager)
+- Color-coded role badges
+
+### Team Management (App Modal)
+
+- View assigned team members in app detail modal
+- Admins/TICs can add/remove assignments
+- Select role first, then user from dropdown
+- Constraints enforce single Owner and TIC Manager per app
 
 ## 📄 Application Pages
 
@@ -281,6 +304,9 @@ User enters new password → Update password → Redirect to login
 | `/api/status` | GET | Fetch app status | - |
 | `/api/sync` | POST | Sync data with Supabase | - |
 | `/api/apps/list` | GET | Get apps for dropdown selection | - |
+| `/api/app-assignments` | GET | Get assignments (by app_id or my_apps=true) | Auth |
+| `/api/app-assignments` | POST | Create assignment | Admin/TIC |
+| `/api/app-assignments` | DELETE | Remove assignment (by id) | Admin/TIC |
 | `/api/users` | GET | List users | Admin |
 | `/api/users` | POST | Create user | Admin |
 | `/api/users/[id]` | GET | Get user details | Admin |

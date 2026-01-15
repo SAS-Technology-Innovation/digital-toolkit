@@ -7,7 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Upcoming features and improvements will be listed here
+### Added
+
+- **App Ownership System**
+  - Owner, Champion, and TIC Manager roles for each app
+  - Database migration for `app_assignments` table
+  - API routes for managing assignments (`/api/app-assignments`)
+- **My Apps Dashboard Tab**
+  - Shows when user is logged in (first tab position)
+  - Groups apps by role (Owner, Champion, TIC Manager)
+  - Color-coded role badges
+- **Team Management in App Modal**
+  - View assigned team members per app
+  - Add/remove assignments (admin/TIC only)
+  - Role selection with user picker
+- **DataTable Component**
+  - TanStack Table integration for apps list view
+  - Sortable columns, pagination, search filtering
+  - Toggle between grid and list views
+- **Shadcn Dialog Integration**
+  - App detail modal now uses standard shadcn Dialog
+  - Automatic escape key, backdrop click handling
+
+### Changed
+
+- **App Detail Modal** - Refactored to use shadcn Dialog component
+- **Apps Page** - Added list view option with DataTable
+- **Sync API** - Fixed duplicate products on sync (uses product name as unique key)
+- **App Cards** - Buttons now wrap properly on small screens
+- **Grid Layout** - Responsive breakpoints work correctly on all screen sizes
+
+### Fixed
+
+- Duplicate products being created on every data sync
+- App card buttons not wrapping (staying in straight line)
+- Grid always stuck at 4 columns regardless of screen size
 
 ---
 
