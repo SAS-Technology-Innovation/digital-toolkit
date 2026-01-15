@@ -393,7 +393,7 @@ export default function HelpPage() {
 
       {/* Footer Links */}
       <div className="text-center text-sm text-muted-foreground pt-4 space-y-2">
-        <p>SAS Digital Toolkit v2.1 - Built with Next.js and Supabase</p>
+        <p>SAS Digital Toolkit v2.1.1 - Built with Next.js and Supabase</p>
         <div className="flex justify-center gap-4">
           <Link href="/about" className="hover:text-primary hover:underline">About</Link>
           <span>|</span>

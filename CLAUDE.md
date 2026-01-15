@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **SAS Digital Toolkit** is a full-stack web application for managing and showcasing educational applications at Singapore American School. The frontend is built with Next.js 16 and deployed to Vercel, while the backend uses Google Apps Script to read from Google Sheets.
 
-**Current Version:** 2.1.0 | [View Releases](/releases) | [Changelog](CHANGELOG.md)
+**Current Version:** 2.1.1 | [View Releases](/releases) | [Changelog](CHANGELOG.md)
 
 ### Architecture
 
