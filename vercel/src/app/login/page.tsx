@@ -10,12 +10,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  AppWindow,
-  Calendar,
-  BarChart3,
-  Users,
-  Shield,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,32 +23,8 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth/auth-context";
 import Link from "next/link";
-
-const features = [
-  {
-    icon: AppWindow,
-    title: "App Catalog",
-    description: "Browse 100+ approved educational applications organized by division and department",
-  },
-  {
-    icon: Calendar,
-    title: "Renewal Management",
-    description: "Track subscriptions and participate in the annual app renewal process",
-  },
-  {
-    icon: BarChart3,
-    title: "Analytics",
-    description: "View usage insights and make data-driven decisions about EdTech tools",
-  },
-  {
-    icon: Users,
-    title: "Collaboration",
-    description: "Share feedback with TICs and contribute to renewal decisions",
-  },
-];
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -134,62 +104,61 @@ function LoginForm() {
 
   if (sent) {
     return (
-      <Card className="w-full">
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center pb-4">
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <CheckCircle className="w-6 h-6 text-green-600" />
           </div>
-          <CardTitle className="text-2xl">Check your email</CardTitle>
+          <CardTitle className="text-xl">Check your email</CardTitle>
           <CardDescription>
-            We sent a magic link to <strong>{email}</strong>
+            Magic link sent to <strong>{email}</strong>
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground text-center">
-            Click the link in the email to sign in. The link will expire in 1 hour.
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground text-center mb-4">
+            Click the link in the email to sign in.
           </p>
-          <div className="text-center">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSent(false);
-                setEmail("");
-              }}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Use a different email
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            className="w-full"
+            onClick={() => {
+              setSent(false);
+              setEmail("");
+            }}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Use a different email
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="text-center pb-2">
+    <Card className="w-full max-w-sm">
+      <CardHeader className="text-center pb-4">
         <CardTitle className="text-xl">Sign In</CardTitle>
         <CardDescription>
-          Use your SAS email to access all features
+          Use your @sas.edu.sg email
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "magic-link" | "password")}>
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="magic-link">Magic Link</TabsTrigger>
             <TabsTrigger value="password">Password</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="magic-link">
-            <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
+          <TabsContent value="magic-link" className="mt-0">
+            <form onSubmit={handleMagicLinkSubmit} className="space-y-3">
               {error && activeTab === "magic-link" && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive" className="py-2">
+                  <AlertDescription className="text-sm">{error}</AlertDescription>
                 </Alert>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email-magic">Email</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="email-magic" className="text-sm">Email</Label>
                 <Input
                   id="email-magic"
                   type="email"
@@ -201,18 +170,13 @@ function LoginForm() {
                   }}
                   required
                   disabled={loading}
+                  className="h-9"
                 />
-                <p className="text-xs text-muted-foreground">
-                  We&apos;ll send you a magic link to sign in
-                </p>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full h-9" disabled={loading}>
                 {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Sending magic link...
-                  </>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
                     <Mail className="w-4 h-4 mr-2" />
@@ -223,16 +187,16 @@ function LoginForm() {
             </form>
           </TabsContent>
 
-          <TabsContent value="password">
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <TabsContent value="password" className="mt-0">
+            <form onSubmit={handlePasswordSubmit} className="space-y-3">
               {error && activeTab === "password" && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive" className="py-2">
+                  <AlertDescription className="text-sm">{error}</AlertDescription>
                 </Alert>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email-password">Email</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="email-password" className="text-sm">Email</Label>
                 <Input
                   id="email-password"
                   type="email"
@@ -244,24 +208,25 @@ function LoginForm() {
                   }}
                   required
                   disabled={loading}
+                  className="h-9"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-sm">Password</Label>
                   <Link
                     href="/reset-password"
                     className="text-xs text-primary hover:underline"
                   >
-                    Forgot password?
+                    Forgot?
                   </Link>
                 </div>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Enter password"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
@@ -269,13 +234,13 @@ function LoginForm() {
                     }}
                     required
                     disabled={loading}
-                    className="pr-10"
+                    className="h-9 pr-9"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-9 w-9 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -287,12 +252,9 @@ function LoginForm() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full h-9" disabled={loading}>
                 {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Signing in...
-                  </>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
                     <Lock className="w-4 h-4 mr-2" />
@@ -301,12 +263,12 @@ function LoginForm() {
                 )}
               </Button>
 
-              <div className="text-center text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+              <p className="text-center text-xs text-muted-foreground">
+                No account?{" "}
                 <Link href="/register" className="text-primary hover:underline">
                   Create one
                 </Link>
-              </div>
+              </p>
             </form>
           </TabsContent>
         </Tabs>
@@ -317,27 +279,18 @@ function LoginForm() {
 
 function LoginSkeleton() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
-      <div className="w-full max-w-6xl">
-        <div className="grid lg:grid-cols-2 gap-8 items-center">
-          <div className="space-y-6">
-            <div className="h-12 w-48 bg-muted rounded animate-pulse" />
-            <div className="h-8 w-96 bg-muted rounded animate-pulse" />
-            <div className="h-4 w-80 bg-muted rounded animate-pulse" />
-          </div>
-          <Card className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
-            <CardHeader className="text-center">
-              <div className="h-6 w-32 mx-auto bg-muted rounded animate-pulse" />
-              <div className="h-4 w-48 mx-auto mt-2 bg-muted rounded animate-pulse" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="h-10 bg-muted rounded animate-pulse" />
-              <div className="h-10 bg-muted rounded animate-pulse" />
-              <div className="h-10 bg-muted rounded animate-pulse" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <div className="h-5 w-24 mx-auto bg-muted rounded animate-pulse" />
+          <div className="h-4 w-40 mx-auto mt-2 bg-muted rounded animate-pulse" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="h-9 bg-muted rounded animate-pulse" />
+          <div className="h-9 bg-muted rounded animate-pulse" />
+          <div className="h-9 bg-muted rounded animate-pulse" />
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -345,107 +298,53 @@ function LoginSkeleton() {
 export default function LoginPage() {
   return (
     <Suspense fallback={<LoginSkeleton />}>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
-        {/* Header */}
-        <header className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <img
-              src="/assets/sas-logo-icon.png"
-              alt="SAS Logo"
-              className="h-10 w-auto"
-            />
-            <span className="font-heading text-xl font-bold text-primary">
-              SAS DIGITAL TOOLKIT
-            </span>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="container mx-auto px-4 py-8 lg:py-16">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left: Hero Content */}
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <Badge variant="secondary" className="mb-2">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  For SAS Staff & Teachers
-                </Badge>
-                <h1 className="text-4xl lg:text-5xl font-bold font-heading tracking-tight text-primary">
-                  YOUR EDTECH
-                  <br />
-                  <span className="text-destructive">COMMAND CENTER</span>
-                </h1>
-                <p className="text-lg text-muted-foreground max-w-lg">
-                  Discover, manage, and evaluate educational technology applications
-                  across Singapore American School. All your EdTech tools in one place.
-                </p>
+      <div className="h-screen flex flex-col bg-gradient-to-br from-primary/5 via-background to-primary/10">
+        {/* Main Content - Centered */}
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left: Branding */}
+            <div className="text-center lg:text-left space-y-4">
+              <div className="flex items-center justify-center lg:justify-start gap-3">
+                <img
+                  src="/assets/sas-logo-icon.png"
+                  alt="SAS Logo"
+                  className="h-12 w-auto"
+                />
+                <div>
+                  <h1 className="font-heading text-2xl font-bold text-primary leading-tight">
+                    SAS DIGITAL TOOLKIT
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Technology & Innovation
+                  </p>
+                </div>
               </div>
-
-              {/* Features Grid */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                {features.map((feature) => (
-                  <div
-                    key={feature.title}
-                    className="flex gap-3 p-4 rounded-lg bg-card border hover:border-primary/50 transition-colors"
-                  >
-                    <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <feature.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-sm">{feature.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Access Info */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="w-4 h-4" />
-                <span>
-                  Secure access for <strong>@sas.edu.sg</strong> email addresses only
-                </span>
+              <p className="text-muted-foreground max-w-md mx-auto lg:mx-0">
+                Discover and manage educational technology applications across Singapore American School.
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-3 text-xs text-muted-foreground">
+                <Link href="/about" className="hover:text-foreground">About</Link>
+                <span>•</span>
+                <Link href="/help" className="hover:text-foreground">Help</Link>
+                <span>•</span>
+                <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+                <span>•</span>
+                <Link href="/terms" className="hover:text-foreground">Terms</Link>
               </div>
             </div>
 
             {/* Right: Login Form */}
-            <div className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
+            <div className="flex justify-center lg:justify-end">
               <LoginForm />
-
-              {/* Guest Access */}
-              <div className="mt-4 text-center">
-                <Link
-                  href="/"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Continue as guest →
-                </Link>
-              </div>
             </div>
           </div>
         </main>
 
-        {/* Footer */}
-        <footer className="container mx-auto px-4 py-8 mt-8 border-t">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} Singapore American School Technology & Innovation</p>
-            <div className="flex gap-4">
-              <Link href="/about" className="hover:text-foreground transition-colors">
-                About
-              </Link>
-              <Link href="/privacy" className="hover:text-foreground transition-colors">
-                Privacy
-              </Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">
-                Terms
-              </Link>
-              <Link href="/help" className="hover:text-foreground transition-colors">
-                Help
-              </Link>
-            </div>
-          </div>
+        {/* Footer - Fixed at bottom */}
+        <footer className="py-3 text-center text-xs text-muted-foreground">
+          <Link href="/" className="hover:text-foreground">
+            Continue as guest →
+          </Link>
         </footer>
       </div>
     </Suspense>
