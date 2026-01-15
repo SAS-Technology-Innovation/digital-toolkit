@@ -421,6 +421,41 @@ export interface Database {
           updated_at?: string;
         };
       };
+      app_assignments: {
+        Row: {
+          id: string;
+          app_id: string;
+          user_id: string;
+          role: "owner" | "champion" | "tic_manager";
+          assigned_at: string;
+          assigned_by: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          app_id: string;
+          user_id: string;
+          role: "owner" | "champion" | "tic_manager";
+          assigned_at?: string;
+          assigned_by?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          app_id?: string;
+          user_id?: string;
+          role?: "owner" | "champion" | "tic_manager";
+          assigned_at?: string;
+          assigned_by?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -435,6 +470,7 @@ export interface Database {
       assessment_recommendation: "renew" | "renew_with_changes" | "replace" | "retire";
       decision_status: "collecting" | "summarizing" | "assessor_review" | "final_review" | "decided" | "implemented";
       user_role: "staff" | "tic" | "approver" | "admin";
+      app_assignment_role: "owner" | "champion" | "tic_manager";
     };
   };
 }
@@ -510,3 +546,37 @@ export type UserRole = Database["public"]["Enums"]["user_role"];
 export type UserProfile = Database["public"]["Tables"]["user_profiles"]["Row"];
 export type UserProfileInsert = Database["public"]["Tables"]["user_profiles"]["Insert"];
 export type UserProfileUpdate = Database["public"]["Tables"]["user_profiles"]["Update"];
+
+// App Assignment types
+export type AppAssignmentRole = Database["public"]["Enums"]["app_assignment_role"];
+
+export type AppAssignment = Database["public"]["Tables"]["app_assignments"]["Row"];
+export type AppAssignmentInsert = Database["public"]["Tables"]["app_assignments"]["Insert"];
+export type AppAssignmentUpdate = Database["public"]["Tables"]["app_assignments"]["Update"];
+
+// Joined type with user and app details
+export interface AppAssignmentWithDetails extends AppAssignment {
+  user_profiles: {
+    id: string;
+    name: string | null;
+    email: string;
+    department: string | null;
+    division: string | null;
+    avatar_url: string | null;
+  };
+  apps: {
+    id: string;
+    product: string;
+    category: string | null;
+    division: string | null;
+    department: string | null;
+    logo_url: string | null;
+    website: string | null;
+  };
+}
+
+// Type for "My Apps" view - apps with assignment info
+export interface MyApp extends App {
+  assignment_role: AppAssignmentRole;
+  assigned_at: string;
+}

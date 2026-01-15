@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 export interface AppData {
+  id?: string;
   product: string;
   description?: string;
   category?: string;
