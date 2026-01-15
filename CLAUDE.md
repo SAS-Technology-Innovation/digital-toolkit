@@ -10,7 +10,7 @@ The **SAS Digital Toolkit** is a full-stack web application for managing and sho
 
 ### Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     Vercel (Frontend)                        │
 │  ┌─────────────────────────────────────────────────────┐    │
@@ -45,20 +45,20 @@ The **SAS Digital Toolkit** is a full-stack web application for managing and sho
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16 with App Router, TypeScript |
-| Styling | Tailwind CSS v4, Shadcn/UI components |
-| Authentication | Supabase Auth (Magic Links + Password) |
-| Database | Supabase (PostgreSQL), Google Sheets |
-| AI | Claude API (via Apps Script proxy) |
-| Analytics | Vercel Analytics, Speed Insights |
-| Deployment | Vercel |
-| Backend API | Google Apps Script |
+| Layer          | Technology                                    |
+| -------------- | --------------------------------------------- |
+| Frontend       | Next.js 16 with App Router, TypeScript        |
+| Styling        | Tailwind CSS v4, Shadcn/UI components         |
+| Authentication | Supabase Auth (Magic Links + Password)        |
+| Database       | Supabase (PostgreSQL), Google Sheets          |
+| AI             | Claude API (via Apps Script proxy)            |
+| Analytics      | Vercel Analytics, Speed Insights              |
+| Deployment     | Vercel                                        |
+| Backend API    | Google Apps Script                            |
 
 ## 📁 Project Structure
 
-```
+```text
 digital-toolkit/
 ├── vercel/                      # Next.js frontend application
 │   ├── src/
@@ -143,6 +143,7 @@ digital-toolkit/
 ## 🔐 Authentication System
 
 ### Overview
+
 - **Provider**: Supabase Auth
 - **Methods**: Magic Links (passwordless) AND Password Authentication
 - **Domain Restriction**: `@sas.edu.sg` emails only
