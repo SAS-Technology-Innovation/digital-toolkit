@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuth } from "@/lib/auth/auth-context";
 
 // Mock the Supabase client
@@ -92,10 +91,12 @@ describe("AuthContext", () => {
 
 describe("useAuth hook", () => {
   it("returns all required properties", async () => {
-    let authValues: ReturnType<typeof useAuth> | null = null;
+    const authValuesRef = { current: null as ReturnType<typeof useAuth> | null };
 
     function CaptureAuth() {
-      authValues = useAuth();
+      const auth = useAuth();
+      // Store in ref object for test verification
+      authValuesRef.current = auth;
       return null;
     }
 
@@ -106,16 +107,16 @@ describe("useAuth hook", () => {
     );
 
     await waitFor(() => {
-      expect(authValues).not.toBeNull();
+      expect(authValuesRef.current).not.toBeNull();
     });
 
-    expect(authValues).toHaveProperty("user");
-    expect(authValues).toHaveProperty("session");
-    expect(authValues).toHaveProperty("loading");
-    expect(authValues).toHaveProperty("signInWithMagicLink");
-    expect(authValues).toHaveProperty("signOut");
-    expect(typeof authValues!.signInWithMagicLink).toBe("function");
-    expect(typeof authValues!.signOut).toBe("function");
+    expect(authValuesRef.current).toHaveProperty("user");
+    expect(authValuesRef.current).toHaveProperty("session");
+    expect(authValuesRef.current).toHaveProperty("loading");
+    expect(authValuesRef.current).toHaveProperty("signInWithMagicLink");
+    expect(authValuesRef.current).toHaveProperty("signOut");
+    expect(typeof authValuesRef.current!.signInWithMagicLink).toBe("function");
+    expect(typeof authValuesRef.current!.signOut).toBe("function");
   });
 });
 

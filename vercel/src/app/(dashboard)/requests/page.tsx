@@ -65,7 +65,7 @@ export default function RequestsPage() {
           Request a New App
         </h1>
         <p className="text-muted-foreground text-lg">
-          Can't find the tool you need? Follow this process to request a new application for the SAS Digital Toolkit.
+          Can&apos;t find the tool you need? Follow this process to request a new application for the SAS Digital Toolkit.
         </p>
       </div>
 

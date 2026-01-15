@@ -21,6 +21,7 @@ import {
   Info,
   Shield,
   FileText,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -137,6 +138,11 @@ const footerItems = [
     title: "About",
     url: "/about",
     icon: Info,
+  },
+  {
+    title: "Releases",
+    url: "/releases",
+    icon: Tag,
   },
   {
     title: "Privacy",

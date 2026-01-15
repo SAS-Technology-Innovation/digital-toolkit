@@ -253,7 +253,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">No apps found matching "{searchQuery}"</p>
+            <p className="text-muted-foreground">No apps found matching &quot;{searchQuery}&quot;</p>
           )}
         </div>
       )}
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                         <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mb-3">
                           <Users className="w-5 h-5 text-white" />
                         </div>
-                        <h3 className="font-semibold text-primary mb-1">Who It's For</h3>
+                        <h3 className="font-semibold text-primary mb-1">Who It&apos;s For</h3>
                         <p className="text-sm text-muted-foreground">
                           Teachers, students, staff managing operations, and parents supporting education.
                         </p>
@@ -298,7 +298,7 @@ export default function DashboardPage() {
                         <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mb-3">
                           <Rocket className="w-5 h-5 text-white" />
                         </div>
-                        <h3 className="font-semibold text-primary mb-1">What You'll Find</h3>
+                        <h3 className="font-semibold text-primary mb-1">What You&apos;ll Find</h3>
                         <p className="text-sm text-muted-foreground">
                           Curated applications organized by division, department, and purpose.
                         </p>
@@ -323,7 +323,7 @@ export default function DashboardPage() {
               <div className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-[#a0192a] flex items-center gap-2 mb-1">
                   <Sparkles className="w-5 h-5 text-[#fabc00]" />
-                  What's New
+                  What&apos;s New
                 </h2>
                 <p className="text-sm text-muted-foreground mb-4">
                   Recently added apps in the last 60 days
