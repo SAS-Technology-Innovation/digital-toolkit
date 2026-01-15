@@ -2,6 +2,7 @@
 
 import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   Search,
   Filter,
@@ -12,6 +13,10 @@ import {
   GraduationCap,
   Building2,
   Briefcase,
+  ArrowUpDown,
+  ExternalLink,
+  ShieldCheck,
+  Smartphone,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/ui/data-table";
 import { cn } from "@/lib/utils";
 import { AppCard, AppDetailModal, AudienceBadgeList, CategoryBadge } from "@/components";
 import type { AppData } from "@/components";
@@ -41,6 +47,20 @@ import type { AppData } from "@/components";
 // Extended type for local usage with id
 interface App extends AppData {
   id: string;
+}
+
+// Helper to check if date is within X days (for NEW badge)
+function isWithinDays(dateString: string | undefined, days: number): boolean {
+  if (!dateString) return false;
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= days;
+  } catch {
+    return false;
+  }
 }
 
 // Mock data - will be fetched from API
@@ -86,7 +106,7 @@ const mockApps: App[] = [
     ssoEnabled: true,
     mobileApp: "Yes",
     division: "elementary",
-    dateAdded: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
+    dateAdded: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     gradeLevels: "K-5",
   },
   {
@@ -115,7 +135,7 @@ const mockApps: App[] = [
     ssoEnabled: true,
     mobileApp: "Yes",
     division: "whole-school",
-    dateAdded: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+    dateAdded: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     gradeLevels: "K-12",
   },
   {
@@ -203,6 +223,136 @@ const divisionTabs = [
   { id: "high-school", label: "High School", icon: Building2, color: "bg-[#1a2d58]" },
 ];
 
+// DataTable columns definition
+function createColumns(onShowDetails: (app: App) => void): ColumnDef<App>[] {
+  return [
+    {
+      accessorKey: "product",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ml-4"
+        >
+          App Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const app = row.original;
+        const isNew = isWithinDays(app.dateAdded, 60);
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-sm font-bold shrink-0">
+              {app.product.charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium truncate">{app.product}</span>
+                {isNew && (
+                  <Badge variant="destructive" className="text-xs animate-pulse">NEW</Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                {app.description}
+              </p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "category",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ml-4"
+        >
+          Category
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const category = row.getValue("category") as string;
+        return category ? <CategoryBadge category={category} /> : null;
+      },
+    },
+    {
+      accessorKey: "audience",
+      header: "Audience",
+      cell: ({ row }) => {
+        const audience = row.getValue("audience") as string;
+        return audience ? <AudienceBadgeList audiences={audience} /> : null;
+      },
+    },
+    {
+      accessorKey: "department",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ml-4"
+        >
+          Department
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span className="text-sm">{row.getValue("department") || "-"}</span>
+      ),
+    },
+    {
+      id: "features",
+      header: "Features",
+      cell: ({ row }) => {
+        const app = row.original;
+        return (
+          <div className="flex gap-1">
+            {app.ssoEnabled && (
+              <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                <ShieldCheck className="w-3 h-3 mr-1" />
+                SSO
+              </Badge>
+            )}
+            {app.mobileApp && app.mobileApp.toLowerCase() !== "no" && (
+              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                <Smartphone className="w-3 h-3 mr-1" />
+                Mobile
+              </Badge>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const app = row.original;
+        return (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onShowDetails(app)}
+            >
+              Details
+            </Button>
+            {app.website && (
+              <Button size="sm" variant="ghost" asChild>
+                <a href={app.website} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+}
+
 function AppsPageContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
@@ -217,19 +367,11 @@ function AppsPageContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("name");
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // Helper to check if date is within X days (for NEW badge)
-  const isWithinDays = (dateString: string | undefined, days: number): boolean => {
-    if (!dateString) return false;
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffTime = Math.abs(now.getTime() - date.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= days;
-    } catch {
-      return false;
-    }
+  const handleShowDetails = (app: App) => {
+    setSelectedApp(app);
+    setModalOpen(true);
   };
 
   const filteredApps = useMemo(() => {
@@ -252,7 +394,6 @@ function AppsPageContent() {
           selectedDepartment === "All" ||
           app.department?.toLowerCase() === selectedDepartment.toLowerCase();
 
-        // Audience is now a comma-separated string
         const matchesAudience =
           selectedAudiences.length === 0 ||
           selectedAudiences.some((a) => app.audience?.includes(a));
@@ -287,7 +428,7 @@ function AppsPageContent() {
     setSelectedAudiences([]);
   };
 
-  const currentDivision = divisionTabs.find((d) => d.id === selectedDivision);
+  const columns = useMemo(() => createColumns(handleShowDetails), []);
 
   return (
     <div className="p-6 space-y-6">
@@ -390,16 +531,18 @@ function AppsPageContent() {
 
         {/* View Toggle */}
         <div className="flex items-center gap-2 ml-auto">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="category">Category</SelectItem>
-              <SelectItem value="new">Newest</SelectItem>
-            </SelectContent>
-          </Select>
+          {viewMode === "grid" && (
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="category">Category</SelectItem>
+                <SelectItem value="new">Newest</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "list")}>
             <TabsList className="h-9">
               <TabsTrigger value="grid" className="px-2">
@@ -420,61 +563,24 @@ function AppsPageContent() {
 
       {/* Apps Grid/List */}
       {viewMode === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredApps.map((app) => (
             <AppCard
               key={app.id}
               app={app}
-              onShowDetails={(appData) => setSelectedApp(appData as App)}
+              onShowDetails={(appData) => handleShowDetails(appData as App)}
             />
           ))}
         </div>
       ) : (
-        <div className="space-y-2">
-          {filteredApps.map((app) => (
-            <Card key={app.id} className="hover:shadow-sm transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground font-bold text-lg shrink-0">
-                    {app.product.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={app.website || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold hover:text-primary transition-colors"
-                      >
-                        {app.product}
-                      </a>
-                      {isWithinDays(app.dateAdded, 60) && (
-                        <Badge variant="destructive" className="text-xs animate-pulse">NEW</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">{app.description}</p>
-                  </div>
-                  <div className="hidden md:flex items-center gap-2">
-                    {app.category && <CategoryBadge category={app.category} />}
-                    {app.audience && <AudienceBadgeList audiences={app.audience} className="hidden lg:flex" />}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setSelectedApp(app)}
-                    >
-                      Details
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DataTable
+          columns={columns}
+          data={filteredApps}
+          searchValue={searchQuery}
+        />
       )}
 
-      {filteredApps.length === 0 && (
+      {filteredApps.length === 0 && viewMode === "grid" && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No apps found matching your criteria.</p>
           <Button variant="link" onClick={clearAllFilters}>
@@ -483,13 +589,12 @@ function AppsPageContent() {
         </div>
       )}
 
-      {/* App Detail Modal */}
-      {selectedApp && (
-        <AppDetailModal
-          app={selectedApp}
-          onClose={() => setSelectedApp(null)}
-        />
-      )}
+      {/* App Detail Modal - Using shadcn Dialog */}
+      <AppDetailModal
+        app={selectedApp}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 }
@@ -506,7 +611,7 @@ function AppsPageSkeleton() {
         <Skeleton className="h-10 w-40" />
         <Skeleton className="h-10 w-40" />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <Card key={i}>
             <CardHeader className="pb-3">

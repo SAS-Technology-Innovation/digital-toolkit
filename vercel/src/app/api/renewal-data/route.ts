@@ -128,7 +128,7 @@ export async function GET() {
     let supabase;
     try {
       supabase = await createServerSupabaseClient();
-    } catch (err) {
+    } catch {
       console.log("Supabase not configured, using mock data");
       return NextResponse.json(mockRenewalData, {
         headers: {

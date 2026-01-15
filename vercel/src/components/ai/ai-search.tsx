@@ -12,7 +12,6 @@ import {
   FolderOpen,
   Wand2,
   Clock,
-  Command,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ import {
   Command as CommandPrimitive,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,
@@ -62,7 +60,6 @@ export function AISearch({
   const {
     parseSearchQuery,
     getSuggestions,
-    queryAI,
     isQuerying,
     recentQueries,
     addRecentQuery,
@@ -214,7 +211,7 @@ export function AISearch({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-0"
+        className="w-(--radix-popover-trigger-width) p-0"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >

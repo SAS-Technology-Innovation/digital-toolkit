@@ -102,7 +102,7 @@ const mockAppsData: AppContext[] = [
 export async function POST(request: NextRequest) {
   try {
     const body: AIQueryRequest = await request.json();
-    const { query, appsData, provider = "claude" } = body;
+    const { query, appsData, provider: _provider = "claude" } = body;
 
     // Validate request
     if (!query || typeof query !== "string" || query.trim().length === 0) {

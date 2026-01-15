@@ -323,30 +323,32 @@ export async function POST(request: Request) {
 
       for (const app of transformedApps) {
         try {
-          const { error: upsertError } = await supabase
+          // Use product name as the unique identifier to prevent duplicates
+          // First check if the app already exists by product name
+          const { data: existingApp } = await supabase
             .from("apps")
-            .upsert(app as never, {
-              onConflict: "apps_script_id",
-              ignoreDuplicates: false,
-            });
+            .select("id")
+            .eq("product", app.product)
+            .single();
 
-          if (upsertError) {
-            if (upsertError.code === "23505" || !app.apps_script_id) {
-              const { error: updateError } = await supabase
-                .from("apps")
-                .update({
-                  ...app,
-                  updated_at: new Date().toISOString(),
-                } as never)
-                .eq("product", app.product);
+          if (existingApp) {
+            // Update existing app
+            const { error: updateError } = await supabase
+              .from("apps")
+              .update({
+                ...app,
+                updated_at: new Date().toISOString(),
+              } as never)
+              .eq("product", app.product);
 
-              if (updateError) {
-                const { error: insertError } = await supabase.from("apps").insert(app as never);
-                if (insertError) throw insertError;
-              }
-            } else {
-              throw upsertError;
-            }
+            if (updateError) throw updateError;
+          } else {
+            // Insert new app
+            const { error: insertError } = await supabase
+              .from("apps")
+              .insert(app as never);
+
+            if (insertError) throw insertError;
           }
           recordsSynced++;
         } catch (err) {

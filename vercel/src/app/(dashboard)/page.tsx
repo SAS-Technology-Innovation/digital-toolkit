@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Search,
   Globe,
@@ -15,9 +15,18 @@ import {
   Lightbulb,
   Target,
   Rocket,
+  User,
+  Crown,
+  Star,
+  Shield,
+  AppWindow,
+  DollarSign,
+  TrendingUp,
+  AlertTriangle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { AppCard, AppDetailModal } from "@/components";
 import type { AppData } from "@/components";
@@ -28,6 +37,7 @@ import {
   divisionThemes,
 } from "@/components/ui/division-section";
 import type { DivisionId } from "@/components/ui/division-section";
+import { useAuth } from "@/lib/auth/auth-context";
 
 // Use shared AppData type
 type App = AppData;
@@ -77,12 +87,28 @@ function processDivisionData(raw: RawDivisionData, isWholeSchool: boolean): Proc
   return { apps, enterpriseApps, everyoneApps };
 }
 
-const divisions = [
+const baseDivisions = [
   { id: "wholeSchool", label: "Whole School", icon: Globe, color: "bg-gray-600" },
   { id: "elementary", label: "Elementary", icon: School, color: "bg-[#228ec2]" },
   { id: "middleSchool", label: "Middle School", icon: GraduationCap, color: "bg-[#a0192a]" },
   { id: "highSchool", label: "High School", icon: Building2, color: "bg-[#1a2d58]" },
 ];
+
+const myAppsDivision = { id: "myApps", label: "My Apps", icon: User, color: "bg-primary" };
+
+// My App with assignment role
+interface MyApp extends App {
+  assignment_id: string;
+  assignment_role: "owner" | "champion" | "tic_manager";
+  assigned_at: string;
+}
+
+// Role display config
+const roleConfig = {
+  owner: { label: "Owner", icon: Crown, color: "bg-amber-500 text-white" },
+  champion: { label: "Champion", icon: Star, color: "bg-purple-500 text-white" },
+  tic_manager: { label: "TIC Manager", icon: Shield, color: "bg-blue-500 text-white" },
+};
 
 // Helper to check if date is within X days
 function isWithinDays(dateString: string | undefined, days: number): boolean {
@@ -98,16 +124,76 @@ function isWithinDays(dateString: string | undefined, days: number): boolean {
   }
 }
 
+// Analytics data type
+interface AnalyticsData {
+  overview: {
+    totalApps: number;
+    totalCategories: number;
+    enterpriseApps: number;
+    newAppsLast60Days: number;
+    totalAnnualCost: number;
+    avgUtilization: number;
+  };
+  renewalStats: {
+    urgentCount: number;
+    upcomingCount: number;
+    overdueCount: number;
+  };
+}
+
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("wholeSchool");
   const [searchQuery, setSearchQuery] = useState("");
   const [rawData, setRawData] = useState<RawDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [myApps, setMyApps] = useState<MyApp[]>([]);
+  const [myAppsLoading, setMyAppsLoading] = useState(false);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+
+  // Build divisions list - add My Apps only when logged in
+  const divisions = useMemo(() => {
+    if (user) {
+      return [myAppsDivision, ...baseDivisions];
+    }
+    return baseDivisions;
+  }, [user]);
+
+  const handleShowDetails = (app: App) => {
+    setSelectedApp(app);
+    setModalOpen(true);
+  };
+
+  // Fetch my apps when user is logged in and tab is selected
+  const fetchMyApps = useCallback(async () => {
+    if (!user) return;
+    setMyAppsLoading(true);
+    try {
+      const res = await fetch("/api/app-assignments?my_apps=true");
+      if (!res.ok) throw new Error("Failed to fetch my apps");
+      const data = await res.json();
+      setMyApps(data.apps || []);
+    } catch (err) {
+      console.error("Failed to fetch my apps:", err);
+      setMyApps([]);
+    } finally {
+      setMyAppsLoading(false);
+    }
+  }, [user]);
+
+  // Fetch my apps when tab changes to myApps
+  useEffect(() => {
+    if (activeTab === "myApps" && user) {
+      fetchMyApps();
+    }
+  }, [activeTab, user, fetchMyApps]);
 
   // Fetch data on mount
   useEffect(() => {
+    // Fetch apps data
     fetch("/api/data")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
@@ -121,6 +207,18 @@ export default function DashboardPage() {
       .catch((err) => {
         setError(err.message);
         setLoading(false);
+      });
+
+    // Fetch analytics data
+    fetch("/api/analytics")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.error) {
+          setAnalytics(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch analytics:", err);
       });
   }, []);
 
@@ -153,25 +251,6 @@ export default function DashboardPage() {
     if (!divisionData) return [];
     return divisionData.apps.filter((app) => isWithinDays(app.dateAdded, 60));
   }, [divisionData]);
-
-  // Calculate metrics across all divisions
-  const metrics = useMemo(() => {
-    if (!rawData) return null;
-    const allApps = [
-      ...(rawData.wholeSchool?.apps || []),
-      ...(rawData.elementary?.apps || []),
-      ...(rawData.middleSchool?.apps || []),
-      ...(rawData.highSchool?.apps || []),
-    ];
-    const uniqueApps = new Map<string, App>();
-    allApps.forEach(app => uniqueApps.set(app.product, app));
-
-    const totalApps = uniqueApps.size;
-    const enterpriseCount = [...uniqueApps.values()].filter(a => a.enterprise).length;
-    const newCount = [...uniqueApps.values()].filter(a => isWithinDays(a.dateAdded, 60)).length;
-
-    return { totalApps, enterpriseCount, newCount };
-  }, [rawData]);
 
   // Loading state
   if (loading) {
@@ -221,6 +300,74 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Live Stats Cards */}
+      {analytics && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Apps</CardTitle>
+              <AppWindow className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.overview.totalApps}</div>
+              <p className="text-xs text-muted-foreground">
+                {analytics.overview.enterpriseApps} enterprise, {analytics.overview.newAppsLast60Days} new
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Annual Investment</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${analytics.overview.totalAnnualCost > 0
+                  ? analytics.overview.totalAnnualCost >= 1000
+                    ? `${(analytics.overview.totalAnnualCost / 1000).toFixed(0)}K`
+                    : analytics.overview.totalAnnualCost.toLocaleString()
+                  : "0"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Across {analytics.overview.totalCategories} categories
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Utilization</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.overview.avgUtilization}%</div>
+              <p className="text-xs text-muted-foreground">
+                License usage rate
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Renewals Attention</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analytics.renewalStats.urgentCount + analytics.renewalStats.overdueCount}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {analytics.renewalStats.overdueCount > 0 && (
+                  <span className="text-red-600">{analytics.renewalStats.overdueCount} overdue, </span>
+                )}
+                {analytics.renewalStats.urgentCount} urgent
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="relative max-w-md mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -249,7 +396,7 @@ export default function DashboardPage() {
           {filteredApps.length > 0 ? (
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredApps.map((app) => (
-                <AppCard key={app.product} app={app} onShowDetails={setSelectedApp} />
+                <AppCard key={app.product} app={app} onShowDetails={handleShowDetails} />
               ))}
             </div>
           ) : (
@@ -258,8 +405,71 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Regular Content (hidden when searching) */}
-      {!searchQuery && divisionData && (
+      {/* My Apps Content */}
+      {!searchQuery && activeTab === "myApps" && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-primary flex items-center gap-3 mb-2">
+              <User className="w-7 h-7" />
+              My Apps
+            </h2>
+            <p className="text-muted-foreground">
+              Apps you are responsible for as an owner, champion, or TIC manager.
+            </p>
+          </div>
+
+          {myAppsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : myApps.length === 0 ? (
+            <div className="text-center py-16 bg-muted/30 rounded-xl">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No apps assigned yet</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                You don&apos;t have any apps assigned to you. Contact your TIC or admin to be assigned as an owner or champion for apps.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Group apps by role */}
+              {(["owner", "champion", "tic_manager"] as const).map((role) => {
+                const appsForRole = myApps.filter((app) => app.assignment_role === role);
+                if (appsForRole.length === 0) return null;
+                const config = roleConfig[role];
+                const RoleIcon = config.icon;
+                return (
+                  <section key={role} className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Badge className={cn("flex items-center gap-1", config.color)}>
+                        <RoleIcon className="w-3 h-3" />
+                        {config.label}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        ({appsForRole.length} {appsForRole.length === 1 ? "app" : "apps"})
+                      </span>
+                    </div>
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {appsForRole.map((app) => (
+                        <AppCard
+                          key={app.assignment_id}
+                          app={app}
+                          onShowDetails={handleShowDetails}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Regular Content (hidden when searching or on My Apps tab) */}
+      {!searchQuery && activeTab !== "myApps" && divisionData && (
         <>
           {/* Why the SAS Digital Toolkit? (Whole School only) */}
           {activeTab === "wholeSchool" && (
@@ -330,7 +540,7 @@ export default function DashboardPage() {
                 </p>
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {newApps.map((app) => (
-                    <AppCard key={app.product} app={app} showNewBadge={false} onShowDetails={setSelectedApp} />
+                    <AppCard key={app.product} app={app} showNewBadge={false} onShowDetails={handleShowDetails} />
                   ))}
                 </div>
               </div>
@@ -354,7 +564,7 @@ export default function DashboardPage() {
                 </p>
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {divisionData.enterpriseApps.map((app) => (
-                    <AppCard key={app.product} app={app} onShowDetails={setSelectedApp} />
+                    <AppCard key={app.product} app={app} onShowDetails={handleShowDetails} />
                   ))}
                 </div>
               </div>
@@ -397,7 +607,7 @@ export default function DashboardPage() {
                 </p>
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {divisionData.everyoneApps.map((app) => (
-                    <AppCard key={app.product} app={app} onShowDetails={setSelectedApp} />
+                    <AppCard key={app.product} app={app} onShowDetails={handleShowDetails} />
                   ))}
                 </div>
               </div>
@@ -421,9 +631,11 @@ export default function DashboardPage() {
       )}
 
       {/* App Detail Modal */}
-      {selectedApp && (
-        <AppDetailModal app={selectedApp} onClose={() => setSelectedApp(null)} />
-      )}
+      <AppDetailModal
+        app={selectedApp}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 }

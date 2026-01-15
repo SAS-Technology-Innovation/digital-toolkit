@@ -20,7 +20,7 @@ function ResetPasswordConfirmForm() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isValidLink, setIsValidLink] = useState(true);
-  const { updatePassword, session } = useAuth();
+  const { updatePassword } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -117,7 +117,7 @@ function ResetPasswordConfirmForm() {
 
   if (!isValidLink) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-50 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -145,7 +145,7 @@ function ResetPasswordConfirmForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-50 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -172,7 +172,7 @@ function ResetPasswordConfirmForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -306,7 +306,7 @@ function ResetPasswordConfirmForm() {
 
 function ResetPasswordConfirmSkeleton() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="h-16 w-16 mx-auto mb-4 bg-muted rounded animate-pulse" />

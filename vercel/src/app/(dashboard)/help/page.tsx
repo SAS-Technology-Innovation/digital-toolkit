@@ -6,14 +6,10 @@ import {
   FileText,
   Users,
   Shield,
-  RefreshCw,
   ExternalLink,
   Mail,
   Search,
-  LayoutDashboard,
-  Settings,
   CheckCircle,
-  Clock,
   Gavel,
   Sparkles,
   BookOpen,
@@ -33,11 +29,11 @@ import {
 
 const quickLinks = [
   {
-    title: "Submit Renewal Assessment",
-    description: "Provide feedback on apps you use",
-    href: "/renewals/submit",
-    icon: FileText,
-    color: "text-blue-600",
+    title: "My Apps",
+    description: "View apps you own or champion",
+    href: "/",
+    icon: Users,
+    color: "text-amber-600",
   },
   {
     title: "Browse Apps",
@@ -47,18 +43,18 @@ const quickLinks = [
     color: "text-green-600",
   },
   {
+    title: "Submit Renewal Assessment",
+    description: "Provide feedback on apps you use",
+    href: "/renewals/submit",
+    icon: FileText,
+    color: "text-blue-600",
+  },
+  {
     title: "Request New App",
     description: "Submit a request for a new tool",
     href: "/requests",
     icon: MessageSquare,
     color: "text-purple-600",
-  },
-  {
-    title: "Dashboard",
-    description: "View app statistics and overview",
-    href: "/",
-    icon: LayoutDashboard,
-    color: "text-orange-600",
   },
 ];
 
@@ -71,6 +67,7 @@ const roleGuides = [
       "Submit renewal assessments for apps you use",
       "Request new applications",
       "View app details and tutorials",
+      "View 'My Apps' when assigned as Owner or Champion",
     ],
     icon: Users,
     color: "bg-blue-100 text-blue-800",
@@ -84,6 +81,8 @@ const roleGuides = [
       "Aggregate teacher feedback",
       "Generate AI summaries",
       "Submit recommendations to Approvers",
+      "Assign app Owners and Champions",
+      "Be assigned as TIC Manager for apps",
     ],
     icon: BookOpen,
     color: "bg-purple-100 text-purple-800",
@@ -108,6 +107,7 @@ const roleGuides = [
       "All Approver capabilities",
       "Manage user roles and profiles via User Management page",
       "Access admin dashboard and user management",
+      "Assign app Owners, Champions, and TIC Managers",
       "Delete assessments and decisions",
       "Mark decisions as implemented",
       "Activate/deactivate user accounts",
@@ -157,6 +157,18 @@ const workflowSteps = [
 
 const faqs = [
   {
+    question: "What is 'My Apps' and how do I access it?",
+    answer: "My Apps shows all applications you are responsible for as an Owner, Champion, or TIC Manager. When logged in, it appears as the first tab on the Dashboard. Apps are grouped by your role - Owner (primary responsibility), Champion (product expert), or TIC Manager (technical oversight)."
+  },
+  {
+    question: "What are app Owners, Champions, and TIC Managers?",
+    answer: "Each app can have team members assigned: Owner (1 per app) - primary responsible person for the app; Champion (multiple allowed) - product advocates and experts who support users; TIC Manager (1 per app) - provides technical oversight. These assignments help clarify accountability and support for each tool."
+  },
+  {
+    question: "How do I get assigned to an app?",
+    answer: "Admins and TICs can assign users to apps from the app detail modal. Click on any app to open its details, and if you have permission, you'll see an 'Add' button in the Team section to assign Owners, Champions, or TIC Managers."
+  },
+  {
     question: "How do I sign in to the Digital Toolkit?",
     answer: "You can sign in using either a magic link (passwordless) or your password. Enter your @sas.edu.sg email address on the login page and choose your preferred method. If you don't have an account yet, click 'Create account' to register."
   },
@@ -191,6 +203,10 @@ const faqs = [
   {
     question: "How are apps categorized by division?",
     answer: "Apps are organized by school division (Elementary, Middle, High School, or Whole School). Some apps are available to everyone ('Everyone Apps'), while others are specific to departments or divisions."
+  },
+  {
+    question: "Can I switch between grid and list view?",
+    answer: "Yes! On the Apps page, use the toggle buttons in the top-right corner to switch between grid view (cards) and list view (table). List view shows a sortable table with columns for name, category, audience, department, and features."
   },
   {
     question: "What is an Enterprise app?",
@@ -373,7 +389,7 @@ export default function HelpPage() {
 
       {/* Footer Links */}
       <div className="text-center text-sm text-muted-foreground pt-4 space-y-2">
-        <p>SAS Digital Toolkit v2.0 - Built with Next.js and Supabase</p>
+        <p>SAS Digital Toolkit v2.1.1 - Built with Next.js and Supabase</p>
         <div className="flex justify-center gap-4">
           <Link href="/about" className="hover:text-primary hover:underline">About</Link>
           <span>|</span>

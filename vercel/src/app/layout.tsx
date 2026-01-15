@@ -21,10 +21,7 @@ const bebasNeue = Bebas_Neue({
 export const metadata: Metadata = {
   title: "SAS Digital Toolkit",
   description: "Applications and digital resources for the SAS community",
-  icons: {
-    icon: "/assets/sas-logo-icon.png",
-    apple: "/assets/sas-logo-icon.png",
-  },
+  // Icons are auto-detected from app/icon.png, app/apple-icon.png, app/favicon.ico
 };
 
 export default function RootLayout({
