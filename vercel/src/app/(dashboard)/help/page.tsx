@@ -371,9 +371,16 @@ export default function HelpPage() {
         </Card>
       </section>
 
-      {/* Version Info */}
-      <div className="text-center text-sm text-muted-foreground pt-4">
+      {/* Footer Links */}
+      <div className="text-center text-sm text-muted-foreground pt-4 space-y-2">
         <p>SAS Digital Toolkit v2.0 - Built with Next.js and Supabase</p>
+        <div className="flex justify-center gap-4">
+          <Link href="/about" className="hover:text-primary hover:underline">About</Link>
+          <span>|</span>
+          <Link href="/privacy" className="hover:text-primary hover:underline">Privacy</Link>
+          <span>|</span>
+          <Link href="/terms" className="hover:text-primary hover:underline">Terms</Link>
+        </div>
       </div>
     </div>
   );

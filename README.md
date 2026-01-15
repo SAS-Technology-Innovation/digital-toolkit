@@ -30,16 +30,23 @@ The Digital Toolkit Dashboard provides an elegant interface for organizing and d
 - **App Catalog** (`/apps`) - Searchable catalog with filters
 - **Request App** (`/requests`) - Form to request new applications
 - **Status** (`/status`) - Real-time app status monitoring
-- **Renewals** (`/renewals`) - Subscription renewal management
+- **Renewals** (`/renewals`) - Subscription renewal management with workflow
 - **Analytics** (`/analytics`) - Usage analytics and insights
 - **Admin** (`/admin`) - Data sync and management (requires login)
+- **User Management** (`/admin/users`) - Manage users, roles, and accounts
+- **Help Center** (`/help`) - Documentation, FAQs, and user guides
+- **About** (`/about`) - Information about the Digital Toolkit
 - **Signage** (`/signage`) - Digital signage display for screens
 
-### Authentication
+### Authentication & User Management
 
-- Magic link authentication via Supabase
-- @sas.edu.sg domain restriction
-- Protected routes for admin pages
+- **Multiple Sign-in Methods**: Magic links (passwordless) and password authentication
+- **Self-Service Registration**: Users can create accounts with @sas.edu.sg emails
+- **Password Reset**: Secure password recovery via email
+- **User Management**: Admins can manage users, roles, and account status
+- **Role-Based Access Control**: Staff, TIC, Approver, and Admin roles
+- **Domain Restriction**: @sas.edu.sg emails only
+- **Protected Routes**: Admin pages require authentication
 
 ### AI Features
 

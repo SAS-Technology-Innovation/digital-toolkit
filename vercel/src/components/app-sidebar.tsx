@@ -18,6 +18,9 @@ import {
   BookOpen,
   Gavel,
   ClipboardList,
+  Info,
+  Shield,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -129,6 +132,21 @@ const footerItems = [
     title: "Help",
     url: "/help",
     icon: HelpCircle,
+  },
+  {
+    title: "About",
+    url: "/about",
+    icon: Info,
+  },
+  {
+    title: "Privacy",
+    url: "/privacy",
+    icon: Shield,
+  },
+  {
+    title: "Terms",
+    url: "/terms",
+    icon: FileText,
   },
 ];
 
