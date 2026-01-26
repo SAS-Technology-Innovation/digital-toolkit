@@ -45,17 +45,50 @@ export interface Database {
           updated_at: string;
           synced_at: string | null;
           apps_script_id: string | null;
-          // New fields from Apps Script
+          // Fields from Apps Script
           enterprise: boolean;
           budget: string | null;
           support_email: string | null;
           date_added: string | null;
           is_whole_school: boolean;
+          // EdTech Impact fields - Compliance
+          privacy_policy_url: string | null;
+          terms_url: string | null;
+          gdpr_url: string | null;
+          risk_rating: string | null;
+          // EdTech Impact fields - Assessment
+          global_rating: number | null;
+          assessment_status: string | null; // RETIRE, UNDER_REVIEW, RETAIN, RECOMMENDED
+          recommended_reason: string | null;
+          // EdTech Impact fields - Accessibility
+          accessibility: string | null;
+          languages: Json | null;
+          // EdTech Impact fields - Support
+          support_options: Json | null;
+          training_options: Json | null;
+          // EdTech Impact fields - Commercial
+          purchase_models: Json | null;
+          price_from: string | null;
+          alternatives: Json | null;
+          // EdTech Impact fields - Contract
+          contract_start_date: string | null;
+          contract_end_date: string | null;
+          auto_renew: boolean;
+          notice_period: string | null;
+          // EdTech Impact fields - Internal
+          product_champion: string | null;
+          product_manager: string | null;
+          provider_contact: string | null;
+          finance_contact: string | null;
+          notes: string | null;
+          // EdTech Impact metadata
+          edtech_impact_id: string | null;
+          last_edtech_sync: string | null;
         };
         Insert: {
           id?: string;
           product: string;
-          product_id?: string | null; // Stable unique identifier from Google Sheets for sync deduplication
+          product_id?: string | null;
           description?: string | null;
           category?: string | null;
           subject?: string | null;
@@ -80,17 +113,42 @@ export interface Database {
           updated_at?: string;
           synced_at?: string | null;
           apps_script_id?: string | null;
-          // New fields from Apps Script
           enterprise?: boolean;
           budget?: string | null;
           support_email?: string | null;
           date_added?: string | null;
           is_whole_school?: boolean;
+          // EdTech Impact fields
+          privacy_policy_url?: string | null;
+          terms_url?: string | null;
+          gdpr_url?: string | null;
+          risk_rating?: string | null;
+          global_rating?: number | null;
+          assessment_status?: string | null;
+          recommended_reason?: string | null;
+          accessibility?: string | null;
+          languages?: Json | null;
+          support_options?: Json | null;
+          training_options?: Json | null;
+          purchase_models?: Json | null;
+          price_from?: string | null;
+          alternatives?: Json | null;
+          contract_start_date?: string | null;
+          contract_end_date?: string | null;
+          auto_renew?: boolean;
+          notice_period?: string | null;
+          product_champion?: string | null;
+          product_manager?: string | null;
+          provider_contact?: string | null;
+          finance_contact?: string | null;
+          notes?: string | null;
+          edtech_impact_id?: string | null;
+          last_edtech_sync?: string | null;
         };
         Update: {
           id?: string;
           product?: string;
-          product_id?: string | null; // Stable unique identifier from Google Sheets for sync deduplication
+          product_id?: string | null;
           description?: string | null;
           category?: string | null;
           subject?: string | null;
@@ -115,12 +173,37 @@ export interface Database {
           updated_at?: string;
           synced_at?: string | null;
           apps_script_id?: string | null;
-          // New fields from Apps Script
           enterprise?: boolean;
           budget?: string | null;
           support_email?: string | null;
           date_added?: string | null;
           is_whole_school?: boolean;
+          // EdTech Impact fields
+          privacy_policy_url?: string | null;
+          terms_url?: string | null;
+          gdpr_url?: string | null;
+          risk_rating?: string | null;
+          global_rating?: number | null;
+          assessment_status?: string | null;
+          recommended_reason?: string | null;
+          accessibility?: string | null;
+          languages?: Json | null;
+          support_options?: Json | null;
+          training_options?: Json | null;
+          purchase_models?: Json | null;
+          price_from?: string | null;
+          alternatives?: Json | null;
+          contract_start_date?: string | null;
+          contract_end_date?: string | null;
+          auto_renew?: boolean;
+          notice_period?: string | null;
+          product_champion?: string | null;
+          product_manager?: string | null;
+          provider_contact?: string | null;
+          finance_contact?: string | null;
+          notes?: string | null;
+          edtech_impact_id?: string | null;
+          last_edtech_sync?: string | null;
         };
       };
       sync_logs: {
