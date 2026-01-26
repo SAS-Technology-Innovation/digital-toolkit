@@ -18,6 +18,11 @@ vi.mock("@/lib/supabase/client", () => ({
         },
       }),
       signInWithOtp: vi.fn().mockResolvedValue({ error: null }),
+      signInWithPassword: vi.fn().mockResolvedValue({ error: null }),
+      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
+      signUp: vi.fn().mockResolvedValue({ error: null }),
+      resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
+      updateUser: vi.fn().mockResolvedValue({ error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   }),
@@ -114,8 +119,18 @@ describe("useAuth hook", () => {
     expect(authValuesRef.current).toHaveProperty("session");
     expect(authValuesRef.current).toHaveProperty("loading");
     expect(authValuesRef.current).toHaveProperty("signInWithMagicLink");
+    expect(authValuesRef.current).toHaveProperty("signInWithPassword");
+    expect(authValuesRef.current).toHaveProperty("signInWithGoogle");
+    expect(authValuesRef.current).toHaveProperty("signUp");
+    expect(authValuesRef.current).toHaveProperty("resetPassword");
+    expect(authValuesRef.current).toHaveProperty("updatePassword");
     expect(authValuesRef.current).toHaveProperty("signOut");
     expect(typeof authValuesRef.current!.signInWithMagicLink).toBe("function");
+    expect(typeof authValuesRef.current!.signInWithPassword).toBe("function");
+    expect(typeof authValuesRef.current!.signInWithGoogle).toBe("function");
+    expect(typeof authValuesRef.current!.signUp).toBe("function");
+    expect(typeof authValuesRef.current!.resetPassword).toBe("function");
+    expect(typeof authValuesRef.current!.updatePassword).toBe("function");
     expect(typeof authValuesRef.current!.signOut).toBe("function");
   });
 });

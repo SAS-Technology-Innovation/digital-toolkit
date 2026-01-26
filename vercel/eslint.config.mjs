@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Node.js scripts (CommonJS)
+    "scripts/**",
   ]),
   // Disable new React 19 hooks purity rules for files with intentional patterns
   {
