@@ -333,9 +333,113 @@ function transformAppToAppsScript(app: App): AppsScriptApp {
 }
 
 /**
- * Write data back to Apps Script
+ * Convert Supabase app to Apps Script field updates
+ * Returns an array of { productId, field, value } for bulkUpdate API
  */
-async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; error?: string }> {
+function appToFieldUpdates(app: App): Array<{ productId: string; field: string; value: unknown }> {
+  const productId = app.product_id;
+  if (!productId) return [];
+
+  // Helper to convert arrays to JSON strings for Google Sheets
+  const arrayToJson = (arr: unknown[] | null | undefined): string | null => {
+    if (!arr || arr.length === 0) return null;
+    return JSON.stringify(arr);
+  };
+
+  // Map of Supabase field → Google Sheets column name
+  const fieldMappings: Array<{ supabaseField: keyof App; sheetColumn: string }> = [
+    { supabaseField: "product", sheetColumn: "product_name" },
+    { supabaseField: "description", sheetColumn: "description" },
+    { supabaseField: "category", sheetColumn: "category" },
+    { supabaseField: "subject", sheetColumn: "subjects" },
+    { supabaseField: "department", sheetColumn: "department" },
+    { supabaseField: "division", sheetColumn: "division" },
+    { supabaseField: "website", sheetColumn: "website" },
+    { supabaseField: "tutorial_link", sheetColumn: "tutorial_link" },
+    { supabaseField: "logo_url", sheetColumn: "logo_url" },
+    { supabaseField: "sso_enabled", sheetColumn: "sso_enabled" },
+    { supabaseField: "mobile_app", sheetColumn: "mobile_app" },
+    { supabaseField: "grade_levels", sheetColumn: "grade_levels" },
+    { supabaseField: "vendor", sheetColumn: "vendor" },
+    { supabaseField: "license_type", sheetColumn: "license_type" },
+    { supabaseField: "renewal_date", sheetColumn: "renewal_date" },
+    { supabaseField: "annual_cost", sheetColumn: "value" },
+    { supabaseField: "licenses", sheetColumn: "licence_count" },
+    { supabaseField: "enterprise", sheetColumn: "enterprise" },
+    { supabaseField: "budget", sheetColumn: "budget" },
+    { supabaseField: "support_email", sheetColumn: "support_email" },
+    { supabaseField: "date_added", sheetColumn: "date_added" },
+    // EdTech Impact fields
+    { supabaseField: "assessment_status", sheetColumn: "assessment_status" },
+    { supabaseField: "global_rating", sheetColumn: "global_rating" },
+    { supabaseField: "recommended_reason", sheetColumn: "recommended_reason" },
+    { supabaseField: "privacy_policy_url", sheetColumn: "privacy_policy_url" },
+    { supabaseField: "terms_url", sheetColumn: "terms_url" },
+    { supabaseField: "gdpr_url", sheetColumn: "gdpr_url" },
+    { supabaseField: "risk_rating", sheetColumn: "risk_rating" },
+    { supabaseField: "accessibility", sheetColumn: "accessibility" },
+    { supabaseField: "price_from", sheetColumn: "price_from" },
+    { supabaseField: "contract_start_date", sheetColumn: "contract_start_date" },
+    { supabaseField: "contract_end_date", sheetColumn: "contract_end_date" },
+    { supabaseField: "auto_renew", sheetColumn: "auto_renew" },
+    { supabaseField: "notice_period", sheetColumn: "notice_period" },
+    { supabaseField: "product_champion", sheetColumn: "product_champion" },
+    { supabaseField: "product_manager", sheetColumn: "product_manager" },
+    { supabaseField: "provider_contact", sheetColumn: "provider_contact" },
+    { supabaseField: "finance_contact", sheetColumn: "finance_contact" },
+    { supabaseField: "notes", sheetColumn: "notes" },
+    { supabaseField: "edtech_impact_id", sheetColumn: "edtech_impact_id" },
+    { supabaseField: "last_edtech_sync", sheetColumn: "last_edtech_sync" },
+  ];
+
+  const updates: Array<{ productId: string; field: string; value: unknown }> = [];
+
+  for (const mapping of fieldMappings) {
+    const value = app[mapping.supabaseField];
+    // Only include fields that have a value (avoid overwriting with null/undefined)
+    if (value !== null && value !== undefined && value !== "") {
+      updates.push({
+        productId,
+        field: mapping.sheetColumn,
+        value,
+      });
+    }
+  }
+
+  // Handle array fields separately (need JSON conversion)
+  const arrayMappings: Array<{ supabaseField: keyof App; sheetColumn: string }> = [
+    { supabaseField: "audience", sheetColumn: "audience" },
+    { supabaseField: "languages", sheetColumn: "languages" },
+    { supabaseField: "support_options", sheetColumn: "support_options" },
+    { supabaseField: "training_options", sheetColumn: "training_options" },
+    { supabaseField: "purchase_models", sheetColumn: "purchase_models" },
+    { supabaseField: "alternatives", sheetColumn: "alternatives" },
+  ];
+
+  for (const mapping of arrayMappings) {
+    const value = app[mapping.supabaseField] as unknown[] | null;
+    if (value && Array.isArray(value) && value.length > 0) {
+      // For audience, join with comma. For others, use JSON
+      const formattedValue = mapping.supabaseField === "audience"
+        ? value.join(", ")
+        : arrayToJson(value);
+      if (formattedValue) {
+        updates.push({
+          productId,
+          field: mapping.sheetColumn,
+          value: formattedValue,
+        });
+      }
+    }
+  }
+
+  return updates;
+}
+
+/**
+ * Write data back to Apps Script using bulkUpdate API
+ */
+async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; error?: string; successCount?: number; failCount?: number }> {
   const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
   const FRONTEND_KEY = process.env.FRONTEND_KEY;
 
@@ -344,7 +448,18 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
   }
 
   try {
-    const transformedApps = apps.map(transformAppToAppsScript);
+    // Convert all apps to field updates
+    const allUpdates: Array<{ productId: string; field: string; value: unknown }> = [];
+    for (const app of apps) {
+      const updates = appToFieldUpdates(app);
+      allUpdates.push(...updates);
+    }
+
+    if (allUpdates.length === 0) {
+      return { success: true, successCount: 0, failCount: 0 };
+    }
+
+    console.log(`Sending ${allUpdates.length} field updates to Apps Script`);
 
     const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
@@ -352,9 +467,9 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        api: "update",
+        api: "bulkUpdate",
         key: FRONTEND_KEY,
-        apps: transformedApps,
+        updates: JSON.stringify(allUpdates),
       }),
     });
 
@@ -368,7 +483,11 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
       return { success: false, error: result.error };
     }
 
-    return { success: true };
+    return {
+      success: true,
+      successCount: result.successCount || 0,
+      failCount: result.failCount || 0,
+    };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
   }
