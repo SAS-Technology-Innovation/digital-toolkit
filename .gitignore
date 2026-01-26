@@ -56,3 +56,6 @@ updated-metadata.csv
 *-import-data.csv
 *-sync.csv
 .env*.local
+
+# Supabase local temp files (at root level)
+/supabase/

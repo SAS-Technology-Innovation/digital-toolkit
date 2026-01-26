@@ -9,7 +9,17 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link --project-ref tsirdxnazadtztdsxqbp",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:status": "npx supabase status",
+    "supabase:migration:new": "npx supabase migration new",
+    "supabase:db:push": "npx supabase db push",
+    "supabase:db:pull": "npx supabase db pull",
+    "sheets:pull": "node scripts/sheets-pull.js",
+    "sheets:push": "node scripts/sheets-push.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

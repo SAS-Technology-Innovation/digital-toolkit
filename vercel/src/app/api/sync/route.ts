@@ -5,6 +5,8 @@ import type { AppInsert, App, SyncLogInsert } from "@/lib/supabase/types";
 interface AppsScriptApp {
   id?: string;
   product: string;
+  productId?: string; // Stable unique ID from Google Sheets (Column W) for sync deduplication
+  product_id?: string; // Alternative naming convention
   description?: string;
   category?: string;
   subject?: string;
@@ -95,6 +97,7 @@ function transformAppToSupabase(app: AppsScriptApp): AppInsert {
 
   return {
     product: app.product,
+    product_id: app.productId || app.product_id || null, // Stable unique ID for sync deduplication
     description: app.description || null,
     category: app.category || null,
     subject: app.subject || null,
@@ -303,11 +306,13 @@ export async function POST(request: Request) {
           }
         }
 
-        // Deduplicate by product name (same app may appear in multiple divisions)
+        // Deduplicate by product_id (preferred) or product name as fallback
+        // Same app may appear in multiple divisions, use product_id as stable unique key
         const uniqueApps = new Map<string, AppsScriptApp>();
         for (const app of allApps) {
-          if (app.product && !uniqueApps.has(app.product)) {
-            uniqueApps.set(app.product, app);
+          const uniqueKey = app.productId || app.product_id || app.product;
+          if (uniqueKey && !uniqueApps.has(uniqueKey)) {
+            uniqueApps.set(uniqueKey, app);
           }
         }
         apps = [...uniqueApps.values()];
@@ -323,23 +328,39 @@ export async function POST(request: Request) {
 
       for (const app of transformedApps) {
         try {
-          // Use product name as the unique identifier to prevent duplicates
-          // First check if the app already exists by product name
-          const { data: existingApp } = await supabase
-            .from("apps")
-            .select("id")
-            .eq("product", app.product)
-            .single();
+          // Use product_id as the primary unique identifier (stable ID from Google Sheets)
+          // Falls back to product name for backwards compatibility with existing records
+          let existingAppId: string | null = null;
 
-          if (existingApp) {
-            // Update existing app
+          // First try to find by product_id (preferred - stable unique identifier)
+          if (app.product_id) {
+            const { data } = await supabase
+              .from("apps")
+              .select("id")
+              .eq("product_id", app.product_id)
+              .single();
+            if (data) existingAppId = (data as { id: string }).id;
+          }
+
+          // Fallback: find by product name if no product_id match
+          if (!existingAppId) {
+            const { data } = await supabase
+              .from("apps")
+              .select("id")
+              .eq("product", app.product)
+              .single();
+            if (data) existingAppId = (data as { id: string }).id;
+          }
+
+          if (existingAppId) {
+            // Update existing app - use id for precise targeting
             const { error: updateError } = await supabase
               .from("apps")
               .update({
                 ...app,
                 updated_at: new Date().toISOString(),
               } as never)
-              .eq("product", app.product);
+              .eq("id", existingAppId);
 
             if (updateError) throw updateError;
           } else {

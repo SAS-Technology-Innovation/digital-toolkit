@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=tsirdxnazadtztdsxqbp"
+    },
+    "clasp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@google/clasp", "mcp"]
+    }
+  }
+}

@@ -287,6 +287,41 @@ function handleApiRequest(endpoint, providedKey, params) {
       const saveResult = saveRenewalAction(product, action, notes);
       return jsonResponse(JSON.parse(saveResult));
 
+    case 'csv':
+      // Export all data as CSV
+      const csvResult = exportSheetAsCSV();
+      return jsonResponse(JSON.parse(csvResult));
+
+    case 'update':
+      // Update a specific cell in the sheet
+      const updateProductId = params.productId || params.product_id;
+      const updateField = params.field;
+      const updateValue = params.value;
+
+      if (!updateProductId || !updateField) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'productId and field parameters are required'
+        }, 400);
+      }
+
+      const updateResult = updateAppField(updateProductId, updateField, updateValue);
+      return jsonResponse(JSON.parse(updateResult));
+
+    case 'bulkUpdate':
+      // Handle bulk updates from JSON array
+      const updates = params.updates;
+
+      if (!updates) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'updates parameter is required (JSON array)'
+        }, 400);
+      }
+
+      const bulkResult = bulkUpdateApps(updates);
+      return jsonResponse(JSON.parse(bulkResult));
+
     default:
       return jsonResponse({
         error: 'Not Found',
@@ -485,6 +520,7 @@ function getDashboardData() {
       // Support both old (capitalized) and new (lowercase) column names
       return {
         product: app.product_name || 'N/A',
+        productId: app.product_id || null, // Stable unique ID for sync deduplication (Column W)
         division: app.division || app.Division || 'N/A',
         department: app.department || app.Department || 'N/A',
         subject: app.subjects || app.subjects_or_department || 'N/A',
@@ -631,4 +667,265 @@ function getDashboardData() {
 // See: validateAllData, findMissingFields, enrichMissingDescriptions,
 //      enrichAllMissingData, getAnalyticsData, detectAppOverlaps
 // ==========================================
+
+// ==========================================
+// BIDIRECTIONAL SYNC FUNCTIONS
+// Functions for exporting data and updating Google Sheets
+// ==========================================
+
+/**
+ * Exports the main sheet data as CSV format
+ * Returns headers and all rows as a JSON object with CSV data
+ *
+ * @function exportSheetAsCSV
+ * @returns {string} JSON string with headers and rows
+ */
+function exportSheetAsCSV() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+    const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+
+    if (!SPREADSHEET_ID || !SHEET_NAME) {
+      return JSON.stringify({
+        error: 'Configuration error',
+        message: 'SPREADSHEET_ID and/or SHEET_NAME not set'
+      });
+    }
+
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    const rows = values.slice(1);
+
+    // Convert to CSV format
+    const csvLines = [headers.join(',')];
+    rows.forEach(row => {
+      const csvRow = row.map(cell => {
+        // Escape quotes and wrap in quotes if contains comma or quote
+        const str = String(cell);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      });
+      csvLines.push(csvRow.join(','));
+    });
+
+    return JSON.stringify({
+      success: true,
+      headers: headers,
+      rowCount: rows.length,
+      csv: csvLines.join('\n'),
+      data: rows.map(row => {
+        const obj = {};
+        headers.forEach((header, idx) => {
+          obj[header] = row[idx];
+        });
+        return obj;
+      })
+    });
+
+  } catch (error) {
+    Logger.log('Error exporting CSV: ' + error.message);
+    return JSON.stringify({
+      error: 'Failed to export CSV',
+      message: error.message
+    });
+  }
+}
+
+/**
+ * Updates a specific field for an app identified by product_id
+ *
+ * @function updateAppField
+ * @param {string} productId - The product_id to find
+ * @param {string} field - The column/field name to update
+ * @param {*} value - The new value
+ * @returns {string} JSON string with success status
+ */
+function updateAppField(productId, field, value) {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+    const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+
+    if (!SPREADSHEET_ID || !SHEET_NAME) {
+      return JSON.stringify({
+        error: 'Configuration error',
+        message: 'SPREADSHEET_ID and/or SHEET_NAME not set'
+      });
+    }
+
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+
+    // Find column indices
+    const productIdCol = headers.indexOf('product_id');
+    const targetCol = headers.indexOf(field);
+
+    if (productIdCol === -1) {
+      return JSON.stringify({
+        error: 'Column not found',
+        message: 'product_id column not found in sheet'
+      });
+    }
+
+    if (targetCol === -1) {
+      return JSON.stringify({
+        error: 'Column not found',
+        message: `Field "${field}" not found in sheet headers`
+      });
+    }
+
+    // Find the row with matching product_id
+    let targetRow = -1;
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][productIdCol] === productId) {
+        targetRow = i + 1; // +1 because sheet rows are 1-indexed
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      return JSON.stringify({
+        error: 'Not found',
+        message: `No app found with product_id: ${productId}`
+      });
+    }
+
+    // Update the cell
+    const cell = sheet.getRange(targetRow, targetCol + 1); // +1 because columns are 1-indexed
+    const oldValue = cell.getValue();
+    cell.setValue(value);
+
+    Logger.log(`Updated ${field} for product_id ${productId}: "${oldValue}" → "${value}"`);
+
+    return JSON.stringify({
+      success: true,
+      message: 'Field updated successfully',
+      data: {
+        productId: productId,
+        field: field,
+        oldValue: oldValue,
+        newValue: value,
+        row: targetRow
+      }
+    });
+
+  } catch (error) {
+    Logger.log('Error updating field: ' + error.message);
+    return JSON.stringify({
+      error: 'Failed to update field',
+      message: error.message
+    });
+  }
+}
+
+/**
+ * Bulk updates multiple apps at once
+ *
+ * @function bulkUpdateApps
+ * @param {string|Array} updates - JSON array of updates, each with productId, field, value
+ * @returns {string} JSON string with success/failure counts
+ */
+function bulkUpdateApps(updates) {
+  try {
+    // Parse if string
+    const updateArray = typeof updates === 'string' ? JSON.parse(updates) : updates;
+
+    if (!Array.isArray(updateArray)) {
+      return JSON.stringify({
+        error: 'Invalid format',
+        message: 'updates must be an array'
+      });
+    }
+
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+    const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+
+    if (!SPREADSHEET_ID || !SHEET_NAME) {
+      return JSON.stringify({
+        error: 'Configuration error',
+        message: 'SPREADSHEET_ID and/or SHEET_NAME not set'
+      });
+    }
+
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+
+    const productIdCol = headers.indexOf('product_id');
+    if (productIdCol === -1) {
+      return JSON.stringify({
+        error: 'Column not found',
+        message: 'product_id column not found in sheet'
+      });
+    }
+
+    // Build a map of productId to row number
+    const productIdToRow = {};
+    for (let i = 1; i < values.length; i++) {
+      const pid = values[i][productIdCol];
+      if (pid) {
+        productIdToRow[pid] = i + 1; // 1-indexed row number
+      }
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+    const failures = [];
+
+    updateArray.forEach((update, index) => {
+      const { productId, field, value } = update;
+
+      if (!productId || !field) {
+        failCount++;
+        failures.push({ index, error: 'Missing productId or field' });
+        return;
+      }
+
+      const targetCol = headers.indexOf(field);
+      if (targetCol === -1) {
+        failCount++;
+        failures.push({ index, productId, error: `Field "${field}" not found` });
+        return;
+      }
+
+      const targetRow = productIdToRow[productId];
+      if (!targetRow) {
+        failCount++;
+        failures.push({ index, productId, error: 'Product not found' });
+        return;
+      }
+
+      try {
+        sheet.getRange(targetRow, targetCol + 1).setValue(value);
+        successCount++;
+      } catch (err) {
+        failCount++;
+        failures.push({ index, productId, error: err.message });
+      }
+    });
+
+    Logger.log(`Bulk update: ${successCount} success, ${failCount} failed`);
+
+    return JSON.stringify({
+      success: true,
+      message: `Updated ${successCount} fields, ${failCount} failed`,
+      successCount: successCount,
+      failCount: failCount,
+      failures: failures
+    });
+
+  } catch (error) {
+    Logger.log('Error in bulk update: ' + error.message);
+    return JSON.stringify({
+      error: 'Failed to perform bulk update',
+      message: error.message
+    });
+  }
+}
 

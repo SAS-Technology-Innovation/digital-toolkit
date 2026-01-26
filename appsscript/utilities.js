@@ -179,6 +179,7 @@ function buildColumnMap(headers) {
   return {
     active: headers.indexOf('active'),
     productName: headers.indexOf('product_name'),
+    productId: headers.indexOf('product_id'), // Stable unique ID for sync deduplication (Column W)
     division: getColumnIndex(headers, 'division', 'Division'),
     department: getColumnIndex(headers, 'department', 'Department'),
     subjects: getColumnIndex(headers, 'subjects', 'subjects_or_department'),

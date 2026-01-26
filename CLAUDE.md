@@ -135,6 +135,8 @@ digital-toolkit/
 │   ├── data-management.js       # Data enrichment
 │   └── appsscript.json          # Apps Script config
 ├── docs/                        # Documentation
+├── .clasp.json                  # Google Apps Script project config
+├── .mcp.json                    # Supabase MCP configuration
 ├── CHANGELOG.md                 # Version history
 ├── CLAUDE.md                    # This file
 └── README.md
@@ -313,6 +315,11 @@ User enters new password → Update password → Redirect to login
 | `/api/users/[id]` | GET | Get user details | Admin |
 | `/api/users/[id]` | PATCH | Update user | Admin |
 | `/api/users/[id]` | DELETE | Delete user | Admin |
+| `/api/duplicates` | GET | Check for duplicate apps | Admin |
+| `/api/duplicates` | POST | Remove duplicate apps | Admin |
+| `/api/sheets/csv` | GET | Export Google Sheets as CSV/JSON | - |
+| `/api/sheets/update` | POST | Update single field in Google Sheets | - |
+| `/api/sheets/update` | PUT | Bulk update Google Sheets | - |
 
 ### Data Structure
 
@@ -362,6 +369,50 @@ Components are installed via `npx shadcn@latest add [component]` and stored in `
 --elementary: #228ec2;    /* Elementary Blue */
 ```
 
+## 🛠️ Project Setup
+
+### Initial Setup
+
+```bash
+# Install all dependencies (root + vercel)
+npm run setup
+
+# Install CLI tools globally (clasp, vercel, supabase)
+npm run setup:cli
+
+# Setup MCP servers for Claude Code
+npm run mcp:setup:supabase  # Supabase database operations
+npm run mcp:setup:clasp     # Google Apps Script operations
+# Then authenticate: claude /mcp → select server → "Authenticate"
+```
+
+### MCP Configuration
+
+The project includes MCP servers for database and Apps Script operations. Configuration is in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=tsirdxnazadtztdsxqbp"
+    },
+    "clasp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@google/clasp", "mcp"]
+    }
+  }
+}
+```
+
+To authenticate MCP servers (run in regular terminal, not IDE):
+```bash
+claude /mcp
+# Select "supabase" → "Authenticate"
+# Select "clasp" → "Authenticate" (requires clasp:login first)
+```
+
 ## 🚀 Development Commands
 
 ### Frontend (Next.js)
@@ -390,15 +441,46 @@ npx shadcn@latest add [component]  # Add new component
 ### Backend (Apps Script)
 
 ```bash
-cd appsscript
-
-npm run login        # Authenticate with Google
-npm run push         # Push code to Apps Script
-npm run pull         # Pull code from Apps Script
-npm run deploy       # Create new deployment
-npm run logs         # View execution logs
-npm run open         # Open in browser
+# Run from project root (clasp is configured at root level)
+npm run clasp:login   # Authenticate with Google
+npm run clasp:push    # Push code to Apps Script
+npm run clasp:pull    # Pull code from Apps Script
+npm run clasp:deploy  # Create new deployment
+npm run clasp:logs    # View execution logs
+npm run clasp:open    # Open in browser
 ```
+
+### Supabase
+
+```bash
+# Run from project root
+npm run supabase:start      # Start local Supabase (requires Docker)
+npm run supabase:stop       # Stop local Supabase
+npm run supabase:status     # Check status
+npm run supabase:db:push    # Push migrations to remote
+npm run supabase:migration:new  # Create new migration
+```
+
+**Local Supabase Setup** (requires Docker Desktop):
+- Project name: `supabase-digitaltoolkit`
+- Studio: <http://localhost:54323>
+- API: <http://localhost:54321>
+
+### Google Sheets Sync
+
+```bash
+# Pull data from Google Sheets to local CSV/JSON
+npm run sheets:pull         # Saves to vercel/data/apps-local.csv and .json
+
+# Edit the local JSON file, then push changes back
+npm run sheets:push         # Compares with backup, pushes changes to Google Sheets
+```
+
+The local dev workflow allows you to:
+1. Pull current data from Google Sheets
+2. Edit the local `apps-local.json` file
+3. Push changes back to Google Sheets
+4. Backup is automatically maintained for change tracking
 
 ## ✅ Pre-Commit Checklist
 
@@ -636,7 +718,7 @@ Required columns (lowercase):
 
 **Empty data response**
 - Verify APPS_SCRIPT_URL is correct deployment URL
-- Check Apps Script logs: `npm run logs`
+- Check Apps Script logs: `npm run clasp:logs`
 
 ### UI Components
 

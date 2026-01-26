@@ -20,6 +20,7 @@ export interface Database {
         Row: {
           id: string;
           product: string;
+          product_id: string | null; // Stable unique identifier from Google Sheets for sync deduplication
           description: string | null;
           category: string | null;
           subject: string | null;
@@ -54,6 +55,7 @@ export interface Database {
         Insert: {
           id?: string;
           product: string;
+          product_id?: string | null; // Stable unique identifier from Google Sheets for sync deduplication
           description?: string | null;
           category?: string | null;
           subject?: string | null;
@@ -88,6 +90,7 @@ export interface Database {
         Update: {
           id?: string;
           product?: string;
+          product_id?: string | null; // Stable unique identifier from Google Sheets for sync deduplication
           description?: string | null;
           category?: string | null;
           subject?: string | null;

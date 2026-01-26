@@ -40,3 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# local sheets data (pulled from Google Sheets for dev)
+/data/*.csv
+/data/*.json
+!/data/.gitkeep

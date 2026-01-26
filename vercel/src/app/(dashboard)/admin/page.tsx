@@ -16,6 +16,9 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   ArrowLeftRight,
+  Trash2,
+  Copy,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +62,21 @@ interface RawAppData {
   [key: string]: unknown;
 }
 
+interface DuplicateGroup {
+  product: string;
+  count: number;
+  ids: string[];
+  keep_id: string;
+  remove_ids: string[];
+}
+
+interface DuplicateInfo {
+  totalApps: number;
+  duplicateGroups: number;
+  totalDuplicates: number;
+  duplicates: DuplicateGroup[];
+}
+
 // Safely extract hostname from URL, returns null if invalid
 function getHostname(url: string | undefined): string | null {
   if (!url || url === "#" || url === "N/A") return null;
@@ -80,6 +98,10 @@ export default function AdminPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(null);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [removingDuplicates, setRemovingDuplicates] = useState(false);
+  const [duplicateSuccess, setDuplicateSuccess] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -184,6 +206,57 @@ export default function AdminPage() {
       setError(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  // Check for duplicates
+  const checkDuplicates = async () => {
+    setCheckingDuplicates(true);
+    setError(null);
+    setDuplicateSuccess(null);
+
+    try {
+      const response = await fetch("/api/duplicates");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to check duplicates");
+      }
+
+      const data = await response.json();
+      setDuplicateInfo(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to check duplicates");
+    } finally {
+      setCheckingDuplicates(false);
+    }
+  };
+
+  // Remove duplicates
+  const removeDuplicates = async () => {
+    setRemovingDuplicates(true);
+    setError(null);
+    setDuplicateSuccess(null);
+
+    try {
+      const response = await fetch("/api/duplicates", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to remove duplicates");
+      }
+
+      const data = await response.json();
+      setDuplicateSuccess(data.message);
+
+      // Refresh data
+      await fetchSupabaseData();
+      await checkDuplicates();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove duplicates");
+    } finally {
+      setRemovingDuplicates(false);
     }
   };
 
@@ -406,6 +479,10 @@ export default function AdminPage() {
           <TabsTrigger value="supabase">Supabase Data</TabsTrigger>
           <TabsTrigger value="raw">Raw Apps Script Data</TabsTrigger>
           <TabsTrigger value="logs">Sync Logs</TabsTrigger>
+          <TabsTrigger value="duplicates" className="flex items-center gap-1">
+            <Copy className="h-3 w-3" />
+            Duplicates
+          </TabsTrigger>
         </TabsList>
 
         {/* Supabase Data Table */}
@@ -685,6 +762,189 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Duplicates Management */}
+        <TabsContent value="duplicates">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Copy className="h-5 w-5" />
+                    Duplicate Management
+                  </CardTitle>
+                  <CardDescription>
+                    Find and remove duplicate apps in the database. Keeps the oldest record for each product name.
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={checkDuplicates}
+                    disabled={checkingDuplicates || removingDuplicates}
+                    variant="outline"
+                  >
+                    {checkingDuplicates ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    Check for Duplicates
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Success message */}
+              {duplicateSuccess && (
+                <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-800 dark:text-green-200">Success</AlertTitle>
+                  <AlertDescription className="text-green-700 dark:text-green-300">
+                    {duplicateSuccess}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Stats */}
+              {duplicateInfo && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-2xl font-bold">{duplicateInfo.totalApps}</div>
+                        <p className="text-xs text-muted-foreground">Total Apps</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-2xl font-bold text-yellow-600">
+                          {duplicateInfo.duplicateGroups}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Products with Duplicates</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-2xl font-bold text-red-600">
+                          {duplicateInfo.totalDuplicates}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Records to Remove</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Remove duplicates button */}
+                  {duplicateInfo.totalDuplicates > 0 && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="destructive" disabled={removingDuplicates}>
+                          {removingDuplicates ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="mr-2 h-4 w-4" />
+                          )}
+                          Remove {duplicateInfo.totalDuplicates} Duplicate{duplicateInfo.totalDuplicates !== 1 ? "s" : ""}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Remove Duplicate Records</DialogTitle>
+                          <DialogDescription>
+                            This will permanently delete {duplicateInfo.totalDuplicates} duplicate app record{duplicateInfo.totalDuplicates !== 1 ? "s" : ""}.
+                            For each product with duplicates, the oldest record (by creation date) will be kept.
+                            This action cannot be undone.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <Button
+                            variant="destructive"
+                            onClick={removeDuplicates}
+                            disabled={removingDuplicates}
+                          >
+                            {removingDuplicates ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Removing...
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Confirm Delete
+                              </>
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+
+                  {duplicateInfo.totalDuplicates === 0 && (
+                    <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <AlertTitle className="text-green-800 dark:text-green-200">No Duplicates</AlertTitle>
+                      <AlertDescription className="text-green-700 dark:text-green-300">
+                        Your database has no duplicate app records. Each product has a single entry.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Duplicates table */}
+                  {duplicateInfo.duplicates.length > 0 && (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Product Name</TableHead>
+                            <TableHead className="text-center">Count</TableHead>
+                            <TableHead className="text-center">To Remove</TableHead>
+                            <TableHead>Keep ID</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {duplicateInfo.duplicates.map((dup, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-medium">{dup.product}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="secondary">{dup.count}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="destructive">{dup.remove_ids.length}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                                  {dup.keep_id.slice(0, 8)}...
+                                </code>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  {duplicateInfo.duplicates.length >= 100 && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      Showing first 100 of {duplicateInfo.duplicateGroups} duplicate groups
+                    </p>
+                  )}
+                </>
+              )}
+
+              {!duplicateInfo && !checkingDuplicates && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Click &quot;Check for Duplicates&quot; to scan the database for duplicate app records.
+                </div>
+              )}
+
+              {checkingDuplicates && (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+                  <p className="text-muted-foreground">Scanning for duplicates...</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -40,11 +40,18 @@ The Digital Toolkit Dashboard provides an elegant interface for organizing and d
 - **Status** (`/status`) - Real-time app status monitoring
 - **Renewals** (`/renewals`) - Subscription renewal management with workflow
 - **Analytics** (`/analytics`) - Usage analytics and insights
-- **Admin** (`/admin`) - Data sync and management (requires login)
+- **Admin** (`/admin`) - Data sync, duplicate management, and data tools
 - **User Management** (`/admin/users`) - Manage users, roles, and accounts
 - **Help Center** (`/help`) - Documentation, FAQs, and user guides
 - **About** (`/about`) - Information about the Digital Toolkit
 - **Signage** (`/signage`) - Digital signage display for screens
+
+### Admin Features
+
+- **Data Sync** - Pull from Google Sheets, push to Supabase
+- **Duplicate Management** - Detect and remove duplicate app records
+- **Export** - Download app data as CSV
+- **Sync Logs** - View sync history and status
 
 ### Authentication & User Management
 
@@ -99,6 +106,7 @@ digital-toolkit/
 ### Prerequisites
 
 - Node.js 18+
+- Docker Desktop (for local Supabase)
 - Google Account with Apps Script access
 - Supabase account
 - Vercel account (for deployment)
@@ -110,25 +118,40 @@ git clone https://github.com/SAS-Technology-Innovation/digital-toolkit.git
 cd digital-toolkit
 ```
 
-### 2. Setup Frontend
+### 2. Install Dependencies
+
+```bash
+# Install all dependencies (root + vercel)
+npm run setup
+
+# Install CLI tools globally (optional)
+npm run setup:cli
+```
+
+### 3. Setup Frontend
 
 ```bash
 cd vercel
-npm install
 cp .env.local.example .env.local
 # Edit .env.local with your credentials
 npm run dev
 ```
 
-### 3. Setup Backend (Apps Script)
+### 4. Setup Backend (Apps Script)
 
 ```bash
-cd appsscript
-npm install
-npm run login
-npx @google/clasp clone "YOUR_SCRIPT_ID"
-npm run push
-npm run deploy
+# From project root
+npm run clasp:login
+npm run clasp:push
+```
+
+### 5. Local Supabase (Optional)
+
+```bash
+# Requires Docker Desktop
+npm run supabase:start   # Start local Supabase
+npm run supabase:status  # Check status
+# Studio at http://localhost:54323
 ```
 
 ### 4. Configure Environment Variables
@@ -158,19 +181,36 @@ ANTHROPIC_API_KEY=your_claude_api_key
 
 ```bash
 cd vercel
-npm run dev      # Start dev server
-npm run build    # Production build
-npm run lint     # Run ESLint
+npm run dev           # Start dev server
+npm run build         # Production build
+npm run lint          # Run ESLint
+npm run test:run      # Run tests
 ```
 
-### Backend Commands
+### Backend Commands (from project root)
 
 ```bash
-cd appsscript
-npm run push     # Push to Apps Script
-npm run deploy   # Create deployment
-npm run logs     # View logs
-npm run open     # Open in browser
+npm run clasp:push    # Push to Apps Script
+npm run clasp:pull    # Pull from Apps Script
+npm run clasp:deploy  # Create deployment
+npm run clasp:logs    # View logs
+npm run clasp:open    # Open in browser
+```
+
+### Supabase Commands (from project root)
+
+```bash
+npm run supabase:start         # Start local Supabase
+npm run supabase:stop          # Stop local Supabase
+npm run supabase:db:push       # Push migrations to remote
+npm run supabase:migration:new # Create new migration
+```
+
+### Google Sheets Sync (from project root)
+
+```bash
+npm run sheets:pull   # Download data to local CSV/JSON
+npm run sheets:push   # Push local changes to Google Sheets
 ```
 
 ## Documentation
