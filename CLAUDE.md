@@ -440,15 +440,24 @@ npx shadcn@latest add [component]  # Add new component
 
 ### Backend (Apps Script)
 
+**CRITICAL: NEVER create new deployments with `clasp deploy`. Only use `clasp push`.**
+
+Creating new deployments changes the deployment URL, which breaks the production app and requires updating environment variables in Vercel. The deployment URL must remain constant.
+
 ```bash
 # Run from project root (clasp is configured at root level)
-npm run clasp:login   # Authenticate with Google
-npm run clasp:push    # Push code to Apps Script
-npm run clasp:pull    # Pull code from Apps Script
-npm run clasp:deploy  # Create new deployment
-npm run clasp:logs    # View execution logs
-npm run clasp:open    # Open in browser
+clasp push            # Push code to Apps Script (ONLY use this)
+clasp pull            # Pull code from Apps Script
+clasp open            # Open in browser
+
+# DO NOT USE these commands:
+# clasp deploy        # NEVER - creates new deployment URL
+# clasp deployments   # View only, don't create new ones
 ```
+
+**Current Production Deployment:**
+- Deployment ID: `AKfycbx4MsENMJksay3IxN0W5HEOyq91pAvMGPIBl9HrBoFly513srCdzVjWICzBK5BTMMHk`
+- Script ID: `1T4d1x26rN5oAbNZIvjU0x1z3FTUxd1UwIoJwyBhxaIB30fWsvBj8-rjw`
 
 ### Supabase
 
