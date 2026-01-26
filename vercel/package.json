@@ -1,6 +1,6 @@
 {
-  "name": "nextjs-app",
-  "version": "0.1.0",
+  "name": "sas-digital-toolkit",
+  "version": "2.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -19,7 +19,10 @@
     "supabase:db:push": "npx supabase db push",
     "supabase:db:pull": "npx supabase db pull",
     "sheets:pull": "node scripts/sheets-pull.js",
-    "sheets:push": "node scripts/sheets-push.js"
+    "sheets:push": "node scripts/sheets-push.js",
+    "edtech:import": "node scripts/edtech-import.js",
+    "edtech:import:apply": "node scripts/edtech-import.js --apply",
+    "edtech:import:local": "node scripts/edtech-import.js --apply --local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -54,7 +57,9 @@
     "react-dom": "19.2.3",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "vercel": "^50.5.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
