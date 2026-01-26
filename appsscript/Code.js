@@ -235,7 +235,14 @@ function doPost(e) {
     const params = {
       query: body.query,
       provider: body.provider,
-      appsData: typeof body.appsData === 'string' ? body.appsData : JSON.stringify(body.appsData)
+      appsData: typeof body.appsData === 'string' ? body.appsData : JSON.stringify(body.appsData),
+      // For bulkUpdate endpoint
+      updates: body.updates,
+      // For single update endpoint
+      productId: body.productId,
+      product_id: body.product_id,
+      field: body.field,
+      value: body.value
     };
 
     return handleApiRequest(endpoint, frontendKey, params);
