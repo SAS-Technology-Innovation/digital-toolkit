@@ -22,6 +22,26 @@
 // Add properties for SPREADSHEET_ID, SHEET_NAME, GEMINI_API_KEY, and CLAUDE_API_KEY.
 
 /**
+ * Parses a JSON field from the sheet (handles both JSON strings and arrays)
+ * @param {*} value - The value to parse
+ * @returns {Array} Parsed array or empty array
+ */
+function parseJsonField(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      // If not valid JSON, try splitting by comma
+      return value.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  return [];
+}
+
+/**
  * Creates a custom menu in Google Sheets when the spreadsheet is opened.
  * Called automatically by Google Sheets trigger system.
  *
@@ -47,9 +67,64 @@ function onOpen() {
     .addItem('✨ Enrich Missing Descriptions', 'enrichMissingDescriptions')
     .addItem('🔄 Refresh All Missing Data', 'enrichAllMissingData')
     .addSeparator()
+    .addItem('🔢 Generate Product IDs', 'generateProductIds')
+    .addSeparator()
     .addItem('🧪 Test Claude Connection', 'testClaude')
     .addItem('🧪 Test Gemini Connection', 'testGemini')
     .addToUi();
+}
+
+/**
+ * Generates sequential product_ids for all apps that don't have one.
+ * Can be run from the menu.
+ */
+function generateProductIds() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID');
+    const SHEET_NAME = scriptProperties.getProperty('SHEET_NAME');
+
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+
+    const productIdCol = headers.indexOf('product_id');
+    if (productIdCol === -1) {
+      SpreadsheetApp.getUi().alert('Error: product_id column not found');
+      return;
+    }
+
+    let updated = 0;
+    let nextId = 1;
+
+    // First pass: find the highest existing product_id
+    for (let i = 1; i < values.length; i++) {
+      const currentId = values[i][productIdCol];
+      if (currentId) {
+        const numId = parseInt(currentId);
+        if (!isNaN(numId) && numId >= nextId) {
+          nextId = numId + 1;
+        }
+      }
+    }
+
+    // Second pass: assign IDs to rows without one
+    for (let i = 1; i < values.length; i++) {
+      const currentId = values[i][productIdCol];
+      if (!currentId || currentId === '') {
+        sheet.getRange(i + 1, productIdCol + 1).setValue(String(nextId));
+        nextId++;
+        updated++;
+      }
+    }
+
+    SpreadsheetApp.getUi().alert('Generated ' + updated + ' product IDs. Next ID will be: ' + nextId);
+    Logger.log('Generated ' + updated + ' product IDs');
+
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('Error: ' + error.message);
+    Logger.log('Error generating product IDs: ' + error.message);
+  }
 }
 
 /**
@@ -542,7 +617,49 @@ function getDashboardData() {
         ssoEnabled: app.sso_enabled === true || app.sso_enabled.toString().toLowerCase() === 'true',
         logoUrl: app.logo_url || '',
         dateAdded: app.date_added || '',
-        renewalDate: app.renewal_date || ''
+        renewalDate: app.renewal_date || '',
+        vendor: app.vendor || '',
+
+        // EdTech Impact fields - Assessment
+        assessmentStatus: app.assessment_status || null,
+        globalRating: app.global_rating ? parseFloat(app.global_rating) : null,
+        recommendedReason: app.recommended_reason || '',
+
+        // EdTech Impact fields - Compliance
+        privacyPolicyUrl: app.privacy_policy_url || '',
+        termsUrl: app.terms_url || '',
+        gdprUrl: app.gdpr_url || '',
+        riskRating: app.risk_rating || '',
+
+        // EdTech Impact fields - Accessibility
+        accessibility: app.accessibility || '',
+        languages: parseJsonField(app.languages),
+
+        // EdTech Impact fields - Support
+        supportOptions: parseJsonField(app.support_options),
+        trainingOptions: parseJsonField(app.training_options),
+
+        // EdTech Impact fields - Commercial
+        purchaseModels: parseJsonField(app.purchase_models),
+        priceFrom: app.price_from || '',
+        alternatives: parseJsonField(app.alternatives),
+
+        // EdTech Impact fields - Contract
+        contractStartDate: app.contract_start_date || '',
+        contractEndDate: app.contract_end_date || '',
+        autoRenew: app.auto_renew === true || (app.auto_renew && app.auto_renew.toString().toLowerCase() === 'true'),
+        noticePeriod: app.notice_period || '',
+
+        // EdTech Impact fields - Internal
+        productChampion: app.product_champion || '',
+        productManager: app.product_manager || '',
+        providerContact: app.provider_contact || '',
+        financeContact: app.finance_contact || '',
+        notes: app.notes || '',
+
+        // EdTech Impact metadata
+        edtechImpactId: app.edtech_impact_id || null,
+        lastEdtechSync: app.last_edtech_sync || null
       };
     });
 
@@ -763,14 +880,8 @@ function updateAppField(productId, field, value) {
 
     // Find column indices
     const productIdCol = headers.indexOf('product_id');
+    const productNameCol = headers.indexOf('product_name');
     const targetCol = headers.indexOf(field);
-
-    if (productIdCol === -1) {
-      return JSON.stringify({
-        error: 'Column not found',
-        message: 'product_id column not found in sheet'
-      });
-    }
 
     if (targetCol === -1) {
       return JSON.stringify({
@@ -779,19 +890,33 @@ function updateAppField(productId, field, value) {
       });
     }
 
-    // Find the row with matching product_id
+    // Find the row - first try by product_id, then by product_name
     let targetRow = -1;
-    for (let i = 1; i < values.length; i++) {
-      if (values[i][productIdCol] === productId) {
-        targetRow = i + 1; // +1 because sheet rows are 1-indexed
-        break;
+
+    // Try product_id first
+    if (productIdCol !== -1) {
+      for (let i = 1; i < values.length; i++) {
+        if (String(values[i][productIdCol]) === String(productId)) {
+          targetRow = i + 1;
+          break;
+        }
+      }
+    }
+
+    // Fallback to product_name match
+    if (targetRow === -1 && productNameCol !== -1) {
+      for (let i = 1; i < values.length; i++) {
+        if (values[i][productNameCol] === productId) {
+          targetRow = i + 1;
+          break;
+        }
       }
     }
 
     if (targetRow === -1) {
       return JSON.stringify({
         error: 'Not found',
-        message: `No app found with product_id: ${productId}`
+        message: `No app found with product_id or name: ${productId}`
       });
     }
 
