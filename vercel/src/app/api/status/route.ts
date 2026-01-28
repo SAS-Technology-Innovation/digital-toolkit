@@ -1,48 +1,87 @@
 import { NextResponse } from "next/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import type { App } from "@/lib/supabase/types";
 
 /**
  * API Route: /api/status
- * Returns application status data
- * In production, this would connect to a monitoring service or database
- * For now, returns mock data for development/demo
+ * Returns application status data from Supabase.
+ * Each app gets a status based on its data presence (website reachability
+ * would require external monitoring; for now we surface what we have).
  */
-
-// Mock data for development/demo
-const mockStatusData = {
-  statuses: {
-    "Google Workspace": 1,
-    "Canvas LMS": 1,
-    Zoom: 1,
-    Seesaw: 1,
-    "Epic!": 1,
-    Desmos: 1,
-    Quizlet: 1,
-    Turnitin: 0, // Simulating an issue
-    "Adobe Creative Cloud": 1,
-  },
-  summary: {
-    total: 9,
-    up: 8,
-    down: 1,
-    uptime: 98.5,
-    avgResponseTime: 245,
-  },
-  lastChecked: new Date().toISOString(),
-};
 
 export async function GET() {
   try {
-    // In production, you could:
-    // 1. Fetch from Vercel Edge Config (requires @vercel/edge-config package)
-    // 2. Query a database
-    // 3. Call an external monitoring API
+    let supabase;
+    try {
+      supabase = createServiceClient();
+    } catch {
+      return NextResponse.json(
+        { error: "Supabase service client not configured" },
+        { status: 500 }
+      );
+    }
 
-    // For now, return mock data
-    return NextResponse.json(mockStatusData, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+    const { data: apps, error } = await supabase
+      .from("apps")
+      .select("*")
+      .order("product");
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // Build status map from real apps
+    const statuses: Record<string, number> = {};
+    const appDetails: Array<{
+      id: string;
+      name: string;
+      status: "operational" | "issues" | "maintenance";
+      website: string | null;
+      category: string | null;
+    }> = [];
+
+    for (const app of (apps as unknown as App[]) || []) {
+      // Default to operational; use status field if it indicates issues
+      const appStatus = (app.status as string | null)?.toLowerCase() || "";
+      let resolvedStatus: "operational" | "issues" | "maintenance" = "operational";
+      if (appStatus.includes("issue") || appStatus.includes("down") || appStatus === "inactive") {
+        resolvedStatus = "issues";
+      } else if (appStatus.includes("maintenance")) {
+        resolvedStatus = "maintenance";
+      }
+
+      statuses[app.product] = resolvedStatus === "operational" ? 1 : 0;
+      appDetails.push({
+        id: app.id,
+        name: app.product,
+        status: resolvedStatus,
+        website: app.website,
+        category: app.category,
+      });
+    }
+
+    const total = appDetails.length;
+    const up = appDetails.filter((a) => a.status === "operational").length;
+    const down = total - up;
+
+    return NextResponse.json(
+      {
+        statuses,
+        apps: appDetails,
+        summary: {
+          total,
+          up,
+          down,
+          uptime: total > 0 ? Math.round((up / total) * 1000) / 10 : 0,
+        },
+        lastChecked: new Date().toISOString(),
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching status data:", error);
 
@@ -50,21 +89,11 @@ export async function GET() {
       {
         error: "Failed to fetch status data",
         statuses: {},
-        summary: {
-          total: 0,
-          up: 0,
-          down: 0,
-          uptime: 0,
-          avgResponseTime: 0,
-        },
+        apps: [],
+        summary: { total: 0, up: 0, down: 0, uptime: 0 },
         lastChecked: null,
       },
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      { status: 500 }
     );
   }
 }

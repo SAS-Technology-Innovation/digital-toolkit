@@ -73,7 +73,7 @@ const roleGuides = [
     color: "bg-blue-100 text-blue-800",
   },
   {
-    role: "TIC (Technology Integration Coach)",
+    role: "TIC (Technology & Innovation Coordinator)",
     description: "Reviews teacher feedback and makes recommendations",
     capabilities: [
       "All Staff capabilities",
@@ -135,7 +135,7 @@ const workflowSteps = [
   {
     step: 3,
     title: "TIC Review",
-    description: "Technology Integration Coach reviews feedback and makes a recommendation",
+    description: "Technology & Innovation Coordinator reviews feedback and makes a recommendation",
     status: "assessor_review",
     icon: BookOpen,
   },
@@ -190,7 +190,7 @@ const faqs = [
   },
   {
     question: "What happens after I submit an assessment?",
-    answer: "Your assessment is aggregated with other teachers' feedback. A TIC (Technology Integration Coach) reviews all submissions, optionally generates an AI summary, and makes a recommendation. An Approver then makes the final decision on whether to renew, modify, or retire the app."
+    answer: "Your assessment is aggregated with other teachers' feedback. A TIC (Technology & Innovation Coordinator) reviews all submissions, optionally generates an AI summary, and makes a recommendation. An Approver then makes the final decision on whether to renew, modify, or retire the app."
   },
   {
     question: "How do I request a new app?",

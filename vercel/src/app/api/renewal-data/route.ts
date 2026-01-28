@@ -4,7 +4,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 /**
  * API Route: /api/renewal-data
  * Fetches app renewal data from Supabase
- * Falls back to mock data if Supabase is not configured
  */
 
 interface SupabaseApp {
@@ -84,58 +83,23 @@ function transformToRenewal(app: SupabaseApp): RenewalApp {
   };
 }
 
-// Mock data for when Supabase is not configured
-const mockRenewalData = {
-  apps: [
-    {
-      id: "1",
-      product: "Adobe Creative Cloud",
-      vendor: "Adobe",
-      category: "Creative",
-      renewalDate: "2024-02-15",
-      annualCost: 25000,
-      licenses: 150,
-      licenseType: "Site License",
-      status: "urgent",
-      division: "Whole School",
-      utilization: 85,
-    },
-    {
-      id: "2",
-      product: "Canva for Education",
-      vendor: "Canva",
-      category: "Creative",
-      renewalDate: "2024-03-01",
-      annualCost: 0,
-      licenses: 500,
-      licenseType: "Free",
-      status: "upcoming",
-      division: "Whole School",
-      utilization: 92,
-    },
-  ],
-  summary: {
-    totalApps: 2,
-    totalAnnualCost: 25000,
-    urgentCount: 1,
-    avgUtilization: 88,
-  },
+const emptyRenewalResponse = {
+  apps: [],
+  summary: { totalApps: 0, totalAnnualCost: 0, urgentCount: 0, avgUtilization: 0 },
 };
 
 export async function GET() {
   try {
-    // Try to create Supabase client
+    // Create Supabase client
     let supabase;
     try {
       supabase = await createServerSupabaseClient();
     } catch {
-      console.log("Supabase not configured, using mock data");
-      return NextResponse.json(mockRenewalData, {
-        headers: {
-          "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
-          "X-Data-Source": "mock",
-        },
-      });
+      console.error("Supabase not configured");
+      return NextResponse.json(
+        { error: "Database not configured" },
+        { status: 500 }
+      );
     }
 
     // Fetch all apps from Supabase
@@ -146,21 +110,16 @@ export async function GET() {
 
     if (error) {
       console.error("Supabase error:", error);
-      return NextResponse.json(mockRenewalData, {
-        headers: {
-          "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
-          "X-Data-Source": "mock-fallback",
-        },
-      });
+      return NextResponse.json(
+        { error: "Failed to fetch renewal data from database" },
+        { status: 500 }
+      );
     }
 
     if (!apps || apps.length === 0) {
-      console.log("No apps in Supabase, using mock data");
-      return NextResponse.json(mockRenewalData, {
-        headers: {
-          "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
-          "X-Data-Source": "mock-empty",
-        },
+      console.log("No apps in Supabase");
+      return NextResponse.json(emptyRenewalResponse, {
+        headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=30" },
       });
     }
 
@@ -198,11 +157,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching renewal data:", error);
-    return NextResponse.json(mockRenewalData, {
-      headers: {
-        "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
-        "X-Data-Source": "mock-error-fallback",
-      },
-    });
+    return NextResponse.json(
+      { error: "Failed to fetch renewal data" },
+      { status: 500 }
+    );
   }
 }

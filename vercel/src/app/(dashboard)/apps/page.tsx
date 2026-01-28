@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Smartphone,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,19 @@ interface App extends AppData {
   id: string;
 }
 
+// Raw API response structure (same as dashboard)
+interface RawDivisionData {
+  name: string;
+  apps: AppData[];
+}
+
+interface RawDashboardData {
+  wholeSchool: RawDivisionData;
+  elementary: RawDivisionData;
+  middleSchool: RawDivisionData;
+  highSchool: RawDivisionData;
+}
+
 // Helper to check if date is within X days (for NEW badge)
 function isWithinDays(dateString: string | undefined, days: number): boolean {
   if (!dateString) return false;
@@ -63,157 +77,6 @@ function isWithinDays(dateString: string | undefined, days: number): boolean {
   }
 }
 
-// Mock data - will be fetched from API
-const mockApps: App[] = [
-  {
-    id: "1",
-    product: "Google Workspace",
-    description: "Collaborative productivity suite including Docs, Sheets, Slides, and more for seamless teamwork.",
-    category: "Productivity",
-    subject: "All Subjects",
-    department: "Technology",
-    audience: "Teachers, Students, Staff",
-    website: "https://workspace.google.com",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "whole-school",
-    gradeLevels: "K-12",
-  },
-  {
-    id: "2",
-    product: "Canvas LMS",
-    description: "Learning management system for course content, assignments, and gradebook.",
-    category: "Learning Management",
-    subject: "All Subjects",
-    department: "Technology",
-    audience: "Teachers, Students",
-    website: "https://canvas.instructure.com",
-    tutorialLink: "https://community.canvaslms.com",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "whole-school",
-    gradeLevels: "K-12",
-  },
-  {
-    id: "3",
-    product: "Seesaw",
-    description: "Student-driven digital portfolio and parent communication platform.",
-    category: "Portfolio",
-    subject: "All Subjects",
-    department: "Elementary",
-    audience: "Teachers, Students, Parents",
-    website: "https://web.seesaw.me",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "elementary",
-    dateAdded: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    gradeLevels: "K-5",
-  },
-  {
-    id: "4",
-    product: "Desmos",
-    description: "Interactive graphing calculator and math activities for visualization.",
-    category: "STEM",
-    subject: "Math",
-    department: "Mathematics",
-    audience: "Teachers, Students",
-    website: "https://desmos.com",
-    ssoEnabled: false,
-    mobileApp: "Yes",
-    division: "whole-school",
-    gradeLevels: "6-12",
-  },
-  {
-    id: "5",
-    product: "Canva for Education",
-    description: "Design platform for creating presentations, posters, and visual content.",
-    category: "Creative",
-    subject: "All Subjects",
-    department: "Technology",
-    audience: "Teachers, Students",
-    website: "https://canva.com/education",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "whole-school",
-    dateAdded: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    gradeLevels: "K-12",
-  },
-  {
-    id: "6",
-    product: "Turnitin",
-    description: "Plagiarism detection and writing feedback tool for academic integrity.",
-    category: "Assessment",
-    subject: "All Subjects",
-    department: "Academic",
-    audience: "Teachers, Students",
-    website: "https://turnitin.com",
-    ssoEnabled: true,
-    mobileApp: "No",
-    division: "high-school",
-    gradeLevels: "9-12",
-  },
-  {
-    id: "7",
-    product: "Epic!",
-    description: "Digital library with over 40,000 books for children aged 12 and under.",
-    category: "Reading",
-    subject: "English",
-    department: "English",
-    audience: "Teachers, Students",
-    website: "https://getepic.com",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "elementary",
-    gradeLevels: "K-5",
-  },
-  {
-    id: "8",
-    product: "BrainPOP",
-    description: "Animated educational content covering science, math, history, and more.",
-    category: "Learning",
-    subject: "Multiple",
-    department: "Academic",
-    audience: "Teachers, Students",
-    website: "https://brainpop.com",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "middle-school",
-    gradeLevels: "6-8",
-  },
-  {
-    id: "9",
-    product: "Adobe Creative Cloud",
-    description: "Professional creative tools including Photoshop, Illustrator, and Premiere Pro.",
-    category: "Creative",
-    subject: "Arts",
-    department: "Arts",
-    audience: "Teachers, Students",
-    website: "https://adobe.com",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "high-school",
-    gradeLevels: "9-12",
-  },
-  {
-    id: "10",
-    product: "Naviance",
-    description: "College and career readiness platform with planning tools and assessments.",
-    category: "College & Career",
-    subject: "Counseling",
-    department: "Counseling",
-    audience: "Teachers, Students, Parents",
-    website: "https://naviance.com",
-    ssoEnabled: true,
-    mobileApp: "Yes",
-    division: "high-school",
-    gradeLevels: "9-12",
-  },
-];
-
-const categories = ["All", "Productivity", "Learning Management", "Creative", "STEM", "Assessment", "Portfolio", "Reading", "Learning", "College & Career"];
-const departments = ["All", "Technology", "Elementary", "Mathematics", "Academic", "Arts", "English", "Counseling"];
-const audiences = ["Teachers", "Students", "Staff", "Parents"];
-
 // Division tabs configuration matching dashboard
 const divisionTabs = [
   { id: "All", label: "All Apps", icon: Globe, color: "bg-gray-600" },
@@ -222,6 +85,17 @@ const divisionTabs = [
   { id: "middle-school", label: "Middle School", icon: GraduationCap, color: "bg-[#a0192a]" },
   { id: "high-school", label: "High School", icon: Building2, color: "bg-[#1a2d58]" },
 ];
+
+// Map API division keys to tab ids
+const divisionKeyToTabId: Record<string, string> = {
+  wholeSchool: "whole-school",
+  elementary: "elementary",
+  middleSchool: "middle-school",
+  highSchool: "high-school",
+};
+
+// Static audience options (these are the known audience types)
+const audiences = ["Teachers", "Students", "Staff", "Parents"];
 
 // DataTable columns definition
 function createColumns(onShowDetails: (app: App) => void): ColumnDef<App>[] {
@@ -244,7 +118,11 @@ function createColumns(onShowDetails: (app: App) => void): ColumnDef<App>[] {
         return (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-sm font-bold shrink-0">
-              {app.product.charAt(0)}
+              {app.logoUrl ? (
+                <img src={app.logoUrl} alt="" className="w-8 h-8 rounded object-contain" />
+              ) : (
+                app.product.charAt(0)
+              )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -369,13 +247,93 @@ function AppsPageContent() {
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Real data state
+  const [allApps, setAllApps] = useState<App[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch real data from API on mount
+  useEffect(() => {
+    fetch("/api/data")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+        return res.json();
+      })
+      .then((json: RawDashboardData) => {
+        if ((json as unknown as { error: string }).error) {
+          throw new Error((json as unknown as { error: string }).error);
+        }
+
+        // Flatten all division apps into a single deduplicated array
+        const appMap = new Map<string, App>();
+        const divisionKeys = ["wholeSchool", "elementary", "middleSchool", "highSchool"] as const;
+
+        for (const key of divisionKeys) {
+          const divisionData = json[key];
+          if (!divisionData?.apps) continue;
+
+          const tabId = divisionKeyToTabId[key];
+          for (const app of divisionData.apps) {
+            // Use product name as dedup key (product_id might not exist on AppData)
+            const uniqueKey = app.product;
+            if (!uniqueKey) continue;
+
+            if (!appMap.has(uniqueKey)) {
+              appMap.set(uniqueKey, {
+                ...app,
+                id: uniqueKey,
+                // Normalize division for filtering
+                division: app.division || tabId,
+              });
+            }
+          }
+        }
+
+        setAllApps(Array.from(appMap.values()));
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load apps:", err);
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  // Dynamically generate filter options from real data
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    for (const app of allApps) {
+      if (app.category) cats.add(app.category);
+    }
+    return ["All", ...Array.from(cats).sort()];
+  }, [allApps]);
+
+  const departments = useMemo(() => {
+    const depts = new Set<string>();
+    for (const app of allApps) {
+      if (app.department) depts.add(app.department);
+    }
+    return ["All", ...Array.from(depts).sort()];
+  }, [allApps]);
+
   const handleShowDetails = (app: App) => {
     setSelectedApp(app);
     setModalOpen(true);
   };
 
+  // Normalize division string for filtering
+  const normalizeDivision = (div: string | undefined): string => {
+    if (!div) return "";
+    const d = div.toLowerCase();
+    if (d.includes("whole") || d.includes("school-wide")) return "whole-school";
+    if (d.includes("elem")) return "elementary";
+    if (d.includes("middle")) return "middle-school";
+    if (d.includes("high")) return "high-school";
+    return d;
+  };
+
   const filteredApps = useMemo(() => {
-    return mockApps
+    return allApps
       .filter((app) => {
         const matchesSearch =
           !searchQuery ||
@@ -388,7 +346,8 @@ function AppsPageContent() {
           app.category?.toLowerCase() === selectedCategory.toLowerCase();
 
         const matchesDivision =
-          selectedDivision === "All" || app.division === selectedDivision;
+          selectedDivision === "All" ||
+          normalizeDivision(app.division) === selectedDivision;
 
         const matchesDepartment =
           selectedDepartment === "All" ||
@@ -410,7 +369,7 @@ function AppsPageContent() {
         }
         return 0;
       });
-  }, [searchQuery, selectedCategory, selectedDivision, selectedDepartment, selectedAudiences, sortBy]);
+  }, [allApps, searchQuery, selectedCategory, selectedDivision, selectedDepartment, selectedAudiences, sortBy]);
 
   const toggleAudience = (audience: string) => {
     setSelectedAudiences((prev) =>
@@ -429,6 +388,30 @@ function AppsPageContent() {
   };
 
   const columns = useMemo(() => createColumns(handleShowDetails), []);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading apps...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <p className="text-destructive font-semibold mb-2">Error loading apps</p>
+          <p className="text-muted-foreground text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -558,7 +541,7 @@ function AppsPageContent() {
 
       {/* Results Count */}
       <p className="text-sm text-muted-foreground">
-        Showing {filteredApps.length} of {mockApps.length} apps
+        Showing {filteredApps.length} of {allApps.length} apps
       </p>
 
       {/* Apps Grid/List */}
