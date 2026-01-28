@@ -29,12 +29,21 @@ interface SupabaseApp {
   licenses: number | null;
   created_at: string;
   updated_at: string;
-  // New fields from Apps Script sync
+  // Fields from Apps Script sync
   enterprise: boolean;
   budget: string | null;
   support_email: string | null;
   date_added: string | null;
   is_whole_school: boolean;
+  // EdTech Impact fields
+  global_rating: number | null;
+  assessment_status: string | null;
+  recommended_reason: string | null;
+  accessibility: string | null;
+  price_from: string | null;
+  product_champion: string | null;
+  product_manager: string | null;
+  edtech_impact_id: string | null;
 }
 
 interface DashboardApp {
@@ -54,9 +63,22 @@ interface DashboardApp {
   licenseType: string;
   renewalDate: string;
   spend: number | string;
+  annualCost: number | null;
+  licenses: number | null;
+  vendor: string;
+  budget: string;
   dateAdded: string;
   enterprise: boolean;
   isWholeSchool?: boolean;
+  // EdTech Impact fields
+  globalRating: number | null;
+  assessmentStatus: string | null;
+  recommendedReason: string | null;
+  accessibility: string | null;
+  priceFrom: string | null;
+  productChampion: string | null;
+  productManager: string | null;
+  edtechImpactId: string | null;
 }
 
 /**
@@ -80,8 +102,21 @@ function transformToDashboard(app: SupabaseApp): DashboardApp {
     licenseType: app.license_type || "N/A",
     renewalDate: app.renewal_date || "",
     spend: app.annual_cost === 0 ? "Free" : (app.annual_cost || "N/A"),
-    dateAdded: app.date_added || "", // Use actual date_added from Apps Script
-    enterprise: app.enterprise, // Use enterprise field from Apps Script
+    annualCost: app.annual_cost,
+    licenses: app.licenses,
+    vendor: app.vendor || "",
+    budget: app.budget || "",
+    dateAdded: app.date_added || "",
+    enterprise: app.enterprise,
+    // EdTech Impact fields
+    globalRating: app.global_rating,
+    assessmentStatus: app.assessment_status,
+    recommendedReason: app.recommended_reason,
+    accessibility: app.accessibility,
+    priceFrom: app.price_from,
+    productChampion: app.product_champion,
+    productManager: app.product_manager,
+    edtechImpactId: app.edtech_impact_id,
   };
 }
 

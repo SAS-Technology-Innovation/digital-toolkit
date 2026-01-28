@@ -18,6 +18,10 @@ import {
   ShieldCheck,
   Smartphone,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -246,6 +250,8 @@ function AppsPageContent() {
   const [sortBy, setSortBy] = useState("name");
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [gridPage, setGridPage] = useState(0);
+  const [gridPageSize, setGridPageSize] = useState(24);
 
   // Real data state
   const [allApps, setAllApps] = useState<App[]>([]);
@@ -378,6 +384,14 @@ function AppsPageContent() {
         : [...prev, audience]
     );
   };
+
+  // Reset grid page when filters change
+  useEffect(() => {
+    setGridPage(0);
+  }, [searchQuery, selectedCategory, selectedDivision, selectedDepartment, selectedAudiences, sortBy]);
+
+  const gridTotalPages = Math.max(1, Math.ceil(filteredApps.length / gridPageSize));
+  const gridPageApps = filteredApps.slice(gridPage * gridPageSize, (gridPage + 1) * gridPageSize);
 
   const clearAllFilters = () => {
     setSearchQuery("");
@@ -546,30 +560,103 @@ function AppsPageContent() {
 
       {/* Apps Grid/List */}
       {viewMode === "grid" ? (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredApps.map((app) => (
-            <AppCard
-              key={app.id}
-              app={app}
-              onShowDetails={(appData) => handleShowDetails(appData as App)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {gridPageApps.map((app) => (
+              <AppCard
+                key={app.id}
+                app={app}
+                onShowDetails={(appData) => handleShowDetails(appData as App)}
+              />
+            ))}
+          </div>
+
+          {filteredApps.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No apps found matching your criteria.</p>
+              <Button variant="link" onClick={clearAllFilters}>
+                Clear all filters
+              </Button>
+            </div>
+          )}
+
+          {/* Grid Pagination */}
+          {filteredApps.length > 0 && (
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {gridPage * gridPageSize + 1} to{" "}
+                  {Math.min((gridPage + 1) * gridPageSize, filteredApps.length)}{" "}
+                  of {filteredApps.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Per page</span>
+                  <Select
+                    value={`${gridPageSize}`}
+                    onValueChange={(value) => {
+                      setGridPageSize(Number(value));
+                      setGridPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[12, 24, 48, 96].map((size) => (
+                        <SelectItem key={size} value={`${size}`}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setGridPage(0)}
+                  disabled={gridPage === 0}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setGridPage((p) => Math.max(0, p - 1))}
+                  disabled={gridPage === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">
+                  Page {gridPage + 1} of {gridTotalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setGridPage((p) => Math.min(gridTotalPages - 1, p + 1))}
+                  disabled={gridPage >= gridTotalPages - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setGridPage(gridTotalPages - 1)}
+                  disabled={gridPage >= gridTotalPages - 1}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <DataTable
           columns={columns}
           data={filteredApps}
           searchValue={searchQuery}
         />
-      )}
-
-      {filteredApps.length === 0 && viewMode === "grid" && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No apps found matching your criteria.</p>
-          <Button variant="link" onClick={clearAllFilters}>
-            Clear all filters
-          </Button>
-        </div>
       )}
 
       {/* App Detail Modal - Using shadcn Dialog */}
