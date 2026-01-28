@@ -268,6 +268,38 @@ function transformRow(row) {
 }
 
 // =============================================================================
+// SYNC OPERATIONS
+// =============================================================================
+
+async function triggerPushSync(useLocal = false) {
+  const baseUrl = useLocal ? "http://localhost:3456" : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3456");
+
+  try {
+    const response = await fetch(`${baseUrl}/api/sync`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ direction: "push" }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `Sync API failed: ${response.status} - ${errorText}` };
+    }
+
+    const result = await response.json();
+    return {
+      success: result.success,
+      records_synced: result.records_synced,
+      error: result.error,
+    };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// =============================================================================
 // DATABASE OPERATIONS
 // =============================================================================
 
@@ -318,17 +350,17 @@ async function applyToDatabase(transformed, useLocal = false) {
   }
 
   const stats = {
+    created: 0,
     updated: 0,
-    notFound: 0,
     errors: 0,
     skipped: 0,
   };
 
-  const notFoundProducts = [];
+  const createdProducts = [];
   const updatedProducts = [];
   const errorProducts = [];
 
-  console.log("\nProcessing updates...");
+  console.log("\nProcessing imports...");
 
   for (const item of transformed) {
     if (!item.product) {
@@ -342,9 +374,66 @@ async function applyToDatabase(transformed, useLocal = false) {
       existingApp = appsByName.get(item.product.toLowerCase());
     }
 
+    // If app doesn't exist, CREATE it
     if (!existingApp) {
-      stats.notFound++;
-      notFoundProducts.push(item.product);
+      const newAppData = {
+        product: item.product,
+        product_id: item.product_id,
+        category: item.category,
+        vendor: item.vendor,
+        website: item.website,
+        description: item.description,
+        grade_levels: item.grade_levels,
+        audience: item.audience,
+        department: item.department,
+        budget: item.budget,
+        annual_cost: item.annual_cost,
+        licenses: item.licenses,
+        // EdTech Impact fields
+        assessment_status: item.assessment_status,
+        global_rating: item.global_rating,
+        recommended_reason: item.recommended_reason,
+        privacy_policy_url: item.privacy_policy_url,
+        terms_url: item.terms_url,
+        gdpr_url: item.gdpr_url,
+        risk_rating: item.risk_rating,
+        accessibility: item.accessibility,
+        languages: item.languages,
+        support_options: item.support_options,
+        training_options: item.training_options,
+        purchase_models: item.purchase_models,
+        price_from: item.price_from,
+        alternatives: item.alternatives,
+        contract_start_date: item.contract_start_date,
+        contract_end_date: item.contract_end_date,
+        auto_renew: item.auto_renew,
+        notice_period: item.notice_period,
+        product_champion: item.product_champion,
+        product_manager: item.product_manager,
+        provider_contact: item.provider_contact,
+        finance_contact: item.finance_contact,
+        // Sync metadata
+        last_edtech_sync: item.last_edtech_sync,
+      };
+
+      // Remove null/undefined values
+      Object.keys(newAppData).forEach(key => {
+        if (newAppData[key] === null || newAppData[key] === undefined) {
+          delete newAppData[key];
+        }
+      });
+
+      const { error: insertError } = await supabase
+        .from("apps")
+        .insert(newAppData);
+
+      if (insertError) {
+        stats.errors++;
+        errorProducts.push({ product: item.product, error: insertError.message, action: "create" });
+      } else {
+        stats.created++;
+        createdProducts.push(item.product);
+      }
       continue;
     }
 
@@ -423,7 +512,7 @@ async function applyToDatabase(transformed, useLocal = false) {
     }
   }
 
-  return { stats, notFoundProducts, updatedProducts, errorProducts };
+  return { stats, createdProducts, updatedProducts, errorProducts };
 }
 
 // =============================================================================
@@ -587,25 +676,25 @@ async function main() {
       console.log("\n" + "=".repeat(60));
       console.log("DATABASE UPDATE COMPLETE");
       console.log("=".repeat(60));
+      console.log(`Created: ${result.stats.created}`);
       console.log(`Updated: ${result.stats.updated}`);
-      console.log(`Not found in DB: ${result.stats.notFound}`);
       console.log(`Errors: ${result.stats.errors}`);
       console.log(`Skipped: ${result.stats.skipped}`);
 
-      if (result.notFoundProducts.length > 0) {
-        console.log("\nProducts not found in database:");
-        for (const name of result.notFoundProducts.slice(0, 20)) {
-          console.log(`  - ${name}`);
+      if (result.createdProducts.length > 0) {
+        console.log("\nNewly created products:");
+        for (const name of result.createdProducts.slice(0, 20)) {
+          console.log(`  + ${name}`);
         }
-        if (result.notFoundProducts.length > 20) {
-          console.log(`  ... and ${result.notFoundProducts.length - 20} more`);
+        if (result.createdProducts.length > 20) {
+          console.log(`  ... and ${result.createdProducts.length - 20} more`);
         }
       }
 
       if (result.errorProducts.length > 0) {
         console.log("\nProducts with errors:");
-        for (const { product, error } of result.errorProducts) {
-          console.log(`  - ${product}: ${error}`);
+        for (const { product, error, action } of result.errorProducts) {
+          console.log(`  - ${product} (${action || "update"}): ${error}`);
         }
       }
 
@@ -613,6 +702,25 @@ async function main() {
       const resultsPath = outputPath.replace("-preview.json", "-results.json");
       fs.writeFileSync(resultsPath, JSON.stringify(result, null, 2));
       console.log(`\nResults saved to: ${resultsPath}`);
+
+      // Trigger push sync to Google Sheets if any changes were made
+      if (result.stats.created > 0 || result.stats.updated > 0) {
+        console.log("\n" + "=".repeat(60));
+        console.log("SYNCING TO GOOGLE SHEETS...");
+        console.log("=".repeat(60));
+
+        try {
+          const syncResult = await triggerPushSync(useLocal);
+          if (syncResult.success) {
+            console.log(`✓ Push sync complete: ${syncResult.records_synced} records synced to Google Sheets`);
+          } else {
+            console.log(`✗ Push sync failed: ${syncResult.error}`);
+          }
+        } catch (syncError) {
+          console.log(`✗ Push sync error: ${syncError.message}`);
+          console.log("  You can manually sync by running: npm run sync:push");
+        }
+      }
     }
 
   } catch (error) {

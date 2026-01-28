@@ -1,5 +1,18 @@
 # Google Apps Script Deployment Guide
 
+> ⚠️ **CRITICAL WARNING** ⚠️
+>
+> **NEVER use `clasp deploy` or `npm run deploy`** - this creates a new deployment URL and BREAKS PRODUCTION.
+>
+> **ONLY use `clasp push` or `npm run push`** to update code.
+>
+> The production Apps Script URL is FINAL and must NEVER change:
+> ```
+> https://script.google.com/macros/s/AKfycbwa6PVAO9kzsNqluKYXftwDuOAPFTsIB7elk3IG-SuA95xZlMIOSW_VH5yt-Ic_vbYv/exec
+> ```
+>
+> Script ID: `1T4d1x26rN5oAbNZIvjU0x1z3FTUxd1UwIoJwyBhxaIB30fWsvBj8-rjw`
+
 ## Local Development Setup
 
 ### First Time Setup
@@ -22,11 +35,8 @@
 ### Daily Development Commands
 
 ```bash
-# Push your code changes
+# Push your code changes (ONLY use this for updates)
 npm run push
-
-# Create a new deployment
-npm run deploy
 
 # View execution logs
 npm run logs
@@ -36,6 +46,8 @@ npm run open
 
 # Pull latest changes from Apps Script
 npm run pull
+
+# ❌ NEVER USE: npm run deploy - this breaks production!
 ```
 
 ## GitHub Actions Setup
@@ -67,16 +79,15 @@ This secret contains your Google authentication tokens.
 
 This secret ensures that GitHub Actions updates a single, stable web app URL instead of creating a new one on every deployment.
 
-1.  **Create an initial deployment manually:**
-    If you haven't deployed before, run:
-    ```bash
-    npm run deploy
-    ```
+> ⚠️ **IMPORTANT**: The deployment already exists. NEVER create a new one.
 
-2.  **Find the Deployment ID:**
+1.  **Use the existing Deployment ID:**
+    The production deployment ID is already configured. Do NOT create new deployments.
+
+2.  **If you need to find the Deployment ID:**
     -   Open the Apps Script project (`npm run open`).
     -   Go to **Deploy > Manage deployments**.
-    -   Find your active "Web app" deployment and click the three dots (...) > **Copy ID**. The ID will start with `AKfyc...`.
+    -   Find the active "Web app" deployment and click the three dots (...) > **Copy ID**.
 
 3.  **Add to GitHub Secrets:**
     -   Go to your repository Settings → Secrets and variables → Actions
@@ -168,11 +179,12 @@ digital-toolkit/
    - Check Apps Script project permissions
    - Verify files are valid JavaScript/HTML
 
-### Manual Deployment
+### Manual Code Push
 
-If automatic deployment fails, you can always deploy manually:
+If automatic deployment fails, you can push code manually:
 
 ```bash
 npm run push
-npm run deploy
 ```
+
+> ⚠️ **NEVER use `npm run deploy`** - this creates a new deployment URL and breaks production. Only push code, never deploy.

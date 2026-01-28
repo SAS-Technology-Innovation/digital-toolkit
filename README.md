@@ -189,12 +189,20 @@ npm run test:run      # Run tests
 
 ### Backend Commands (from project root)
 
+> ⚠️ **CRITICAL: NEVER use `clasp deploy`** - Only use `clasp push`. Creating new deployments breaks production.
+
 ```bash
-npm run clasp:push    # Push to Apps Script
+npm run clasp:push    # Push to Apps Script (ONLY use this for updates)
 npm run clasp:pull    # Pull from Apps Script
-npm run clasp:deploy  # Create deployment
 npm run clasp:logs    # View logs
 npm run clasp:open    # Open in browser
+
+# ❌ NEVER create new deployments - the URL must stay constant
+```
+
+**Production Apps Script URL (FINAL):**
+```
+https://script.google.com/macros/s/AKfycbwa6PVAO9kzsNqluKYXftwDuOAPFTsIB7elk3IG-SuA95xZlMIOSW_VH5yt-Ic_vbYv/exec
 ```
 
 ### Supabase Commands (from project root)
