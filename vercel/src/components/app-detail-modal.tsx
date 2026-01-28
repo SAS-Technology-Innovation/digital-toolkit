@@ -98,10 +98,11 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [userProfile, setUserProfile] = useState<{ role: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ role: string; roles?: string[] } | null>(null);
 
   // Check if current user can manage assignments (admin or tic)
-  const canManageAssignments = userProfile && ["admin", "tic"].includes(userProfile.role);
+  const userRoles = userProfile?.roles || (userProfile?.role ? [userProfile.role] : []);
+  const canManageAssignments = userProfile && (userRoles.includes("admin") || userRoles.includes("tic"));
 
   // Fetch user profile to check permissions
   useEffect(() => {
@@ -110,7 +111,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
         .then((res) => res.json())
         .then((data) => {
           if (data.user) {
-            setUserProfile({ role: data.user.role });
+            setUserProfile({ role: data.user.role, roles: data.user.roles });
           }
         })
         .catch(() => setUserProfile(null));

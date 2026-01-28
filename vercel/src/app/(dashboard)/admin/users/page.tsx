@@ -50,10 +50,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
@@ -85,6 +91,12 @@ function getRoleBadgeVariant(role: UserRole): "default" | "secondary" | "outline
     default:
       return "outline";
   }
+}
+
+/** Get the effective roles array from a user profile (handles legacy single role) */
+function getUserRoles(user: UserProfile): string[] {
+  if (user.roles && user.roles.length > 0) return user.roles;
+  return [user.role || "staff"];
 }
 
 function getUserInitials(user: UserProfile): string {
@@ -121,7 +133,7 @@ export default function AdminUsersPage() {
     name: "",
     department: "",
     division: "",
-    role: "staff" as UserRole,
+    roles: ["staff"] as string[],
   });
   const [addingUser, setAddingUser] = useState(false);
 
@@ -157,28 +169,33 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Update user role
-  const updateUserRole = async (userId: string, newRole: UserRole) => {
+  // Update user roles (multi-role)
+  const updateUserRoles = async (userId: string, newRoles: string[]) => {
+    if (newRoles.length === 0) {
+      toast.error("User must have at least one role");
+      return;
+    }
+
     setUpdatingUserId(userId);
     try {
       const response = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ roles: newRoles }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to update role");
+        throw new Error(data.error || "Failed to update roles");
       }
 
       const data = await response.json();
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? data.user : u))
       );
-      toast.success(`Role updated to ${newRole}`);
+      toast.success(`Roles updated to: ${newRoles.join(", ")}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update role");
+      toast.error(err instanceof Error ? err.message : "Failed to update roles");
     } finally {
       setUpdatingUserId(null);
     }
@@ -211,6 +228,19 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Toggle a role in the new user form
+  const toggleNewUserRole = (role: string) => {
+    setNewUser((prev) => {
+      const current = prev.roles;
+      if (current.includes(role)) {
+        // Don't allow removing last role
+        if (current.length <= 1) return prev;
+        return { ...prev, roles: current.filter((r) => r !== role) };
+      }
+      return { ...prev, roles: [...current, role] };
+    });
+  };
+
   // Add new user
   const handleAddUser = async () => {
     if (!newUser.email) {
@@ -240,7 +270,7 @@ export default function AdminUsersPage() {
         name: "",
         department: "",
         division: "",
-        role: "staff",
+        roles: ["staff"],
       });
       toast.success(`User ${data.user.email} created`);
     } catch (err) {
@@ -250,12 +280,14 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Stats
+  // Stats - count from roles array
+  const hasRole = (u: UserProfile, role: string) =>
+    getUserRoles(u).includes(role);
   const roleStats = {
-    admin: users.filter((u) => u.role === "admin").length,
-    approver: users.filter((u) => u.role === "approver").length,
-    tic: users.filter((u) => u.role === "tic").length,
-    staff: users.filter((u) => u.role === "staff").length,
+    admin: users.filter((u) => hasRole(u, "admin")).length,
+    approver: users.filter((u) => hasRole(u, "approver")).length,
+    tic: users.filter((u) => hasRole(u, "tic")).length,
+    staff: users.filter((u) => hasRole(u, "staff")).length,
     active: users.filter((u) => u.is_active).length,
     inactive: users.filter((u) => !u.is_active).length,
   };
@@ -353,29 +385,27 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={newUser.role}
-                    onValueChange={(value) =>
-                      setNewUser((prev) => ({ ...prev, role: value as UserRole }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLES.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          <div className="flex flex-col">
-                            <span>{role.label}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {role.description}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Roles</Label>
+                  <div className="space-y-2 rounded-md border p-3">
+                    {ROLES.map((role) => (
+                      <div key={role.value} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`new-role-${role.value}`}
+                          checked={newUser.roles.includes(role.value)}
+                          onCheckedChange={() => toggleNewUserRole(role.value)}
+                        />
+                        <label
+                          htmlFor={`new-role-${role.value}`}
+                          className="text-sm font-medium leading-none cursor-pointer"
+                        >
+                          {role.label}
+                        </label>
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {role.description}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -508,7 +538,7 @@ export default function AdminUsersPage() {
                     <TableHead>User</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Division</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Roles</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Last Submission</TableHead>
                     <TableHead className="w-12"></TableHead>
@@ -522,103 +552,135 @@ export default function AdminUsersPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                                {getUserInitials(user)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{user.name || "—"}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
+                    users.map((user) => {
+                      const userRoles = getUserRoles(user);
+                      return (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                                  {getUserInitials(user)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{user.name || "—"}</p>
+                                <p className="text-sm text-muted-foreground">{user.email}</p>
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{user.department || "—"}</TableCell>
-                        <TableCell>
-                          {user.division ? (
-                            <span className="text-sm">{user.division.replace("SAS ", "")}</span>
-                          ) : (
-                            "—"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={user.role}
-                            onValueChange={(value) => updateUserRole(user.id, value as UserRole)}
-                            disabled={updatingUserId === user.id}
-                          >
-                            <SelectTrigger className="w-32">
-                              <Badge variant={getRoleBadgeVariant(user.role)}>
-                                {updatingUserId === user.id ? (
-                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                ) : user.role === "admin" ? (
-                                  <Shield className="h-3 w-3 mr-1" />
-                                ) : null}
-                                {ROLES.find((r) => r.value === user.role)?.label || user.role}
-                              </Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ROLES.map((role) => (
-                                <SelectItem key={role.value} value={role.value}>
-                                  {role.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={user.is_active}
-                              onCheckedChange={(checked) => toggleUserActive(user.id, checked)}
-                              disabled={updatingUserId === user.id}
-                            />
-                            {user.is_active ? (
-                              <Badge variant="outline" className="text-green-600 border-green-600">
-                                <CheckCircle2 className="h-3 w-3 mr-1" />
-                                Active
-                              </Badge>
+                          </TableCell>
+                          <TableCell>{user.department || "—"}</TableCell>
+                          <TableCell>
+                            {user.division ? (
+                              <span className="text-sm">{user.division.replace("SAS ", "")}</span>
                             ) : (
-                              <Badge variant="outline" className="text-gray-500">
-                                <XCircle className="h-3 w-3 mr-1" />
-                                Inactive
-                              </Badge>
+                              "—"
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {user.last_submission_at ? (
-                            <span className="text-sm text-muted-foreground">
-                              {new Date(user.last_submission_at).toLocaleDateString()}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Never</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => toggleUserActive(user.id, !user.is_active)}
-                              >
-                                {user.is_active ? "Deactivate" : "Activate"} User
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                          </TableCell>
+                          <TableCell>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="h-auto p-1 flex flex-wrap gap-1"
+                                  disabled={updatingUserId === user.id}
+                                >
+                                  {updatingUserId === user.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    userRoles.map((r) => (
+                                      <Badge key={r} variant={getRoleBadgeVariant(r as UserRole)} className="text-xs">
+                                        {r === "admin" && <Shield className="h-3 w-3 mr-1" />}
+                                        {ROLES.find((role) => role.value === r)?.label || r}
+                                      </Badge>
+                                    ))
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56" align="start">
+                                <div className="space-y-2">
+                                  <p className="text-sm font-medium">Edit Roles</p>
+                                  {ROLES.map((role) => (
+                                    <div key={role.value} className="flex items-center gap-2">
+                                      <Checkbox
+                                        id={`role-${user.id}-${role.value}`}
+                                        checked={userRoles.includes(role.value)}
+                                        onCheckedChange={(checked) => {
+                                          let newRoles: string[];
+                                          if (checked) {
+                                            newRoles = [...userRoles, role.value];
+                                          } else {
+                                            newRoles = userRoles.filter((r) => r !== role.value);
+                                          }
+                                          if (newRoles.length === 0) {
+                                            toast.error("User must have at least one role");
+                                            return;
+                                          }
+                                          updateUserRoles(user.id, newRoles);
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={`role-${user.id}-${role.value}`}
+                                        className="text-sm cursor-pointer flex-1"
+                                      >
+                                        {role.label}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={user.is_active}
+                                onCheckedChange={(checked) => toggleUserActive(user.id, checked)}
+                                disabled={updatingUserId === user.id}
+                              />
+                              {user.is_active ? (
+                                <Badge variant="outline" className="text-green-600 border-green-600">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-gray-500">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Inactive
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {user.last_submission_at ? (
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(user.last_submission_at).toLocaleDateString()}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Never</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => toggleUserActive(user.id, !user.is_active)}
+                                >
+                                  {user.is_active ? "Deactivate" : "Activate"} User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

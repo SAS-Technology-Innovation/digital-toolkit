@@ -465,6 +465,7 @@ export interface Database {
           department: string | null;
           division: string | null;
           role: "staff" | "tic" | "approver" | "admin";
+          roles: string[];
           avatar_url: string | null;
           is_active: boolean;
           first_submission_at: string | null;
@@ -481,6 +482,7 @@ export interface Database {
           department?: string | null;
           division?: string | null;
           role?: "staff" | "tic" | "approver" | "admin";
+          roles?: string[];
           avatar_url?: string | null;
           is_active?: boolean;
           first_submission_at?: string | null;
@@ -497,6 +499,7 @@ export interface Database {
           department?: string | null;
           division?: string | null;
           role?: "staff" | "tic" | "approver" | "admin";
+          roles?: string[];
           avatar_url?: string | null;
           is_active?: boolean;
           first_submission_at?: string | null;
@@ -628,6 +631,7 @@ export interface RenewalAssessmentWithApp extends RenewalAssessment {
 
 // User Profile types
 export type UserRole = Database["public"]["Enums"]["user_role"];
+export const ALL_USER_ROLES: UserRole[] = ["staff", "tic", "approver", "admin"];
 
 export type UserProfile = Database["public"]["Tables"]["user_profiles"]["Row"];
 export type UserProfileInsert = Database["public"]["Tables"]["user_profiles"]["Insert"];

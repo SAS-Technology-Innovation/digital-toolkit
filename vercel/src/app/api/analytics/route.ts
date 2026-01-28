@@ -257,14 +257,16 @@ export async function GET() {
       else if (daysUntil <= 90) upcomingCount++;
     });
 
-    // User stats
+    // User stats - count users who have each role (from roles array)
+    const hasRoleInArray = (u: UserProfile, role: string) =>
+      u.roles?.includes(role) || u.role === role;
     const userStats = {
       totalUsers: users?.length || 0,
       activeUsers: users?.filter(u => u.is_active).length || 0,
-      adminCount: users?.filter(u => u.role === "admin").length || 0,
-      ticCount: users?.filter(u => u.role === "tic").length || 0,
-      approverCount: users?.filter(u => u.role === "approver").length || 0,
-      staffCount: users?.filter(u => u.role === "staff").length || 0,
+      adminCount: users?.filter(u => hasRoleInArray(u, "admin")).length || 0,
+      ticCount: users?.filter(u => hasRoleInArray(u, "tic")).length || 0,
+      approverCount: users?.filter(u => hasRoleInArray(u, "approver")).length || 0,
+      staffCount: users?.filter(u => hasRoleInArray(u, "staff")).length || 0,
     };
 
     const response: AnalyticsResponse = {

@@ -38,9 +38,9 @@ export async function GET(request: NextRequest) {
       query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
     }
 
-    // Apply role filter
+    // Apply role filter - search in roles array
     if (role) {
-      query = query.eq("role", role);
+      query = query.contains("roles", [role]);
     }
 
     // Apply active status filter
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { email, name, department, division, role = "staff" } = body;
+    const { email, name, department, division, roles: bodyRoles, role: bodyRole } = body;
 
     if (!email) {
       return Response.json(
@@ -110,14 +110,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate role
+    // Support both roles array and single role for backward compat
     const validRoles: UserRole[] = ["staff", "tic", "approver", "admin"];
-    if (!validRoles.includes(role)) {
-      return Response.json(
-        { error: `Invalid role. Must be one of: ${validRoles.join(", ")}` },
-        { status: 400 }
-      );
+    let roles: string[] = bodyRoles || (bodyRole ? [bodyRole] : ["staff"]);
+
+    // Validate all roles
+    for (const r of roles) {
+      if (!validRoles.includes(r as UserRole)) {
+        return Response.json(
+          { error: `Invalid role: ${r}. Must be one of: ${validRoles.join(", ")}` },
+          { status: 400 }
+        );
+      }
     }
+
+    // Deduplicate
+    roles = [...new Set(roles)];
+
+    // Determine highest role for legacy single role column
+    const roleHierarchy: Record<string, number> = { staff: 1, tic: 2, approver: 3, admin: 4 };
+    const highestRole = roles.reduce((highest, r) =>
+      (roleHierarchy[r] || 0) > (roleHierarchy[highest] || 0) ? r : highest
+    , "staff");
 
     const serviceClient = createServiceClient() as SupabaseClient<Database>;
 
@@ -145,7 +159,8 @@ export async function POST(request: NextRequest) {
         name,
         department,
         division,
-        role,
+        role: highestRole,
+        roles,
         is_active: true,
       })
       .select()
