@@ -72,7 +72,8 @@ const FIELD_MAPPING = {
   // Commercial
   "Purchase Models": "_purchase_models",
   "Price from": "price_from",
-  "value": "annual_cost",
+  "Spend": "_spend",
+  "value": "_value",
   "Licences": "licenses",
 
   // Languages
@@ -255,6 +256,12 @@ function transformRow(row) {
   transformed.training_options = parseJsonArray(row["Training"]);
   transformed.purchase_models = parseJsonArray(row["Purchase Models"]);
   transformed.alternatives = parseJsonArray(row["Alternatives"]);
+
+  // Annual cost: prefer "Spend" column, fall back to "value" column
+  const spendVal = row["Spend"];
+  const valueVal = row["value"];
+  const rawCost = spendVal != null && spendVal !== "" ? spendVal : valueVal;
+  transformed.annual_cost = rawCost != null && rawCost !== "" ? parseFloat(rawCost) || null : null;
 
   // Generate product_id for matching
   if (transformed.product) {

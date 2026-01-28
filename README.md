@@ -48,8 +48,12 @@ The Digital Toolkit Dashboard provides an elegant interface for organizing and d
 
 ### Admin Features
 
-- **Data Sync** - Pull from Google Sheets, push to Supabase
+- **Notion-Style Inline Editing** - Click any cell to edit directly in the data table (TIC/Admin roles)
+- **50+ Editable Fields** - Product info, contracts, costs, compliance, contacts, and more
+- **Field-Aware Editors** - Text, number, date, select, boolean, URL, textarea, and multi-select editors
+- **Data Sync** - Bidirectional sync between Supabase and Google Sheets
 - **Duplicate Management** - Detect and remove duplicate app records
+- **EdTech Impact Integration** - Import assessment data, ratings, and compliance info
 - **Export** - Download app data as CSV
 - **Sync Logs** - View sync history and status
 
@@ -76,7 +80,7 @@ The Digital Toolkit Dashboard provides an elegant interface for organizing and d
 | Frontend | Next.js 16 with App Router |
 | Styling | Tailwind CSS v4, Shadcn/UI |
 | Authentication | Supabase Auth (Magic Links) |
-| Database | Supabase (PostgreSQL), Google Sheets |
+| Database | Supabase (PostgreSQL) — primary; Google Sheets (sync target) |
 | AI | Claude API |
 | Deployment | Vercel |
 | Backend API | Google Apps Script |

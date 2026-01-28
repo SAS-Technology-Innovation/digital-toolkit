@@ -62,7 +62,6 @@ interface DashboardApp {
   gradeLevels: string;
   licenseType: string;
   renewalDate: string;
-  spend: number | string;
   annualCost: number | null;
   licenses: number | null;
   vendor: string;
@@ -101,7 +100,6 @@ function transformToDashboard(app: SupabaseApp): DashboardApp {
     gradeLevels: app.grade_levels || "N/A",
     licenseType: app.license_type || "N/A",
     renewalDate: app.renewal_date || "",
-    spend: app.annual_cost === 0 ? "Free" : (app.annual_cost || "N/A"),
     annualCost: app.annual_cost,
     licenses: app.licenses,
     vendor: app.vendor || "",

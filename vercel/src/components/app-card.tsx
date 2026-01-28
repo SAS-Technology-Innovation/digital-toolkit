@@ -33,7 +33,6 @@ export interface AppData {
   licenseType?: string;
   enterprise?: boolean;
   // Cost & licensing
-  spend?: number | string;
   annualCost?: number | null;
   licenses?: number | null;
   vendor?: string;

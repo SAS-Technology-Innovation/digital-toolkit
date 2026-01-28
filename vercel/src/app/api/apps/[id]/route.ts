@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { AppUpdate } from "@/lib/supabase/types";
+import { requireRole } from "@/lib/auth/rbac";
 
 /**
  * GET /api/apps/[id]
@@ -34,35 +35,71 @@ export async function GET(
   }
 }
 
+// All fields that can be edited via the PATCH endpoint
+const ALLOWED_FIELDS = [
+  // Core
+  "product", "description", "category", "subject", "department",
+  "division", "audience", "grade_levels",
+  // URLs
+  "website", "tutorial_link", "logo_url",
+  // Technical
+  "sso_enabled", "mobile_app", "is_new", "enterprise", "is_whole_school",
+  // Vendor & cost
+  "vendor", "license_type", "annual_cost", "licenses", "utilization",
+  "budget", "renewal_date", "date_added", "support_email", "status",
+  // Compliance
+  "privacy_policy_url", "terms_url", "gdpr_url", "risk_rating",
+  // Assessment
+  "global_rating", "assessment_status", "recommended_reason", "accessibility",
+  // Commercial
+  "price_from",
+  // Contract
+  "contract_start_date", "contract_end_date", "auto_renew", "notice_period",
+  // Internal
+  "product_champion", "product_manager", "provider_contact", "finance_contact",
+  "notes", "edtech_impact_id",
+];
+
+const NUMERIC_FIELDS = ["annual_cost", "licenses", "utilization", "global_rating"];
+const BOOLEAN_FIELDS = ["sso_enabled", "mobile_app", "enterprise", "is_new", "is_whole_school", "auto_renew"];
+
 /**
  * PATCH /api/apps/[id]
  * Update an app's fields (partial update)
+ * Requires TIC or Admin role.
  */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Auth check: require TIC or higher
+    const { authorized, errorResponse } = await requireRole("tic");
+    if (!authorized) {
+      return errorResponse;
+    }
+
     const { id } = await params;
     const body = await request.json();
     const supabase = await createServerSupabaseClient();
 
-    // Only allow certain fields to be updated
-    const allowedFields = [
-      "status",
-      "renewal_date",
-      "annual_cost",
-      "licenses",
-      "utilization",
-      "license_type",
-      "description",
-      "notes",
-    ];
-
     const updates: AppUpdate = {};
-    for (const field of allowedFields) {
+    for (const field of ALLOWED_FIELDS) {
       if (body[field] !== undefined) {
-        (updates as Record<string, unknown>)[field] = body[field];
+        let value = body[field];
+
+        // Type coercion for numeric fields
+        if (NUMERIC_FIELDS.includes(field)) {
+          value = value === null || value === "" ? null : Number(value);
+          if (value !== null && isNaN(value)) value = null;
+        }
+
+        // Type coercion for boolean fields
+        if (BOOLEAN_FIELDS.includes(field)) {
+          value = value === true || value === "true";
+        }
+
+        (updates as Record<string, unknown>)[field] = value;
       }
     }
 
