@@ -238,6 +238,8 @@ function doPost(e) {
       appsData: typeof body.appsData === 'string' ? body.appsData : JSON.stringify(body.appsData),
       // For bulkUpdate endpoint
       updates: body.updates,
+      // For bulkAdd endpoint
+      apps: body.apps,
       // For single update endpoint
       productId: body.productId,
       product_id: body.product_id,
@@ -404,10 +406,24 @@ function handleApiRequest(endpoint, providedKey, params) {
       const bulkResult = bulkUpdateApps(updates);
       return jsonResponse(JSON.parse(bulkResult));
 
+    case 'bulkAdd':
+      // Handle bulk add of new apps
+      const appsToAdd = params.apps;
+
+      if (!appsToAdd) {
+        return jsonResponse({
+          error: 'Bad Request',
+          message: 'apps parameter is required (JSON array of app objects)'
+        }, 400);
+      }
+
+      const addResult = bulkAddApps(appsToAdd);
+      return jsonResponse(JSON.parse(addResult));
+
     default:
       return jsonResponse({
         error: 'Not Found',
-        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai, verify-password, saveRenewalAction`
+        message: `Unknown API endpoint: ${endpoint}. Valid endpoints: data, ai, verify-password, saveRenewalAction, bulkUpdate, bulkAdd`
       }, 404);
   }
 }
@@ -1056,6 +1072,97 @@ function bulkUpdateApps(updates) {
     Logger.log('Error in bulk update: ' + error.message);
     return JSON.stringify({
       error: 'Failed to perform bulk update',
+      message: error.message
+    });
+  }
+}
+
+/**
+ * Bulk add new rows to Google Sheets
+ * Expects JSON array of app objects with field names matching column headers
+ * @param {string} appsJson - JSON stringified array of app objects
+ * @returns {string} JSON response with counts
+ */
+function bulkAddApps(appsJson) {
+  try {
+    const apps = JSON.parse(appsJson);
+
+    if (!Array.isArray(apps)) {
+      return JSON.stringify({
+        error: 'Invalid input',
+        message: 'Expected array of apps'
+      });
+    }
+
+    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+    const SHEET_NAME = PropertiesService.getScriptProperties().getProperty('SHEET_NAME') || 'Apps';
+
+    if (!SPREADSHEET_ID || !SHEET_NAME) {
+      return JSON.stringify({
+        error: 'Configuration error',
+        message: 'SPREADSHEET_ID and/or SHEET_NAME not set'
+      });
+    }
+
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    // Get existing product_ids to avoid duplicates
+    const productIdCol = headers.indexOf('product_id');
+    const existingProductIds = new Set();
+    if (productIdCol !== -1) {
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][productIdCol]) {
+          existingProductIds.add(data[i][productIdCol]);
+        }
+      }
+    }
+
+    let addedCount = 0;
+    let skippedCount = 0;
+    const failures = [];
+
+    for (const app of apps) {
+      // Skip if product_id already exists
+      if (app.product_id && existingProductIds.has(app.product_id)) {
+        skippedCount++;
+        continue;
+      }
+
+      // Build row array based on headers
+      const row = headers.map(header => {
+        const value = app[header];
+        if (value === undefined || value === null) return '';
+        if (Array.isArray(value)) return value.join(', ');
+        return value;
+      });
+
+      try {
+        sheet.appendRow(row);
+        addedCount++;
+        if (app.product_id) {
+          existingProductIds.add(app.product_id);
+        }
+      } catch (err) {
+        failures.push({ product: app.product_name || app.product, error: err.message });
+      }
+    }
+
+    Logger.log(`Bulk add: ${addedCount} added, ${skippedCount} skipped (duplicates)`);
+
+    return JSON.stringify({
+      success: true,
+      message: `Added ${addedCount} apps, ${skippedCount} skipped (already exist)`,
+      addedCount: addedCount,
+      skippedCount: skippedCount,
+      failures: failures
+    });
+
+  } catch (error) {
+    Logger.log('Error in bulk add: ' + error.message);
+    return JSON.stringify({
+      error: 'Failed to perform bulk add',
       message: error.message
     });
   }

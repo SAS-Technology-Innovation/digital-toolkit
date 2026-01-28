@@ -1,445 +1,18 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { AppInsert, App, SyncLogInsert } from "@/lib/supabase/types";
-
-interface AppsScriptApp {
-  id?: string;
-  product: string;
-  productId?: string; // Stable unique ID from Google Sheets (Column W) for sync deduplication
-  product_id?: string; // Alternative naming convention
-  description?: string;
-  category?: string;
-  subject?: string;
-  department?: string;
-  division?: string;
-  audience?: string | string[];
-  website?: string;
-  // Tutorial link - support both naming conventions
-  tutorialLink?: string;
-  tutorial_link?: string;
-  // Logo URL - support both naming conventions
-  logoUrl?: string;
-  logo_url?: string;
-  // SSO enabled - support both naming conventions
-  ssoEnabled?: boolean | string;
-  sso_enabled?: boolean | string;
-  // Mobile app - support both naming conventions
-  mobileApp?: boolean | string;
-  mobile_app?: boolean | string;
-  // Grade levels - support both naming conventions
-  gradeLevels?: string;
-  grade_levels?: string;
-  // Is new - support both naming conventions
-  isNew?: boolean | string;
-  is_new?: boolean | string;
-  // Vendor
-  vendor?: string;
-  // License type - support both naming conventions
-  licenseType?: string;
-  license_type?: string;
-  // Renewal date - support both naming conventions
-  renewalDate?: string;
-  renewal_date?: string;
-  // Cost - support multiple naming conventions (Apps Script uses 'spend')
-  annualCost?: number | string;
-  annual_cost?: number | string;
-  spend?: number | string;
-  // Licenses
-  licenses?: number | string;
-  utilization?: number | string;
-  status?: string;
-  // Enterprise flag from Apps Script
-  enterprise?: boolean | string;
-  // Budget field from Apps Script
-  budget?: string;
-  // Support email from Apps Script
-  supportEmail?: string;
-  support_email?: string;
-  // Date added from Apps Script
-  dateAdded?: string;
-  date_added?: string;
-  // Is whole school flag (set by Apps Script)
-  isWholeSchool?: boolean;
-
-  // EdTech Impact fields - Assessment
-  assessmentStatus?: string;
-  assessment_status?: string;
-  globalRating?: number | string;
-  global_rating?: number | string;
-  recommendedReason?: string;
-  recommended_reason?: string;
-
-  // EdTech Impact fields - Compliance
-  privacyPolicyUrl?: string;
-  privacy_policy_url?: string;
-  termsUrl?: string;
-  terms_url?: string;
-  gdprUrl?: string;
-  gdpr_url?: string;
-  riskRating?: string;
-  risk_rating?: string;
-
-  // EdTech Impact fields - Accessibility
-  accessibility?: string;
-  languages?: string[] | string;
-
-  // EdTech Impact fields - Support
-  supportOptions?: string[] | string;
-  support_options?: string[] | string;
-  trainingOptions?: string[] | string;
-  training_options?: string[] | string;
-
-  // EdTech Impact fields - Commercial
-  purchaseModels?: string[] | string;
-  purchase_models?: string[] | string;
-  priceFrom?: string;
-  price_from?: string;
-  alternatives?: string[] | string;
-
-  // EdTech Impact fields - Contract
-  contractStartDate?: string;
-  contract_start_date?: string;
-  contractEndDate?: string;
-  contract_end_date?: string;
-  autoRenew?: boolean | string;
-  auto_renew?: boolean | string;
-  noticePeriod?: string;
-  notice_period?: string;
-
-  // EdTech Impact fields - Internal
-  productChampion?: string;
-  product_champion?: string;
-  productManager?: string;
-  product_manager?: string;
-  providerContact?: string;
-  provider_contact?: string;
-  financeContact?: string;
-  finance_contact?: string;
-  notes?: string;
-
-  // EdTech Impact metadata
-  edtechImpactId?: string;
-  edtech_impact_id?: string;
-  lastEdtechSync?: string;
-  last_edtech_sync?: string;
-}
+import type { LegacyApp } from "@/lib/shared/schema";
+import {
+  transformAppsScriptToSupabase,
+  toAppsScriptFieldUpdates,
+  toGoogleSheetsRow,
+} from "@/lib/shared/transforms";
+import type { SupabaseApp } from "@/lib/shared/schema";
 
 /**
- * Transform Apps Script data to Supabase format
+ * Write data back to Apps Script - updates existing apps AND adds new ones
  */
-function transformAppToSupabase(app: AppsScriptApp): AppInsert {
-  let audience: string[] | null = null;
-  if (app.audience) {
-    if (Array.isArray(app.audience)) {
-      audience = app.audience;
-    } else if (typeof app.audience === "string") {
-      audience = app.audience.split(",").map((a) => a.trim()).filter(Boolean);
-    }
-  }
-
-  const parseBoolean = (val: unknown): boolean => {
-    if (typeof val === "boolean") return val;
-    if (typeof val === "string") return val.toLowerCase() === "true" || val === "Yes";
-    return false;
-  };
-
-  const parseNumber = (val: unknown): number | null => {
-    if (val === null || val === undefined || val === "") return null;
-    // Handle "Free" as 0
-    if (typeof val === "string" && val.toLowerCase() === "free") return 0;
-    const num = typeof val === "string" ? parseFloat(val.replace(/[,$]/g, "")) : Number(val);
-    return isNaN(num) ? null : num;
-  };
-
-  // Annual cost: Apps Script returns this as 'spend', also support annualCost and annual_cost
-  const annualCostValue = app.spend ?? app.annualCost ?? app.annual_cost;
-
-  // Parse date_added for NEW badge calculation
-  const dateAddedValue = app.dateAdded || app.date_added || null;
-
-  // Helper to parse JSON array fields from Apps Script
-  const parseJsonArray = (val: unknown): string[] | null => {
-    if (!val) return null;
-    if (Array.isArray(val)) return val as string[];
-    if (typeof val === "string") {
-      try {
-        const parsed = JSON.parse(val);
-        return Array.isArray(parsed) ? parsed : null;
-      } catch {
-        // If not valid JSON, try splitting by comma
-        return val.split(",").map((s) => s.trim()).filter(Boolean);
-      }
-    }
-    return null;
-  };
-
-  return {
-    product: app.product,
-    product_id: app.productId || app.product_id || null, // Stable unique ID for sync deduplication
-    description: app.description || null,
-    category: app.category || null,
-    subject: app.subject || null,
-    department: app.department || null,
-    division: app.division || null,
-    audience,
-    website: app.website === "#" ? null : (app.website || null),
-    tutorial_link: app.tutorialLink || app.tutorial_link || null,
-    logo_url: app.logoUrl || app.logo_url || null,
-    sso_enabled: parseBoolean(app.ssoEnabled ?? app.sso_enabled),
-    mobile_app: parseBoolean(app.mobileApp ?? app.mobile_app),
-    grade_levels: app.gradeLevels || app.grade_levels || null,
-    is_new: parseBoolean(app.isNew ?? app.is_new),
-    vendor: app.vendor || null,
-    license_type: app.licenseType || app.license_type || null,
-    renewal_date: app.renewalDate || app.renewal_date || null,
-    annual_cost: parseNumber(annualCostValue),
-    licenses: parseNumber(app.licenses) as number | null,
-    utilization: parseNumber(app.utilization) as number | null,
-    status: app.status || null,
-    synced_at: new Date().toISOString(),
-    apps_script_id: app.id || null,
-    // Core fields from Apps Script
-    enterprise: parseBoolean(app.enterprise),
-    budget: app.budget || null,
-    support_email: app.supportEmail || app.support_email || null,
-    date_added: dateAddedValue,
-    is_whole_school: parseBoolean(app.isWholeSchool),
-
-    // EdTech Impact fields - Assessment
-    assessment_status: app.assessmentStatus || app.assessment_status || null,
-    global_rating: parseNumber(app.globalRating ?? app.global_rating),
-    recommended_reason: app.recommendedReason || app.recommended_reason || null,
-
-    // EdTech Impact fields - Compliance
-    privacy_policy_url: app.privacyPolicyUrl || app.privacy_policy_url || null,
-    terms_url: app.termsUrl || app.terms_url || null,
-    gdpr_url: app.gdprUrl || app.gdpr_url || null,
-    risk_rating: app.riskRating || app.risk_rating || null,
-
-    // EdTech Impact fields - Accessibility
-    accessibility: app.accessibility || null,
-    languages: parseJsonArray(app.languages),
-
-    // EdTech Impact fields - Support
-    support_options: parseJsonArray(app.supportOptions ?? app.support_options),
-    training_options: parseJsonArray(app.trainingOptions ?? app.training_options),
-
-    // EdTech Impact fields - Commercial
-    purchase_models: parseJsonArray(app.purchaseModels ?? app.purchase_models),
-    price_from: app.priceFrom || app.price_from || null,
-    alternatives: parseJsonArray(app.alternatives),
-
-    // EdTech Impact fields - Contract
-    contract_start_date: app.contractStartDate || app.contract_start_date || null,
-    contract_end_date: app.contractEndDate || app.contract_end_date || null,
-    auto_renew: parseBoolean(app.autoRenew ?? app.auto_renew),
-    notice_period: app.noticePeriod || app.notice_period || null,
-
-    // EdTech Impact fields - Internal
-    product_champion: app.productChampion || app.product_champion || null,
-    product_manager: app.productManager || app.product_manager || null,
-    provider_contact: app.providerContact || app.provider_contact || null,
-    finance_contact: app.financeContact || app.finance_contact || null,
-    notes: app.notes || null,
-
-    // EdTech Impact metadata
-    edtech_impact_id: app.edtechImpactId || app.edtech_impact_id || null,
-    last_edtech_sync: app.lastEdtechSync || app.last_edtech_sync || null,
-  };
-}
-
-/**
- * Transform Supabase data back to Apps Script format for writeback
- */
-function transformAppToAppsScript(app: App): AppsScriptApp {
-  // Helper to convert arrays to JSON strings for Google Sheets
-  const arrayToString = (arr: unknown[] | null | undefined): string | undefined => {
-    if (!arr || arr.length === 0) return undefined;
-    return JSON.stringify(arr);
-  };
-
-  return {
-    id: app.apps_script_id || undefined,
-    product: app.product,
-    productId: app.product_id || undefined,
-    description: app.description || undefined,
-    category: app.category || undefined,
-    subject: app.subject || undefined,
-    department: app.department || undefined,
-    division: app.division || undefined,
-    audience: app.audience?.join(", ") || undefined,
-    website: app.website || undefined,
-    tutorialLink: app.tutorial_link || undefined,
-    logoUrl: app.logo_url || undefined,
-    ssoEnabled: app.sso_enabled,
-    mobileApp: app.mobile_app,
-    gradeLevels: app.grade_levels || undefined,
-    isNew: app.is_new,
-    vendor: app.vendor || undefined,
-    licenseType: app.license_type || undefined,
-    renewalDate: app.renewal_date || undefined,
-    annualCost: app.annual_cost || undefined,
-    licenses: app.licenses || undefined,
-    utilization: app.utilization || undefined,
-    status: app.status || undefined,
-    // Core fields from Apps Script
-    enterprise: app.enterprise,
-    budget: app.budget || undefined,
-    supportEmail: app.support_email || undefined,
-    dateAdded: app.date_added || undefined,
-    isWholeSchool: app.is_whole_school,
-
-    // EdTech Impact fields - Assessment
-    assessmentStatus: app.assessment_status || undefined,
-    globalRating: app.global_rating || undefined,
-    recommendedReason: app.recommended_reason || undefined,
-
-    // EdTech Impact fields - Compliance
-    privacyPolicyUrl: app.privacy_policy_url || undefined,
-    termsUrl: app.terms_url || undefined,
-    gdprUrl: app.gdpr_url || undefined,
-    riskRating: app.risk_rating || undefined,
-
-    // EdTech Impact fields - Accessibility
-    accessibility: app.accessibility || undefined,
-    languages: arrayToString(app.languages as unknown[] | null),
-
-    // EdTech Impact fields - Support
-    supportOptions: arrayToString(app.support_options as unknown[] | null),
-    trainingOptions: arrayToString(app.training_options as unknown[] | null),
-
-    // EdTech Impact fields - Commercial
-    purchaseModels: arrayToString(app.purchase_models as unknown[] | null),
-    priceFrom: app.price_from || undefined,
-    alternatives: arrayToString(app.alternatives as unknown[] | null),
-
-    // EdTech Impact fields - Contract
-    contractStartDate: app.contract_start_date || undefined,
-    contractEndDate: app.contract_end_date || undefined,
-    autoRenew: app.auto_renew,
-    noticePeriod: app.notice_period || undefined,
-
-    // EdTech Impact fields - Internal
-    productChampion: app.product_champion || undefined,
-    productManager: app.product_manager || undefined,
-    providerContact: app.provider_contact || undefined,
-    financeContact: app.finance_contact || undefined,
-    notes: app.notes || undefined,
-
-    // EdTech Impact metadata
-    edtechImpactId: app.edtech_impact_id || undefined,
-    lastEdtechSync: app.last_edtech_sync || undefined,
-  };
-}
-
-/**
- * Convert Supabase app to Apps Script field updates
- * Returns an array of { productId, field, value } for bulkUpdate API
- */
-function appToFieldUpdates(app: App): Array<{ productId: string; field: string; value: unknown }> {
-  const productId = app.product_id;
-  if (!productId) return [];
-
-  // Helper to convert arrays to JSON strings for Google Sheets
-  const arrayToJson = (arr: unknown[] | null | undefined): string | null => {
-    if (!arr || arr.length === 0) return null;
-    return JSON.stringify(arr);
-  };
-
-  // Map of Supabase field → Google Sheets column name
-  const fieldMappings: Array<{ supabaseField: keyof App; sheetColumn: string }> = [
-    { supabaseField: "product", sheetColumn: "product_name" },
-    { supabaseField: "description", sheetColumn: "description" },
-    { supabaseField: "category", sheetColumn: "category" },
-    { supabaseField: "subject", sheetColumn: "subjects" },
-    { supabaseField: "department", sheetColumn: "department" },
-    { supabaseField: "division", sheetColumn: "division" },
-    { supabaseField: "website", sheetColumn: "website" },
-    { supabaseField: "tutorial_link", sheetColumn: "tutorial_link" },
-    { supabaseField: "logo_url", sheetColumn: "logo_url" },
-    { supabaseField: "sso_enabled", sheetColumn: "sso_enabled" },
-    { supabaseField: "mobile_app", sheetColumn: "mobile_app" },
-    { supabaseField: "grade_levels", sheetColumn: "grade_levels" },
-    { supabaseField: "vendor", sheetColumn: "vendor" },
-    { supabaseField: "license_type", sheetColumn: "license_type" },
-    { supabaseField: "renewal_date", sheetColumn: "renewal_date" },
-    { supabaseField: "annual_cost", sheetColumn: "value" },
-    { supabaseField: "licenses", sheetColumn: "licence_count" },
-    { supabaseField: "enterprise", sheetColumn: "enterprise" },
-    { supabaseField: "budget", sheetColumn: "budget" },
-    { supabaseField: "support_email", sheetColumn: "support_email" },
-    { supabaseField: "date_added", sheetColumn: "date_added" },
-    // EdTech Impact fields
-    { supabaseField: "assessment_status", sheetColumn: "assessment_status" },
-    { supabaseField: "global_rating", sheetColumn: "global_rating" },
-    { supabaseField: "recommended_reason", sheetColumn: "recommended_reason" },
-    { supabaseField: "privacy_policy_url", sheetColumn: "privacy_policy_url" },
-    { supabaseField: "terms_url", sheetColumn: "terms_url" },
-    { supabaseField: "gdpr_url", sheetColumn: "gdpr_url" },
-    { supabaseField: "risk_rating", sheetColumn: "risk_rating" },
-    { supabaseField: "accessibility", sheetColumn: "accessibility" },
-    { supabaseField: "price_from", sheetColumn: "price_from" },
-    { supabaseField: "contract_start_date", sheetColumn: "contract_start_date" },
-    { supabaseField: "contract_end_date", sheetColumn: "contract_end_date" },
-    { supabaseField: "auto_renew", sheetColumn: "auto_renew" },
-    { supabaseField: "notice_period", sheetColumn: "notice_period" },
-    { supabaseField: "product_champion", sheetColumn: "product_champion" },
-    { supabaseField: "product_manager", sheetColumn: "product_manager" },
-    { supabaseField: "provider_contact", sheetColumn: "provider_contact" },
-    { supabaseField: "finance_contact", sheetColumn: "finance_contact" },
-    { supabaseField: "notes", sheetColumn: "notes" },
-    { supabaseField: "edtech_impact_id", sheetColumn: "edtech_impact_id" },
-    { supabaseField: "last_edtech_sync", sheetColumn: "last_edtech_sync" },
-  ];
-
-  const updates: Array<{ productId: string; field: string; value: unknown }> = [];
-
-  for (const mapping of fieldMappings) {
-    const value = app[mapping.supabaseField];
-    // Only include fields that have a value (avoid overwriting with null/undefined)
-    if (value !== null && value !== undefined && value !== "") {
-      updates.push({
-        productId,
-        field: mapping.sheetColumn,
-        value,
-      });
-    }
-  }
-
-  // Handle array fields separately (need JSON conversion)
-  const arrayMappings: Array<{ supabaseField: keyof App; sheetColumn: string }> = [
-    { supabaseField: "audience", sheetColumn: "audience" },
-    { supabaseField: "languages", sheetColumn: "languages" },
-    { supabaseField: "support_options", sheetColumn: "support_options" },
-    { supabaseField: "training_options", sheetColumn: "training_options" },
-    { supabaseField: "purchase_models", sheetColumn: "purchase_models" },
-    { supabaseField: "alternatives", sheetColumn: "alternatives" },
-  ];
-
-  for (const mapping of arrayMappings) {
-    const value = app[mapping.supabaseField] as unknown[] | null;
-    if (value && Array.isArray(value) && value.length > 0) {
-      // For audience, join with comma. For others, use JSON
-      const formattedValue = mapping.supabaseField === "audience"
-        ? value.join(", ")
-        : arrayToJson(value);
-      if (formattedValue) {
-        updates.push({
-          productId,
-          field: mapping.sheetColumn,
-          value: formattedValue,
-        });
-      }
-    }
-  }
-
-  return updates;
-}
-
-/**
- * Write data back to Apps Script using bulkUpdate API
- */
-async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; error?: string; successCount?: number; failCount?: number }> {
+async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; error?: string; successCount?: number; failCount?: number; addedCount?: number }> {
   const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
   const FRONTEND_KEY = process.env.FRONTEND_KEY;
 
@@ -448,45 +21,72 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
   }
 
   try {
-    // Convert all apps to field updates
+    // Step 1: Update existing apps with bulkUpdate
     const allUpdates: Array<{ productId: string; field: string; value: unknown }> = [];
     for (const app of apps) {
-      const updates = appToFieldUpdates(app);
+      const updates = toAppsScriptFieldUpdates(app as unknown as SupabaseApp);
       allUpdates.push(...updates);
     }
 
-    if (allUpdates.length === 0) {
-      return { success: true, successCount: 0, failCount: 0 };
+    let updateSuccessCount = 0;
+    let updateFailCount = 0;
+
+    if (allUpdates.length > 0) {
+      console.log(`Sending ${allUpdates.length} field updates to Apps Script`);
+
+      const updateResponse = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          api: "bulkUpdate",
+          key: FRONTEND_KEY,
+          updates: JSON.stringify(allUpdates),
+        }),
+      });
+
+      if (updateResponse.ok) {
+        const updateResult = await updateResponse.json();
+        updateSuccessCount = updateResult.successCount || 0;
+        updateFailCount = updateResult.failCount || 0;
+      }
     }
 
-    console.log(`Sending ${allUpdates.length} field updates to Apps Script`);
+    // Step 2: Add new apps with bulkAdd (will skip existing ones based on product_id)
+    const appsToAdd = apps
+      .filter(app => app.product_id)
+      .map(app => toGoogleSheetsRow(app as unknown as SupabaseApp));
 
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        api: "bulkUpdate",
-        key: FRONTEND_KEY,
-        updates: JSON.stringify(allUpdates),
-      }),
-    });
+    let addedCount = 0;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { success: false, error: `Apps Script write failed: ${response.status} - ${errorText}` };
-    }
+    if (appsToAdd.length > 0) {
+      console.log(`Sending ${appsToAdd.length} apps to bulkAdd API`);
 
-    const result = await response.json();
-    if (result.error) {
-      return { success: false, error: result.error };
+      const addResponse = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          api: "bulkAdd",
+          key: FRONTEND_KEY,
+          apps: JSON.stringify(appsToAdd),
+        }),
+      });
+
+      if (addResponse.ok) {
+        const addResult = await addResponse.json();
+        addedCount = addResult.addedCount || 0;
+        console.log(`bulkAdd result: ${addedCount} added, ${addResult.skippedCount || 0} skipped`);
+      }
     }
 
     return {
       success: true,
-      successCount: result.successCount || 0,
-      failCount: result.failCount || 0,
+      successCount: updateSuccessCount,
+      failCount: updateFailCount,
+      addedCount: addedCount,
     };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
@@ -572,18 +172,16 @@ export async function POST(request: Request) {
       }
 
       // Extract apps from division-based structure or flat array
-      let apps: AppsScriptApp[] = [];
+      let apps: LegacyApp[] = [];
 
       if (data.apps && Array.isArray(data.apps)) {
-        // Flat array format: { apps: [...] }
         apps = data.apps;
       } else if (Array.isArray(data)) {
-        // Direct array format: [...]
         apps = data;
       } else if (typeof data === "object" && data !== null) {
         // Division-based format: { wholeSchool: { apps: [...] }, elementary: { apps: [...] }, ... }
         const divisions = ["wholeSchool", "elementary", "middleSchool", "highSchool"];
-        const allApps: AppsScriptApp[] = [];
+        const allApps: LegacyApp[] = [];
 
         for (const div of divisions) {
           const divisionData = data[div];
@@ -592,9 +190,8 @@ export async function POST(request: Request) {
           }
         }
 
-        // Deduplicate by product_id (preferred) or product name as fallback
-        // Same app may appear in multiple divisions, use product_id as stable unique key
-        const uniqueApps = new Map<string, AppsScriptApp>();
+        // Deduplicate by product_id or product name
+        const uniqueApps = new Map<string, LegacyApp>();
         for (const app of allApps) {
           const uniqueKey = app.productId || app.product_id || app.product;
           if (uniqueKey && !uniqueApps.has(uniqueKey)) {
@@ -610,12 +207,11 @@ export async function POST(request: Request) {
 
       console.log(`Received ${apps.length} apps from Apps Script`);
 
-      const transformedApps = apps.map(transformAppToSupabase);
+      // Use shared transform function
+      const transformedApps = apps.map(app => transformAppsScriptToSupabase(app) as unknown as AppInsert);
 
       for (const app of transformedApps) {
         try {
-          // Use product_id as the primary unique identifier (stable ID from Google Sheets)
-          // Falls back to product name for backwards compatibility with existing records
           let existingAppId: string | null = null;
 
           // First try to find by product_id (preferred - stable unique identifier)
@@ -628,7 +224,7 @@ export async function POST(request: Request) {
             if (data) existingAppId = (data as { id: string }).id;
           }
 
-          // Fallback: find by product name if no product_id match
+          // Fallback: find by product name
           if (!existingAppId) {
             const { data } = await supabase
               .from("apps")
@@ -639,7 +235,6 @@ export async function POST(request: Request) {
           }
 
           if (existingAppId) {
-            // Update existing app - use id for precise targeting
             const { error: updateError } = await supabase
               .from("apps")
               .update({
@@ -650,7 +245,6 @@ export async function POST(request: Request) {
 
             if (updateError) throw updateError;
           } else {
-            // Insert new app
             const { error: insertError } = await supabase
               .from("apps")
               .insert(app as never);
@@ -670,7 +264,6 @@ export async function POST(request: Request) {
     if (direction === "push" || direction === "bidirectional") {
       console.log("Pushing to Apps Script...");
 
-      // Get all apps from Supabase that have a product_id (needed for Apps Script update)
       const { data: allApps, error: fetchError } = await supabase
         .from("apps")
         .select("*")
@@ -679,10 +272,8 @@ export async function POST(request: Request) {
       if (fetchError) {
         errors.push(`Push fetch error: ${fetchError.message}`);
       } else if (allApps && allApps.length > 0) {
-        // Filter to only apps that have been modified since last sync
-        // Compare updated_at with synced_at in JavaScript since Supabase doesn't support column comparison
         const modifiedApps = allApps.filter((app: { updated_at: string; synced_at: string | null }) => {
-          if (!app.synced_at) return true; // Never synced
+          if (!app.synced_at) return true;
           return new Date(app.updated_at) > new Date(app.synced_at);
         });
 
@@ -694,7 +285,6 @@ export async function POST(request: Request) {
           const writeResult = await writeBackToAppsScript(modifiedApps as App[]);
 
           if (writeResult.success) {
-            // Update synced_at for all pushed apps
             const ids = modifiedApps.map((a: { id: string }) => a.id);
             await supabase
               .from("apps")

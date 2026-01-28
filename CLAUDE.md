@@ -440,24 +440,32 @@ npx shadcn@latest add [component]  # Add new component
 
 ### Backend (Apps Script)
 
-**CRITICAL: NEVER create new deployments with `clasp deploy`. Only use `clasp push`.**
-
-Creating new deployments changes the deployment URL, which breaks the production app and requires updating environment variables in Vercel. The deployment URL must remain constant.
+> ⚠️ **CRITICAL WARNING: NEVER USE `clasp deploy`** ⚠️
+>
+> Creating new deployments changes the deployment URL, which **BREAKS THE PRODUCTION APP** and requires updating environment variables everywhere. The deployment URL below is FINAL and must NEVER change.
+>
+> **ONLY use `clasp push`** - this updates the code without changing the deployment URL.
 
 ```bash
 # Run from project root (clasp is configured at root level)
-clasp push            # Push code to Apps Script (ONLY use this)
-clasp pull            # Pull code from Apps Script
-clasp open            # Open in browser
+clasp push            # ✅ ONLY use this - pushes code to Apps Script
+clasp pull            # ✅ OK - pulls code from Apps Script
+clasp open            # ✅ OK - opens in browser
 
-# DO NOT USE these commands:
-# clasp deploy        # NEVER - creates new deployment URL
-# clasp deployments   # View only, don't create new ones
+# ❌ NEVER USE THESE COMMANDS:
+# clasp deploy        # ❌ NEVER - creates new deployment URL and BREAKS PRODUCTION
+# clasp deployments   # ❌ View only - don't create new ones
 ```
 
-**Current Production Deployment:**
-- Deployment ID: `AKfycbx4MsENMJksay3IxN0W5HEOyq91pAvMGPIBl9HrBoFly513srCdzVjWICzBK5BTMMHk`
-- Script ID: `1T4d1x26rN5oAbNZIvjU0x1z3FTUxd1UwIoJwyBhxaIB30fWsvBj8-rjw`
+**Production Apps Script Configuration (FINAL - DO NOT CHANGE):**
+```
+URL: https://script.google.com/macros/s/AKfycbwa6PVAO9kzsNqluKYXftwDuOAPFTsIB7elk3IG-SuA95xZlMIOSW_VH5yt-Ic_vbYv/exec
+Script ID: 1T4d1x26rN5oAbNZIvjU0x1z3FTUxd1UwIoJwyBhxaIB30fWsvBj8-rjw
+```
+
+This URL is configured in:
+- `vercel/.env.local` (APPS_SCRIPT_URL)
+- Vercel environment variables (production)
 
 ### Supabase
 
@@ -728,6 +736,19 @@ Required columns (lowercase):
 **Empty data response**
 - Verify APPS_SCRIPT_URL is correct deployment URL
 - Check Apps Script logs: `npm run clasp:logs`
+
+### Apps Script
+
+**"Bad Request" or API not responding after code changes**
+- Code was pushed with `clasp push` but deployment uses old version
+- **Solution**: Use the Apps Script editor to update the deployment to use the latest version (HEAD)
+- **NEVER** create a new deployment - update the existing one
+
+**Apps Script URL changed or broken**
+- Someone used `clasp deploy` which created a new URL
+- **Solution**: The production URL must be: `https://script.google.com/macros/s/AKfycbwa6PVAO9kzsNqluKYXftwDuOAPFTsIB7elk3IG-SuA95xZlMIOSW_VH5yt-Ic_vbYv/exec`
+- Update `vercel/.env.local` and Vercel environment variables if needed
+- **Prevention**: NEVER use `clasp deploy`, only `clasp push`
 
 ### UI Components
 
