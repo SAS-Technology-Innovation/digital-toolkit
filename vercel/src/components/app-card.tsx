@@ -32,6 +32,22 @@ export interface AppData {
   dateAdded?: string;
   licenseType?: string;
   enterprise?: boolean;
+  // Cost & licensing
+  spend?: number | string;
+  annualCost?: number | null;
+  licenses?: number | null;
+  vendor?: string;
+  budget?: string;
+  renewalDate?: string;
+  // EdTech Impact fields
+  globalRating?: number | null;
+  assessmentStatus?: string | null;
+  recommendedReason?: string | null;
+  accessibility?: string | null;
+  priceFrom?: string | null;
+  productChampion?: string | null;
+  productManager?: string | null;
+  edtechImpactId?: string | null;
 }
 
 // Helper to check if date is within X days

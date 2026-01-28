@@ -19,6 +19,10 @@ import {
   Trash2,
   Copy,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +52,13 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import type { App, SyncLog } from "@/lib/supabase/types";
 
@@ -96,6 +107,10 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<keyof App>("product");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [supabasePage, setSupabasePage] = useState(0);
+  const [supabasePageSize, setSupabasePageSize] = useState(50);
+  const [rawPage, setRawPage] = useState(0);
+  const [rawPageSize, setRawPageSize] = useState(50);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(null);
@@ -516,12 +531,13 @@ export default function AdminPage() {
                   ))}
                 </div>
               ) : (
+                <>
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead
-                          className="cursor-pointer hover:bg-muted/50"
+                          className="cursor-pointer hover:bg-muted/50 sticky left-0 z-20 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                           onClick={() => handleSort("product")}
                         >
                           Product <SortIcon field="product" />
@@ -546,20 +562,24 @@ export default function AdminPage() {
                         </TableHead>
                         <TableHead className="text-right">Annual Cost</TableHead>
                         <TableHead className="text-right">Licenses</TableHead>
+                        <TableHead>Budget</TableHead>
+                        <TableHead>Renewal Date</TableHead>
                         <TableHead>Synced</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredApps.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                             No apps found. Run a sync to populate data.
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredApps.slice(0, 50).map((app) => (
+                        filteredApps
+                          .slice(supabasePage * supabasePageSize, (supabasePage + 1) * supabasePageSize)
+                          .map((app) => (
                           <TableRow key={app.id}>
-                            <TableCell className="font-medium">{app.product}</TableCell>
+                            <TableCell className="font-medium sticky left-0 z-10 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{app.product}</TableCell>
                             <TableCell>
                               <Badge variant="secondary">{app.category || "N/A"}</Badge>
                             </TableCell>
@@ -571,6 +591,16 @@ export default function AdminPage() {
                                 : "Free"}
                             </TableCell>
                             <TableCell className="text-right">{app.licenses || "-"}</TableCell>
+                            <TableCell>{app.budget || "-"}</TableCell>
+                            <TableCell>
+                              {app.renewal_date ? (
+                                <span className="text-xs">
+                                  {new Date(app.renewal_date).toLocaleDateString()}
+                                </span>
+                              ) : (
+                                "-"
+                              )}
+                            </TableCell>
                             <TableCell>
                               {app.synced_at ? (
                                 <span className="text-xs text-muted-foreground">
@@ -586,11 +616,57 @@ export default function AdminPage() {
                     </TableBody>
                   </Table>
                 </div>
-              )}
-              {filteredApps.length > 50 && (
-                <p className="text-sm text-muted-foreground mt-4 text-center">
-                  Showing 50 of {filteredApps.length} apps
-                </p>
+                {/* Supabase table pagination */}
+                {filteredApps.length > 0 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-4">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {supabasePage * supabasePageSize + 1} to{" "}
+                        {Math.min((supabasePage + 1) * supabasePageSize, filteredApps.length)}{" "}
+                        of {filteredApps.length}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Per page</span>
+                        <Select
+                          value={`${supabasePageSize}`}
+                          onValueChange={(value) => {
+                            setSupabasePageSize(Number(value));
+                            setSupabasePage(0);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[25, 50, 100, 200].map((size) => (
+                              <SelectItem key={size} value={`${size}`}>
+                                {size}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(0)} disabled={supabasePage === 0}>
+                        <ChevronsLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(p => Math.max(0, p - 1))} disabled={supabasePage === 0}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">
+                        Page {supabasePage + 1} of {Math.max(1, Math.ceil(filteredApps.length / supabasePageSize))}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(p => p + 1)} disabled={(supabasePage + 1) * supabasePageSize >= filteredApps.length}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(Math.ceil(filteredApps.length / supabasePageSize) - 1)} disabled={(supabasePage + 1) * supabasePageSize >= filteredApps.length}>
+                        <ChevronsRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -613,11 +689,12 @@ export default function AdminPage() {
                   ))}
                 </div>
               ) : (
+                <>
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Product</TableHead>
+                        <TableHead className="sticky left-0 z-20 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Product</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Division</TableHead>
                         <TableHead>Vendor</TableHead>
@@ -632,9 +709,11 @@ export default function AdminPage() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        rawData.slice(0, 50).map((app, idx) => (
+                        rawData
+                          .slice(rawPage * rawPageSize, (rawPage + 1) * rawPageSize)
+                          .map((app, idx) => (
                           <TableRow key={app.id || idx}>
-                            <TableCell className="font-medium">{app.product}</TableCell>
+                            <TableCell className="font-medium sticky left-0 z-10 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{app.product}</TableCell>
                             <TableCell>{app.category || "N/A"}</TableCell>
                             <TableCell>{app.division || "N/A"}</TableCell>
                             <TableCell>{app.vendor || "N/A"}</TableCell>
@@ -658,11 +737,57 @@ export default function AdminPage() {
                     </TableBody>
                   </Table>
                 </div>
-              )}
-              {rawData.length > 50 && (
-                <p className="text-sm text-muted-foreground mt-4 text-center">
-                  Showing 50 of {rawData.length} apps
-                </p>
+                {/* Raw data pagination */}
+                {rawData.length > 0 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-4">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {rawPage * rawPageSize + 1} to{" "}
+                        {Math.min((rawPage + 1) * rawPageSize, rawData.length)}{" "}
+                        of {rawData.length}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Per page</span>
+                        <Select
+                          value={`${rawPageSize}`}
+                          onValueChange={(value) => {
+                            setRawPageSize(Number(value));
+                            setRawPage(0);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[25, 50, 100, 200].map((size) => (
+                              <SelectItem key={size} value={`${size}`}>
+                                {size}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => setRawPage(0)} disabled={rawPage === 0}>
+                        <ChevronsLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setRawPage(p => Math.max(0, p - 1))} disabled={rawPage === 0}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">
+                        Page {rawPage + 1} of {Math.max(1, Math.ceil(rawData.length / rawPageSize))}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => setRawPage(p => p + 1)} disabled={(rawPage + 1) * rawPageSize >= rawData.length}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setRawPage(Math.ceil(rawData.length / rawPageSize) - 1)} disabled={(rawPage + 1) * rawPageSize >= rawData.length}>
+                        <ChevronsRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </CardContent>
           </Card>
