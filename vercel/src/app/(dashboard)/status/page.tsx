@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -9,6 +9,7 @@ import {
   Search,
   ExternalLink,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,69 +23,21 @@ interface AppStatus {
   id: string;
   name: string;
   status: "operational" | "issues" | "maintenance";
-  lastChecked: string;
-  responseTime?: number;
-  website: string;
-  category: string;
+  website: string | null;
+  category: string | null;
 }
 
-// Mock data
-const mockStatuses: AppStatus[] = [
-  {
-    id: "1",
-    name: "Google Workspace",
-    status: "operational",
-    lastChecked: new Date().toISOString(),
-    responseTime: 145,
-    website: "https://workspace.google.com",
-    category: "Productivity",
-  },
-  {
-    id: "2",
-    name: "Canvas LMS",
-    status: "operational",
-    lastChecked: new Date().toISOString(),
-    responseTime: 230,
-    website: "https://canvas.instructure.com",
-    category: "Learning Management",
-  },
-  {
-    id: "3",
-    name: "Zoom",
-    status: "maintenance",
-    lastChecked: new Date().toISOString(),
-    responseTime: 0,
-    website: "https://zoom.us",
-    category: "Communication",
-  },
-  {
-    id: "4",
-    name: "Adobe Creative Cloud",
-    status: "operational",
-    lastChecked: new Date().toISOString(),
-    responseTime: 189,
-    website: "https://adobe.com",
-    category: "Creative",
-  },
-  {
-    id: "5",
-    name: "Turnitin",
-    status: "issues",
-    lastChecked: new Date().toISOString(),
-    responseTime: 2500,
-    website: "https://turnitin.com",
-    category: "Assessment",
-  },
-  {
-    id: "6",
-    name: "Seesaw",
-    status: "operational",
-    lastChecked: new Date().toISOString(),
-    responseTime: 167,
-    website: "https://web.seesaw.me",
-    category: "Portfolio",
-  },
-];
+interface StatusApiResponse {
+  apps: AppStatus[];
+  summary: {
+    total: number;
+    up: number;
+    down: number;
+    uptime: number;
+  };
+  lastChecked: string;
+  error?: string;
+}
 
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
@@ -121,32 +74,85 @@ export default function StatusPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  const filteredApps = mockStatuses.filter((app) => {
-    const matchesSearch =
-      !searchQuery ||
-      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.category.toLowerCase().includes(searchQuery.toLowerCase());
+  // Real data state
+  const [apps, setApps] = useState<AppStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "up" && app.status === "operational") ||
-      (statusFilter === "down" && (app.status === "issues" || app.status === "maintenance"));
+  const fetchStatuses = async () => {
+    try {
+      const res = await fetch("/api/status");
+      if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+      const data: StatusApiResponse = await res.json();
+      if (data.error) throw new Error(data.error);
+      setApps(data.apps || []);
+      setLastRefresh(new Date(data.lastChecked || Date.now()));
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch statuses:", err);
+      setError(err instanceof Error ? err.message : "Failed to load status data");
+    }
+  };
 
-    return matchesSearch && matchesStatus;
-  });
+  // Fetch on mount
+  useEffect(() => {
+    fetchStatuses().finally(() => setLoading(false));
+  }, []);
 
-  const operationalCount = mockStatuses.filter((a) => a.status === "operational").length;
-  const issuesCount = mockStatuses.filter((a) => a.status === "issues" || a.status === "maintenance").length;
+  const filteredApps = useMemo(() => {
+    return apps.filter((app) => {
+      const matchesSearch =
+        !searchQuery ||
+        app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (app.category?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "up" && app.status === "operational") ||
+        (statusFilter === "down" && (app.status === "issues" || app.status === "maintenance"));
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [apps, searchQuery, statusFilter]);
+
+  const operationalCount = apps.filter((a) => a.status === "operational").length;
+  const issuesCount = apps.filter((a) => a.status === "issues" || a.status === "maintenance").length;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setLastRefresh(new Date());
+    await fetchStatuses();
     setIsRefreshing(false);
   };
 
-  const allOperational = issuesCount === 0;
+  const allOperational = issuesCount === 0 && apps.length > 0;
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state (only if no apps loaded at all)
+  if (error && apps.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <p className="text-destructive font-semibold mb-2">Error loading status</p>
+          <p className="text-muted-foreground text-sm">{error}</p>
+          <Button variant="outline" className="mt-4" onClick={handleRefresh}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -190,7 +196,7 @@ export default function StatusPage() {
                   : `${issuesCount} System${issuesCount > 1 ? "s" : ""} with Issues`}
               </h2>
               <p className={allOperational ? "text-green-700" : "text-red-700"}>
-                {operationalCount} of {mockStatuses.length} applications are running normally
+                {operationalCount} of {apps.length} applications are running normally
               </p>
             </div>
           </div>
@@ -214,7 +220,7 @@ export default function StatusPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Apps Monitored</CardDescription>
-            <CardTitle className="text-3xl">{mockStatuses.length}</CardTitle>
+            <CardTitle className="text-3xl">{apps.length}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -244,7 +250,7 @@ export default function StatusPage() {
         <CardHeader>
           <CardTitle>Applications</CardTitle>
           <CardDescription>
-            Showing {filteredApps.length} of {mockStatuses.length} applications
+            Showing {filteredApps.length} of {apps.length} applications
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -271,20 +277,21 @@ export default function StatusPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium">{app.name}</h3>
-                      <Badge variant="outline" className="text-xs">
-                        {app.category}
-                      </Badge>
+                      {app.category && (
+                        <Badge variant="outline" className="text-xs">
+                          {app.category}
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {app.responseTime ? `Response time: ${app.responseTime}ms` : "Not responding"}
-                    </p>
                   </div>
                   <StatusBadge status={app.status} />
-                  <Button variant="ghost" size="icon" asChild>
-                    <a href={app.website} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
+                  {app.website && (
+                    <Button variant="ghost" size="icon" asChild>
+                      <a href={app.website} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  )}
                 </div>
               ))
             )}

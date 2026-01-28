@@ -39,7 +39,7 @@ The system uses role-based access control (RBAC) with four tiers:
 | Role | Description | Permissions |
 |------|-------------|-------------|
 | **Staff** | Regular users | Browse apps, submit assessments, request new apps |
-| **TIC** | Technology Integration Coach | All Staff + review assessments, generate AI summaries, make recommendations |
+| **TIC** | Technology & Innovation Coordinator | All Staff + review assessments, generate AI summaries, make recommendations |
 | **Approver** | Director/Decision maker | All TIC + make final decisions, set subscription terms |
 | **Admin** | EdTech team | All Approver + delete assessments, manage users, mark implemented |
 

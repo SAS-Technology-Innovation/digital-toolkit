@@ -4,7 +4,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 /**
  * API Route: /api/data
  * Fetches app data from Supabase and formats it for the dashboard.
- * Falls back to mock data if Supabase is not configured.
  */
 
 interface SupabaseApp {
@@ -129,45 +128,8 @@ function isEffectivelyWholeSchool(app: DashboardApp): boolean {
   return false;
 }
 
-// Mock data for when Supabase is not configured
-const mockData = {
-  wholeSchool: {
-    name: "Whole School",
-    apps: [
-      {
-        product: "Google Workspace",
-        website: "https://workspace.google.com",
-        renewalDate: "2024-06-15",
-        spend: 0,
-        dateAdded: "2023-01-01",
-        division: "Whole School",
-        enterprise: true,
-        licenseType: "Site License",
-        category: "Productivity",
-        audience: "Teachers, Students, Staff, Parents",
-        description: "Collaborative productivity suite including Docs, Sheets, Slides, and more.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-12",
-      },
-      {
-        product: "Toddle",
-        website: "https://toddleapp.com",
-        renewalDate: "2024-08-01",
-        spend: 45000,
-        dateAdded: "2023-06-15",
-        division: "Whole School",
-        enterprise: true,
-        licenseType: "Enterprise",
-        category: "Learning Management",
-        audience: "Teachers, Students",
-        description: "Collaborative teaching and learning platform for planning, assessment, and communication.",
-        ssoEnabled: true,
-        mobileApp: "Yes",
-        gradeLevels: "K-12",
-      },
-    ],
-  },
+const emptyResponse = {
+  wholeSchool: { name: "Whole School", apps: [] },
   elementary: { name: "Elementary", apps: [] },
   middleSchool: { name: "Middle School", apps: [] },
   highSchool: { name: "High School", apps: [] },
@@ -175,15 +137,16 @@ const mockData = {
 
 export async function GET() {
   try {
-    // Try to create Supabase client
+    // Create Supabase client
     let supabase;
     try {
       supabase = await createServerSupabaseClient();
     } catch {
-      console.log("Supabase not configured, using mock data");
-      return NextResponse.json(mockData, {
-        headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
-      });
+      console.error("Supabase not configured");
+      return NextResponse.json(
+        { error: "Database not configured" },
+        { status: 500 }
+      );
     }
 
     // Fetch all apps from Supabase
@@ -194,15 +157,16 @@ export async function GET() {
 
     if (error) {
       console.error("Supabase error:", error);
-      return NextResponse.json(mockData, {
-        headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
-      });
+      return NextResponse.json(
+        { error: "Failed to fetch apps from database" },
+        { status: 500 }
+      );
     }
 
     if (!apps || apps.length === 0) {
-      console.log("No apps in Supabase, using mock data");
-      return NextResponse.json(mockData, {
-        headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
+      console.log("No apps in Supabase");
+      return NextResponse.json(emptyResponse, {
+        headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=30" },
       });
     }
 
@@ -287,8 +251,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching data:", error);
-    return NextResponse.json(mockData, {
-      headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" },
-    });
+    return NextResponse.json(
+      { error: "Failed to fetch data" },
+      { status: 500 }
+    );
   }
 }
