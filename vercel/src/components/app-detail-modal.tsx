@@ -470,23 +470,63 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
               </div>
             </div>
 
-            {/* License Information Section */}
+            {/* License & Cost Information Section */}
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-3">
                 <Key className="w-4 h-4" />
-                License Information
+                License & Cost Information
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {app.annualCost != null && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Annual Cost</div>
+                    <div className="font-semibold">
+                      {app.annualCost === 0
+                        ? "Free"
+                        : `$${Number(app.annualCost).toLocaleString()}`}
+                    </div>
+                  </div>
+                )}
                 {app.licenseType && app.licenseType !== "N/A" && (
                   <div className="bg-muted/50 rounded-lg p-3">
                     <div className="text-xs font-medium text-muted-foreground uppercase">License Type</div>
                     <div className="font-semibold">{app.licenseType}</div>
                   </div>
                 )}
+                {app.licenses != null && app.licenses > 0 && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Licenses</div>
+                    <div className="font-semibold">{Number(app.licenses).toLocaleString()}</div>
+                  </div>
+                )}
+                {app.vendor && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Vendor</div>
+                    <div className="font-semibold">{app.vendor}</div>
+                  </div>
+                )}
+                {app.budget && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Budget</div>
+                    <div className="font-semibold">{app.budget}</div>
+                  </div>
+                )}
+                {app.renewalDate && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Renewal Date</div>
+                    <div className="font-semibold">{new Date(app.renewalDate).toLocaleDateString()}</div>
+                  </div>
+                )}
                 {app.dateAdded && (
                   <div className="bg-muted/50 rounded-lg p-3">
                     <div className="text-xs font-medium text-muted-foreground uppercase">Date Added</div>
                     <div className="font-semibold">{new Date(app.dateAdded).toLocaleDateString()}</div>
+                  </div>
+                )}
+                {app.globalRating != null && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Global Rating</div>
+                    <div className="font-semibold">{app.globalRating}/5</div>
                   </div>
                 )}
               </div>

@@ -12,7 +12,17 @@ import {
   ColumnFiltersState,
   VisibilityState,
   ColumnResizeMode,
+  RowData,
 } from "@tanstack/react-table";
+
+// Extend TanStack Table meta to support inline editing
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface TableMeta<TData extends RowData> {
+    onCellEdit?: (rowId: string, field: string, value: unknown) => Promise<void>;
+    canEdit?: boolean;
+  }
+}
 import { useState } from "react";
 import {
   Table,
@@ -49,6 +59,10 @@ interface DataTableProps<TData, TValue> {
   defaultPageSize?: number;
   defaultColumnVisibility?: VisibilityState;
   stickyFirstColumn?: boolean;
+  /** Callback for inline cell editing. If provided, editable cells will call this on save. */
+  onCellEdit?: (rowId: string, field: string, value: unknown) => Promise<void>;
+  /** Whether the current user can edit cells. Defaults to false. */
+  canEdit?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -59,6 +73,8 @@ export function DataTable<TData, TValue>({
   defaultPageSize = 25,
   defaultColumnVisibility = {},
   stickyFirstColumn = true,
+  onCellEdit,
+  canEdit = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -88,6 +104,10 @@ export function DataTable<TData, TValue>({
       pagination: {
         pageSize: defaultPageSize,
       },
+    },
+    meta: {
+      onCellEdit,
+      canEdit,
     },
   });
 

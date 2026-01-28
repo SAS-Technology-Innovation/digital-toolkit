@@ -34,11 +34,13 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
     if (allUpdates.length > 0) {
       console.log(`Sending ${allUpdates.length} field updates to Apps Script`);
 
+      // Apps Script returns 302 redirect; follow it manually to get JSON response
       const updateResponse = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        redirect: "follow",
         body: JSON.stringify({
           api: "bulkUpdate",
           key: FRONTEND_KEY,
@@ -46,10 +48,24 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
         }),
       });
 
-      if (updateResponse.ok) {
-        const updateResult = await updateResponse.json();
+      // Handle redirect: if we got HTML back, the redirect wasn't followed properly
+      const responseText = await updateResponse.text();
+      try {
+        const updateResult = JSON.parse(responseText);
         updateSuccessCount = updateResult.successCount || 0;
         updateFailCount = updateResult.failCount || 0;
+      } catch {
+        // If response is HTML (redirect page), try following the redirect manually
+        if (updateResponse.redirected && updateResponse.url) {
+          const redirectResponse = await fetch(updateResponse.url);
+          if (redirectResponse.ok) {
+            const updateResult = await redirectResponse.json();
+            updateSuccessCount = updateResult.successCount || 0;
+            updateFailCount = updateResult.failCount || 0;
+          }
+        } else {
+          console.error("Failed to parse Apps Script response:", responseText.substring(0, 200));
+        }
       }
     }
 
@@ -68,6 +84,7 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
         headers: {
           "Content-Type": "application/json",
         },
+        redirect: "follow",
         body: JSON.stringify({
           api: "bulkAdd",
           key: FRONTEND_KEY,
@@ -75,10 +92,22 @@ async function writeBackToAppsScript(apps: App[]): Promise<{ success: boolean; e
         }),
       });
 
-      if (addResponse.ok) {
-        const addResult = await addResponse.json();
+      const addResponseText = await addResponse.text();
+      try {
+        const addResult = JSON.parse(addResponseText);
         addedCount = addResult.addedCount || 0;
         console.log(`bulkAdd result: ${addedCount} added, ${addResult.skippedCount || 0} skipped`);
+      } catch {
+        if (addResponse.redirected && addResponse.url) {
+          const redirectResponse = await fetch(addResponse.url);
+          if (redirectResponse.ok) {
+            const addResult = await redirectResponse.json();
+            addedCount = addResult.addedCount || 0;
+            console.log(`bulkAdd result: ${addedCount} added, ${addResult.skippedCount || 0} skipped`);
+          }
+        } else {
+          console.error("Failed to parse bulkAdd response:", addResponseText.substring(0, 200));
+        }
       }
     }
 

@@ -98,7 +98,7 @@ export async function GET() {
     const { data: appsData, error: appsError } = await supabase
       .from("apps")
       .select("*")
-      .neq("status", "retired");
+      .or("status.neq.retired,status.is.null");
 
     const apps = appsData as App[] | null;
 

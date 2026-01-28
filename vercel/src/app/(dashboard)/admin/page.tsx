@@ -9,8 +9,6 @@ import {
   AlertTriangle,
   Play,
   Loader2,
-  ChevronDown,
-  ChevronUp,
   Search,
   Download,
   ArrowDownToLine,
@@ -59,7 +57,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth/auth-context";
+import { DataTable } from "@/components/ui/data-table";
+import { createAppColumns, getDefaultColumnVisibility } from "@/lib/app-columns";
 import type { App, SyncLog } from "@/lib/supabase/types";
 
 interface RawAppData {
@@ -105,10 +107,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<keyof App>("product");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [supabasePage, setSupabasePage] = useState(0);
-  const [supabasePageSize, setSupabasePageSize] = useState(50);
   const [rawPage, setRawPage] = useState(0);
   const [rawPageSize, setRawPageSize] = useState(50);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -117,8 +115,57 @@ export default function AdminPage() {
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [removingDuplicates, setRemovingDuplicates] = useState(false);
   const [duplicateSuccess, setDuplicateSuccess] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
 
   const supabase = createClient();
+  const { user } = useAuth();
+
+  // Check if current user can edit (admin or TIC role)
+  useEffect(() => {
+    if (!user) {
+      setCanEdit(false);
+      return;
+    }
+    fetch("/api/users?current=true")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          const roles = data.user.roles || [data.user.role || "staff"];
+          setCanEdit(roles.includes("admin") || roles.includes("tic"));
+        }
+      })
+      .catch(() => setCanEdit(false));
+  }, [user]);
+
+  // Column definitions for the editable DataTable
+  const appColumns = createAppColumns();
+  const defaultColumnVisibility = getDefaultColumnVisibility();
+
+  // Handle inline cell edits
+  const handleCellEdit = useCallback(
+    async (rowId: string, field: string, value: unknown) => {
+      const res = await fetch(`/api/apps/${rowId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save");
+      }
+
+      // Update local state optimistically
+      setApps((prev) =>
+        prev.map((app) =>
+          app.id === rowId
+            ? { ...app, [field]: value, updated_at: new Date().toISOString() }
+            : app
+        )
+      );
+    },
+    []
+  );
 
   // Fetch data from Supabase
   const fetchSupabaseData = useCallback(async () => {
@@ -150,7 +197,7 @@ export default function AdminPage() {
     }
   }, [supabase]);
 
-  // Fetch raw data from Apps Script
+  // Fetch formatted data from Supabase via API
   const fetchRawData = useCallback(async () => {
     try {
       const response = await fetch("/api/data");
@@ -275,41 +322,10 @@ export default function AdminPage() {
     }
   };
 
-  // Sort handler
-  const handleSort = (field: keyof App) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  // Filter and sort apps
-  const filteredApps = apps
-    .filter((app) => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        app.product?.toLowerCase().includes(query) ||
-        app.category?.toLowerCase().includes(query) ||
-        app.vendor?.toLowerCase().includes(query) ||
-        app.division?.toLowerCase().includes(query)
-      );
-    })
-    .sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-      const comparison = String(aVal).localeCompare(String(bVal));
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-
   // Export to CSV
   const exportToCsv = () => {
     const headers = ["Product", "Category", "Division", "Vendor", "Annual Cost", "Licenses", "Renewal Date"];
-    const rows = filteredApps.map((app) => [
+    const rows = apps.map((app) => [
       app.product,
       app.category || "",
       app.division || "",
@@ -329,15 +345,6 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   };
 
-  const SortIcon = ({ field }: { field: keyof App }) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ChevronUp className="ml-1 h-4 w-4 inline" />
-    ) : (
-      <ChevronDown className="ml-1 h-4 w-4 inline" />
-    );
-  };
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -345,7 +352,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-heading">ADMIN</h1>
           <p className="text-muted-foreground">
-            Manage data sync and view raw data from Apps Script
+            Manage data sync between Supabase and Google Sheets
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -465,7 +472,7 @@ export default function AdminPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">{rawData.length}</div>
-                <p className="text-xs text-muted-foreground">Apps in Apps Script</p>
+                <p className="text-xs text-muted-foreground">Formatted Apps (API)</p>
               </CardContent>
             </Card>
             <Card>
@@ -492,7 +499,7 @@ export default function AdminPage() {
       <Tabs defaultValue="supabase" className="space-y-4">
         <TabsList>
           <TabsTrigger value="supabase">Supabase Data</TabsTrigger>
-          <TabsTrigger value="raw">Raw Apps Script Data</TabsTrigger>
+          <TabsTrigger value="raw">Formatted Data</TabsTrigger>
           <TabsTrigger value="logs">Sync Logs</TabsTrigger>
           <TabsTrigger value="duplicates" className="flex items-center gap-1">
             <Copy className="h-3 w-3" />
@@ -500,12 +507,17 @@ export default function AdminPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Supabase Data Table */}
+        {/* Supabase Data Table — Notion-style inline editing */}
         <TabsContent value="supabase">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Apps in Supabase</CardTitle>
+                <div>
+                  <CardTitle>Apps in Supabase</CardTitle>
+                  {canEdit && (
+                    <CardDescription>Click any cell to edit inline. Changes save automatically.</CardDescription>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <div className="relative w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -531,154 +543,28 @@ export default function AdminPage() {
                   ))}
                 </div>
               ) : (
-                <>
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead
-                          className="cursor-pointer hover:bg-muted/50 sticky left-0 z-20 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
-                          onClick={() => handleSort("product")}
-                        >
-                          Product <SortIcon field="product" />
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort("category")}
-                        >
-                          Category <SortIcon field="category" />
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort("division")}
-                        >
-                          Division <SortIcon field="division" />
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort("vendor")}
-                        >
-                          Vendor <SortIcon field="vendor" />
-                        </TableHead>
-                        <TableHead className="text-right">Annual Cost</TableHead>
-                        <TableHead className="text-right">Licenses</TableHead>
-                        <TableHead>Budget</TableHead>
-                        <TableHead>Renewal Date</TableHead>
-                        <TableHead>Synced</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredApps.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                            No apps found. Run a sync to populate data.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredApps
-                          .slice(supabasePage * supabasePageSize, (supabasePage + 1) * supabasePageSize)
-                          .map((app) => (
-                          <TableRow key={app.id}>
-                            <TableCell className="font-medium sticky left-0 z-10 bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{app.product}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{app.category || "N/A"}</Badge>
-                            </TableCell>
-                            <TableCell>{app.division || "N/A"}</TableCell>
-                            <TableCell>{app.vendor || "N/A"}</TableCell>
-                            <TableCell className="text-right">
-                              {app.annual_cost
-                                ? `$${Number(app.annual_cost).toLocaleString()}`
-                                : "Free"}
-                            </TableCell>
-                            <TableCell className="text-right">{app.licenses || "-"}</TableCell>
-                            <TableCell>{app.budget || "-"}</TableCell>
-                            <TableCell>
-                              {app.renewal_date ? (
-                                <span className="text-xs">
-                                  {new Date(app.renewal_date).toLocaleDateString()}
-                                </span>
-                              ) : (
-                                "-"
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {app.synced_at ? (
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(app.synced_at).toLocaleDateString()}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-yellow-600">Never</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-                {/* Supabase table pagination */}
-                {filteredApps.length > 0 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-4">
-                      <div className="text-sm text-muted-foreground">
-                        Showing {supabasePage * supabasePageSize + 1} to{" "}
-                        {Math.min((supabasePage + 1) * supabasePageSize, filteredApps.length)}{" "}
-                        of {filteredApps.length}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Per page</span>
-                        <Select
-                          value={`${supabasePageSize}`}
-                          onValueChange={(value) => {
-                            setSupabasePageSize(Number(value));
-                            setSupabasePage(0);
-                          }}
-                        >
-                          <SelectTrigger className="h-8 w-[70px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[25, 50, 100, 200].map((size) => (
-                              <SelectItem key={size} value={`${size}`}>
-                                {size}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(0)} disabled={supabasePage === 0}>
-                        <ChevronsLeft className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(p => Math.max(0, p - 1))} disabled={supabasePage === 0}>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="text-sm font-medium">
-                        Page {supabasePage + 1} of {Math.max(1, Math.ceil(filteredApps.length / supabasePageSize))}
-                      </span>
-                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(p => p + 1)} disabled={(supabasePage + 1) * supabasePageSize >= filteredApps.length}>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setSupabasePage(Math.ceil(filteredApps.length / supabasePageSize) - 1)} disabled={(supabasePage + 1) * supabasePageSize >= filteredApps.length}>
-                        <ChevronsRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                </>
+                <DataTable
+                  columns={appColumns}
+                  data={apps as Record<string, unknown>[] & App[]}
+                  searchValue={searchQuery}
+                  defaultPageSize={50}
+                  defaultColumnVisibility={defaultColumnVisibility}
+                  stickyFirstColumn={true}
+                  onCellEdit={handleCellEdit}
+                  canEdit={canEdit}
+                />
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Raw Apps Script Data */}
+        {/* Formatted Data (from Supabase API) */}
         <TabsContent value="raw">
           <Card>
             <CardHeader>
-              <CardTitle>Raw Data from Apps Script</CardTitle>
+              <CardTitle>Formatted Data</CardTitle>
               <CardDescription>
-                This is the data coming directly from Google Sheets before it&apos;s synced to Supabase
+                Division-formatted app data from Supabase (as served by the /api/data endpoint)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -705,7 +591,7 @@ export default function AdminPage() {
                       {rawData.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No raw data available. Check Apps Script connection.
+                            No formatted data available. Check Supabase connection.
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -798,7 +684,7 @@ export default function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle>Sync History</CardTitle>
-              <CardDescription>Recent sync operations between Apps Script and Supabase</CardDescription>
+              <CardDescription>Recent sync operations between Google Sheets and Supabase</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">

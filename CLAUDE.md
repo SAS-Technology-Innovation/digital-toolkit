@@ -50,7 +50,7 @@ The **SAS Digital Toolkit** is a full-stack web application for managing and sho
 | Frontend       | Next.js 16 with App Router, TypeScript        |
 | Styling        | Tailwind CSS v4, Shadcn/UI components         |
 | Authentication | Supabase Auth (Magic Links + Password)        |
-| Database       | Supabase (PostgreSQL), Google Sheets          |
+| Database       | Supabase (PostgreSQL) — primary; Google Sheets (sync target) |
 | AI             | Claude API (via Apps Script proxy)            |
 | Analytics      | Vercel Analytics, Speed Insights              |
 | Deployment     | Vercel                                        |
@@ -103,6 +103,8 @@ digital-toolkit/
 │   │   │   └── layout.tsx       # Root layout
 │   │   ├── components/          # React components
 │   │   │   ├── ui/              # Shadcn/UI components
+│   │   │   │   ├── data-table.tsx   # Shared DataTable (TanStack) with inline editing
+│   │   │   │   ├── editable-cell.tsx # Notion-style inline cell editor
 │   │   │   │   ├── switch.tsx   # Toggle switch
 │   │   │   │   ├── breadcrumb.tsx
 │   │   │   │   └── ...          # Other Shadcn components
@@ -111,12 +113,15 @@ digital-toolkit/
 │   │   │   ├── app-sidebar.tsx  # Navigation sidebar
 │   │   │   └── dashboard-search.tsx
 │   │   ├── lib/                 # Utilities
-│   │   │   ├── auth/            # Auth context
-│   │   │   │   └── auth-context.tsx
+│   │   │   ├── auth/            # Auth context & RBAC
+│   │   │   │   ├── auth-context.tsx
+│   │   │   │   └── rbac.ts         # Role-based access control helpers
 │   │   │   ├── supabase/        # Supabase clients
 │   │   │   │   ├── client.ts    # Browser client
 │   │   │   │   ├── server.ts    # Server client
 │   │   │   │   └── types.ts     # TypeScript types
+│   │   │   ├── field-config.ts  # Centralized field type registry (50+ fields)
+│   │   │   ├── app-columns.tsx  # Shared column definitions for all data tables
 │   │   │   └── utils.ts         # Helper functions
 │   │   ├── hooks/               # Custom React hooks
 │   │   ├── __tests__/           # Test files
@@ -265,6 +270,54 @@ User enters new password → Update password → Redirect to login
 - Select role first, then user from dropdown
 - Constraints enforce single Owner and TIC Manager per app
 
+## ✏️ Inline Editing (Notion-Style)
+
+The admin data table supports Notion-style inline cell editing. This is built into the shared `DataTable` component so any page using it can opt in.
+
+### Architecture
+
+| File | Purpose |
+|------|---------|
+| `src/lib/field-config.ts` | Centralized registry of all 50+ app fields — types, labels, widths, dropdown options, formatters |
+| `src/components/ui/editable-cell.tsx` | Renders display/edit mode per field type (text, number, date, select, boolean, url, textarea, multiSelect) |
+| `src/lib/app-columns.tsx` | Generates `ColumnDef[]` from field config; each cell uses `EditableCell` |
+| `src/components/ui/data-table.tsx` | Accepts optional `onCellEdit` + `canEdit` via TanStack Table `meta` |
+| `src/app/api/apps/[id]/route.ts` | PATCH endpoint — 40+ allowed fields, `requireRole("tic")` auth |
+
+### How It Works
+
+1. **DataTable** receives `onCellEdit` callback and `canEdit` boolean as props
+2. These are passed through TanStack Table's `meta` to cell renderers
+3. **EditableCell** reads `meta.canEdit` — if true, clicking a cell opens the appropriate editor
+4. On save (Enter/blur), the `onCellEdit` callback PATCHes `/api/apps/{id}` and updates local state
+5. Escape cancels, boolean fields save immediately via Switch toggle
+6. Non-admin/TIC users see read-only cells with no edit affordances
+
+### Field Types
+
+- **text/url/number/date**: Inline `<Input>`, auto-focused
+- **select**: Shadcn `<Select>` dropdown with options from field config
+- **boolean**: `<Switch>` — saves immediately on toggle
+- **textarea/multiSelect**: Opens in `<Popover>` to avoid distorting row height
+- **readonly**: No edit affordance (id, timestamps, sync fields)
+
+### Adding Editing to a New Page
+
+```tsx
+<DataTable
+  columns={createAppColumns()}
+  data={apps}
+  onCellEdit={async (rowId, field, value) => {
+    await fetch(`/api/apps/${rowId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [field]: value }),
+    });
+  }}
+  canEdit={userRole === "admin" || userRole === "tic"}
+/>
+```
+
 ## 📄 Application Pages
 
 ### Dashboard Group (with sidebar)
@@ -306,6 +359,9 @@ User enters new password → Update password → Redirect to login
 | `/api/renewal-data` | GET | Fetch renewal data | - |
 | `/api/status` | GET | Fetch app status | - |
 | `/api/sync` | POST | Sync data with Supabase | - |
+| `/api/apps/[id]` | GET | Fetch single app | - |
+| `/api/apps/[id]` | PATCH | Update app fields (inline edit) | TIC+ |
+| `/api/apps/[id]` | DELETE | Soft delete (retire) app | - |
 | `/api/apps/list` | GET | Get apps for dropdown selection | - |
 | `/api/app-assignments` | GET | Get assignments (by app_id or my_apps=true) | Auth |
 | `/api/app-assignments` | POST | Create assignment | Admin/TIC |
