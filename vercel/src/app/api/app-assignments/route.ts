@@ -174,16 +174,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user's profile to check role
+    // Get current user's profile to check roles
     const profileResult = await supabase
       .from("user_profiles")
-      .select("id, role")
+      .select("id, role, roles")
       .eq("auth_user_id", user.id)
       .single();
 
-    const currentProfile = profileResult.data as { id: string; role: string } | null;
+    const currentProfile = profileResult.data as { id: string; role: string; roles: string[] | null } | null;
 
-    if (!currentProfile || !["admin", "tic"].includes(currentProfile.role)) {
+    const userRoles = currentProfile?.roles || (currentProfile?.role ? [currentProfile.role] : []);
+    if (!currentProfile || (!userRoles.includes("admin") && !userRoles.includes("tic"))) {
       return NextResponse.json({ error: "Forbidden - Admin or TIC role required" }, { status: 403 });
     }
 
@@ -270,16 +271,17 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user's profile to check role
+    // Get current user's profile to check roles
     const profileResult = await supabase
       .from("user_profiles")
-      .select("id, role")
+      .select("id, role, roles")
       .eq("auth_user_id", user.id)
       .single();
 
-    const currentProfile = profileResult.data as { id: string; role: string } | null;
+    const currentProfile = profileResult.data as { id: string; role: string; roles: string[] | null } | null;
 
-    if (!currentProfile || !["admin", "tic"].includes(currentProfile.role)) {
+    const delUserRoles = currentProfile?.roles || (currentProfile?.role ? [currentProfile.role] : []);
+    if (!currentProfile || (!delUserRoles.includes("admin") && !delUserRoles.includes("tic"))) {
       return NextResponse.json({ error: "Forbidden - Admin or TIC role required" }, { status: 403 });
     }
 

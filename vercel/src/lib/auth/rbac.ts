@@ -14,7 +14,30 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 };
 
 /**
- * Get the current authenticated user's profile with role
+ * Get the highest role from a roles array
+ */
+export function getHighestRole(roles: string[] | null | undefined): UserRole {
+  if (!roles || roles.length === 0) return "staff";
+  let highest: UserRole = "staff";
+  for (const r of roles) {
+    const role = r as UserRole;
+    if (ROLE_HIERARCHY[role] && ROLE_HIERARCHY[role] > ROLE_HIERARCHY[highest]) {
+      highest = role;
+    }
+  }
+  return highest;
+}
+
+/**
+ * Check if a roles array includes a specific role
+ */
+export function userHasRole(roles: string[] | null | undefined, role: UserRole): boolean {
+  if (!roles || roles.length === 0) return false;
+  return roles.includes(role);
+}
+
+/**
+ * Get the current authenticated user's profile with roles
  */
 export async function getCurrentUserProfile() {
   try {
@@ -27,12 +50,12 @@ export async function getCurrentUserProfile() {
       return { user: null, profile: null, error: "Not authenticated" };
     }
 
-    // Get user profile with role
+    // Get user profile with roles
     const serviceClient = createServiceClient() as SupabaseClient<Database>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile, error: profileError } = await (serviceClient as any)
       .from("user_profiles")
-      .select("id, email, name, role, department, division, is_active")
+      .select("id, email, name, role, roles, department, division, is_active")
       .eq("email", user.email)
       .single();
 
@@ -45,12 +68,18 @@ export async function getCurrentUserProfile() {
           email: user.email,
           name: null,
           role: "staff" as UserRole,
+          roles: ["staff"],
           department: null,
           division: null,
           is_active: true,
         },
         error: null,
       };
+    }
+
+    // Ensure roles array is populated (backward compat with old single-role data)
+    if (!profile.roles || profile.roles.length === 0) {
+      profile.roles = [profile.role || "staff"];
     }
 
     return { user, profile, error: null };
@@ -61,7 +90,8 @@ export async function getCurrentUserProfile() {
 }
 
 /**
- * Check if user has at least the required role
+ * Check if user has at least the required role level
+ * Uses the highest role from the roles array for hierarchy checks
  */
 export function hasRole(userRole: UserRole | null | undefined, requiredRole: UserRole): boolean {
   if (!userRole) return false;
@@ -69,24 +99,41 @@ export function hasRole(userRole: UserRole | null | undefined, requiredRole: Use
 }
 
 /**
- * Check if user can perform TIC actions (tic, approver, or admin)
+ * Check if a user's roles array satisfies the required role level
  */
-export function canPerformTicActions(userRole: UserRole | null | undefined): boolean {
-  return hasRole(userRole, "tic");
+export function hasRoleLevel(roles: string[] | null | undefined, requiredRole: UserRole): boolean {
+  const highest = getHighestRole(roles);
+  return hasRole(highest, requiredRole);
 }
 
 /**
- * Check if user can perform approver actions (approver or admin)
+ * Check if user can perform TIC actions (has tic, approver, or admin role)
  */
-export function canPerformApproverActions(userRole: UserRole | null | undefined): boolean {
-  return hasRole(userRole, "approver");
+export function canPerformTicActions(userRoleOrRoles: UserRole | string[] | null | undefined): boolean {
+  if (Array.isArray(userRoleOrRoles)) {
+    return hasRoleLevel(userRoleOrRoles, "tic");
+  }
+  return hasRole(userRoleOrRoles as UserRole, "tic");
 }
 
 /**
- * Check if user can perform admin actions (admin only)
+ * Check if user can perform approver actions (has approver or admin role)
  */
-export function canPerformAdminActions(userRole: UserRole | null | undefined): boolean {
-  return hasRole(userRole, "admin");
+export function canPerformApproverActions(userRoleOrRoles: UserRole | string[] | null | undefined): boolean {
+  if (Array.isArray(userRoleOrRoles)) {
+    return hasRoleLevel(userRoleOrRoles, "approver");
+  }
+  return hasRole(userRoleOrRoles as UserRole, "approver");
+}
+
+/**
+ * Check if user can perform admin actions (has admin role)
+ */
+export function canPerformAdminActions(userRoleOrRoles: UserRole | string[] | null | undefined): boolean {
+  if (Array.isArray(userRoleOrRoles)) {
+    return hasRoleLevel(userRoleOrRoles, "admin");
+  }
+  return hasRole(userRoleOrRoles as UserRole, "admin");
 }
 
 /**
@@ -94,7 +141,7 @@ export function canPerformAdminActions(userRole: UserRole | null | undefined): b
  */
 export async function requireRole(requiredRole: UserRole): Promise<{
   authorized: boolean;
-  profile: { id: string | null; email: string; role: UserRole } | null;
+  profile: { id: string | null; email: string; role: UserRole; roles: string[] } | null;
   errorResponse?: Response;
 }> {
   const { profile, error } = await getCurrentUserProfile();
@@ -121,14 +168,18 @@ export async function requireRole(requiredRole: UserRole): Promise<{
     };
   }
 
-  if (!hasRole(profile.role as UserRole, requiredRole)) {
+  // Check using roles array (multi-role) with fallback to single role
+  const roles = profile.roles || [profile.role || "staff"];
+  const highestRole = getHighestRole(roles);
+
+  if (!hasRole(highestRole, requiredRole)) {
     return {
       authorized: false,
-      profile: profile as { id: string | null; email: string; role: UserRole },
+      profile: { id: profile.id, email: profile.email, role: highestRole, roles },
       errorResponse: new Response(
         JSON.stringify({
           error: `Insufficient permissions. Required role: ${requiredRole}`,
-          currentRole: profile.role,
+          currentRoles: roles,
         }),
         { status: 403, headers: { "Content-Type": "application/json" } }
       ),
@@ -137,6 +188,6 @@ export async function requireRole(requiredRole: UserRole): Promise<{
 
   return {
     authorized: true,
-    profile: profile as { id: string | null; email: string; role: UserRole },
+    profile: { id: profile.id, email: profile.email, role: highestRole, roles },
   };
 }

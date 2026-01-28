@@ -63,11 +63,30 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { role, is_active, name, department, division } = body;
+    const { role, roles: bodyRoles, is_active, name, department, division } = body;
 
-    // Validate role if provided
-    if (role !== undefined) {
-      const validRoles: UserRole[] = ["staff", "tic", "approver", "admin"];
+    const validRoles: UserRole[] = ["staff", "tic", "approver", "admin"];
+
+    // Validate roles array if provided
+    if (bodyRoles !== undefined) {
+      if (!Array.isArray(bodyRoles) || bodyRoles.length === 0) {
+        return Response.json(
+          { error: "Roles must be a non-empty array" },
+          { status: 400 }
+        );
+      }
+      for (const r of bodyRoles) {
+        if (!validRoles.includes(r as UserRole)) {
+          return Response.json(
+            { error: `Invalid role: ${r}. Must be one of: ${validRoles.join(", ")}` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // Validate single role if provided (backward compat)
+    if (role !== undefined && !bodyRoles) {
       if (!validRoles.includes(role)) {
         return Response.json(
           { error: `Invalid role. Must be one of: ${validRoles.join(", ")}` },
@@ -82,7 +101,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: existingUser, error: fetchError } = await (serviceClient as any)
       .from("user_profiles")
-      .select("id, email, role")
+      .select("id, email, role, roles")
       .eq("id", id)
       .single();
 
@@ -93,12 +112,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Prevent admin from demoting themselves
-    if (existingUser.email === profile?.email && role && role !== "admin") {
-      return Response.json(
-        { error: "You cannot change your own admin role" },
-        { status: 400 }
-      );
+    // Prevent admin from removing their own admin role
+    if (existingUser.email === profile?.email) {
+      const newRoles = bodyRoles || (role ? [role] : null);
+      if (newRoles && !newRoles.includes("admin")) {
+        return Response.json(
+          { error: "You cannot remove your own admin role" },
+          { status: 400 }
+        );
+      }
     }
 
     // Build update object
@@ -106,7 +128,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       updated_at: new Date().toISOString(),
     };
 
-    if (role !== undefined) updates.role = role;
+    // Handle roles update
+    if (bodyRoles !== undefined) {
+      const dedupedRoles = [...new Set(bodyRoles as string[])];
+      updates.roles = dedupedRoles;
+      // Keep legacy role column in sync (highest role)
+      const roleHierarchy: Record<string, number> = { staff: 1, tic: 2, approver: 3, admin: 4 };
+      updates.role = dedupedRoles.reduce((highest, r) =>
+        (roleHierarchy[r] || 0) > (roleHierarchy[highest] || 0) ? r : highest
+      , "staff");
+    } else if (role !== undefined) {
+      // Single role update (backward compat) - also update roles array
+      updates.role = role;
+      updates.roles = [role];
+    }
+
     if (is_active !== undefined) updates.is_active = is_active;
     if (name !== undefined) updates.name = name;
     if (department !== undefined) updates.department = department;

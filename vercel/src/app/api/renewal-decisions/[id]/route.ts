@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
 import { requireRole, canPerformTicActions, canPerformApproverActions, getCurrentUserProfile } from "@/lib/auth/rbac";
-import type { UserRole, Database } from "@/lib/supabase/types";
+import type { Database } from "@/lib/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -91,13 +91,13 @@ export async function PATCH(
       );
     }
 
-    const userRole = profile.role as UserRole;
+    const userRoles = profile.roles || [profile.role || "staff"];
 
     // Check role based on action
     switch (action) {
       case "tic_review":
       case "generate_summary":
-        if (!canPerformTicActions(userRole)) {
+        if (!canPerformTicActions(userRoles)) {
           return NextResponse.json(
             { error: "TIC role or higher required for this action" },
             { status: 403 }
@@ -105,7 +105,7 @@ export async function PATCH(
         }
         break;
       case "director_decision":
-        if (!canPerformApproverActions(userRole)) {
+        if (!canPerformApproverActions(userRoles)) {
           return NextResponse.json(
             { error: "Approver role or higher required for this action" },
             { status: 403 }
@@ -124,7 +124,7 @@ export async function PATCH(
         break;
       default:
         // For generic updates, require at least TIC role
-        if (!canPerformTicActions(userRole)) {
+        if (!canPerformTicActions(userRoles)) {
           return NextResponse.json(
             { error: "TIC role or higher required" },
             { status: 403 }
